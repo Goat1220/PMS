@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.zerock</groupId>
 	<artifactId>controller</artifactId>
-	<name>PSM</name>
+	<name>PMS</name>
 	<packaging>war</packaging>
 	<version>1.0.0-BUILD-SNAPSHOT</version>
 	<properties>
