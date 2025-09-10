@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.pms.feature.runpayroll.mapper.RunPayrollMapper">
+
+  <!-- 1) 메인 급여 요약 -->
+ <select id="selectPayrollSummary"
+        parameterType="org.pms.feature.runpayroll.domain.PayrollSearchParam"
+        resultType="org.pms.feature.runpayroll.domain.PayrollRow">
+  <![CDATA[
+  WITH yh AS (
+    SELECT * FROM (
+      SELECT y.*,
+             ROW_NUMBER() OVER (PARTITION BY y.emp_id, y.base_year
+                                ORDER BY y.created_at DESC, y.yrt_id DESC) rn
+      FROM yrt_header y
+      WHERE y.base_year = TO_NUMBER(SUBSTR(#{yyyymm},1,4))
+    ) WHERE rn = 1
+  )
+  SELECT
+    e.emp_name  AS empName,     -- 사원
+    e.emp_no    AS empNo,       -- 사번
+    d.dept_name AS deptName,    -- 부서
+
+    NVL(yh.tax_apply_type,'')                 AS taxApplyType,          -- 세금적용구분
+
+    NVL(etp.tax_adjust_rate,0)                AS taxAdjustRate,         -- 세액조정율
+    NVL(etp.project_name,'')                  AS projectName,           -- 프로젝트
+    NVL(etp.tax_calc_exempt_yn,'N')           AS taxCalcExemptYn,       -- 세금계산안함
+    NVL(etp.prorate_yn,'N')                   AS prorateYn,             -- 일할계산여부
+    NVL(etp.settlement_reflect_yn,'N')        AS settlementReflectYn,   -- 정산반영여부
+    NVL(etp.manuf_tax_exempt_yn,'N')          AS manufTaxExemptYn,      -- 생산직비과세대상여부
+    NVL(etp.overseas_tax_exempt_yn,'N')       AS overseasTaxExemptYn,   -- 국외근로비과세대상여부
+    NVL(etp.researcher_tax_exempt_yn,'N')     AS researcherTaxExemptYn, -- 연구원비과세대상여부
+    NVL(etp.income_tax_reduction_rate,0)      AS incomeTaxReductionRate,-- 소득세감면율
+    NVL(etp.personal_tax_apply_type,'')       AS personalTaxApplyType,  -- 세금적용구분(개인)
+    NVL(etp.bonus_rate,0)                     AS bonusRate,             -- 상여율
+
+    NVL(SUM(NVL(pi.amount,0)),0)              AS payTotAmt,             -- 지급총액
+    NVL(SUM(CASE WHEN pi.is_previous = 'Y'
+                 THEN NVL(pi.amount,0) ELSE 0 END),0) AS prevPayTotAmt, -- 기지급총액
+    NVL(SUM(NVL(pd.amount,0)),0)              AS dedTotAmt,             -- 공제총액
+    NVL(SUM(NVL(pi.amount,0)) - SUM(NVL(pd.amount,0)),0) AS netPayAmt,  -- 실지급액
+
+    CASE
+      WHEN e.retire_date IS NOT NULL
+       AND e.retire_date <= LAST_DAY(TO_DATE(#{yyyymm}, 'YYYY-MM'))
+      THEN 'Y' ELSE 'N'
+    END AS retireYn
+  FROM emp e
+  JOIN dept d ON d.dept_id = e.dept_id
+  LEFT JOIN emp_tax_profile etp ON etp.emp_id = e.emp_id
+  LEFT JOIN payslip ps ON ps.emp_id = e.emp_id
+    AND ps.apply_yyyymm = #{yyyymm}
+  ]]>
+    <if test="payType != null and payType != ''">
+      <![CDATA[ AND ps.pay_type = #{payType} ]]>
+    </if>
+  <![CDATA[
+  LEFT JOIN payslip_item pi ON pi.payslip_id = ps.payslip_id
+  LEFT JOIN payslip_deduction pd ON pd.payslip_id = ps.payslip_id
+  LEFT JOIN yh ON yh.emp_id = e.emp_id
+  WHERE 1=1
+  ]]>
+    <if test="deptCode != null and deptCode != ''">
+      <![CDATA[ AND d.dept_code = #{deptCode} ]]>
+    </if>
+    <if test="empNo != null and empNo != ''">
+      <![CDATA[ AND e.emp_no = #{empNo} ]]>
+    </if>
+  <![CDATA[
+  GROUP BY
+    e.emp_id, e.emp_no, e.emp_name,
+    d.dept_name,
+    yh.tax_apply_type,
+    etp.tax_adjust_rate, etp.project_name, etp.tax_calc_exempt_yn,
+    etp.prorate_yn, etp.settlement_reflect_yn,
+    etp.manuf_tax_exempt_yn, etp.overseas_tax_exempt_yn,
+    etp.researcher_tax_exempt_yn, etp.income_tax_reduction_rate,
+    etp.personal_tax_apply_type, etp.bonus_rate,
+    e.retire_date
+  ORDER BY e.emp_no
+  ]]>
+</select>
+
+  <!-- 2) 지급 항목 -->
+  <select id="selectPayslipItems"
+        resultType="org.pms.feature.runpayroll.domain.PayslipItemRow">
+  <![CDATA[
+  SELECT
+    item_name   AS itemName,
+    non_tax_type AS nonTaxType,
+    previous_yn AS previousYn,
+    amount      AS amount
+  FROM (
+    -- 0) TOTAL
+    SELECT
+      'TOTAL' AS item_name,
+      NULL    AS non_tax_type,
+      NULL    AS previous_yn,
+      NVL(SUM(NVL(pi.amount,0)),0) AS amount,
+      0 AS sort_no
+    FROM payslip_item pi
+    JOIN payslip ps ON ps.payslip_id = pi.payslip_id
+    JOIN emp e ON e.emp_id = ps.emp_id
+    WHERE e.emp_no = #{empNo}
+      AND ps.apply_yyyymm = #{yyyymm}
+  ]]>
+    <if test="payType != null and payType != ''">
+      <![CDATA[ AND ps.pay_type = #{payType} ]]>
+    </if>
+  <![CDATA[
+    UNION ALL
+    -- 1) DETAIL
+    SELECT
+      pi.item_name AS item_name,
+      CASE
+        WHEN pi.is_safety_bonus = 'Y' THEN '비과세'
+        WHEN pi.item_name IN ('식대','자가운전보조금','육아수당','자녀보육수당') THEN '비과세'
+        ELSE '과세'
+      END AS non_tax_type,
+      CASE WHEN pi.is_previous = 'Y' THEN 'Y' ELSE 'N' END AS previous_yn,
+      NVL(pi.amount,0) AS amount,
+      1 AS sort_no
+    FROM payslip_item pi
+    JOIN payslip ps ON ps.payslip_id = pi.payslip_id
+    JOIN emp e ON e.emp_id = ps.emp_id
+    WHERE e.emp_no = #{empNo}
+      AND ps.apply_yyyymm = #{yyyymm}
+  ]]>
+    <if test="payType != null and payType != ''">
+      <![CDATA[ AND ps.pay_type = #{payType} ]]>
+    </if>
+  <![CDATA[
+  )
+  ORDER BY sort_no, item_name
+  ]]>
+</select>
+
+
+  <!-- 3) 공제 항목 -->
+<select id="selectPayslipDeductions"
+        resultType="org.pms.feature.runpayroll.domain.PayslipDeductionRow">
+  <![CDATA[
+  SELECT
+    deduction_name AS deductionName,
+    amount
+  FROM (
+    -- 0) TOTAL
+    SELECT
+      'TOTAL' AS deduction_name,
+      NVL(SUM(NVL(d.amount,0)),0) AS amount,
+      0 AS sort_no
+    FROM payslip_deduction d
+    JOIN payslip ps ON ps.payslip_id = d.payslip_id
+    JOIN emp e ON e.emp_id = ps.emp_id
+    WHERE e.emp_no = #{empNo}
+      AND ps.apply_yyyymm = #{yyyymm}
+  ]]>
+    <if test="payType != null and payType != ''">
+      <![CDATA[ AND ps.pay_type = #{payType} ]]>
+    </if>
+  <![CDATA[
+    UNION ALL
+    -- 1) DETAIL
+    SELECT
+      NVL(d.deduction_name, d.deduction_code) AS deduction_name,
+      NVL(d.amount,0) AS amount,
+      1 AS sort_no
+    FROM payslip_deduction d
+    JOIN payslip ps ON ps.payslip_id = d.payslip_id
+    JOIN emp e ON e.emp_id = ps.emp_id
+    WHERE e.emp_no = #{empNo}
+      AND ps.apply_yyyymm = #{yyyymm}
+  ]]>
+    <if test="payType != null and payType != ''">
+      <![CDATA[ AND ps.pay_type = #{payType} ]]>
+    </if>
+  <![CDATA[
+  )
+  ORDER BY sort_no, deduction_name
+  ]]>
+</select>
+
+
+</mapper>

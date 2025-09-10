@@ -6,33 +6,50 @@
 	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
-	
+
 	<!-- Root Context: defines shared resources visible to all other web components -->
-		
-		<bean id = "hikariConfig" class="com.zaxxer.hikari.HikariConfig">
-			<!-- <property name ="driverClassName" value="oracle.jdbc.driver.OracleDriver"></property>
+
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<!-- <property name ="driverClassName" value="oracle.jdbc.driver.OracleDriver"></property> 
 			<property name = "jdbcUrl" value ="jdbc:oracle:thin:@localhost:1521:XE"></property> -->
-			
-			<property name ="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"></property>
-			<property name ="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE"></property>
-			<property name = "username" value="system"></property>
-			<property name ="password" value = "1234"></property>
-		</bean>	
-	
+
+		<property name="driverClassName"
+			value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"></property>
+		<property name="jdbcUrl"
+			value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE"></property>
+		<property name="username" value="system"></property>
+		<property name="password" value="1234"></property>
+	</bean>
+
 
 	<!-- HikeriCP configuration -->
-	<bean id ="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-		<constructor-arg ref="hikariConfig"/>
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
 	</bean>
-	
+
 	<!-- MyBatis -->
-	<bean id="sqlSessionFectory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<bean id="sqlSessionFectory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"></property>
+		<property name="typeAliasesPackage"
+			value="org.pms.feature.runpayroll.domain" />
+		<property name="mapperLocations"
+			value="classpath*:mappers/*.xml" />
 	</bean>
-	
+
 	<!-- mapper -->
-	<mybatis-spring:scan base-package="org.zerock.mapper"/>
-	
-	<context:component-scan base-package="org.zerock.sample">
+	<mybatis-spring:scan
+		base-package="org.zerock.mapper" />
+
+	<context:component-scan
+		base-package="org.zerock.sample">
 	</context:component-scan>
+
+	<!-- run payroll -->
+	<mybatis-spring:scan
+		base-package="org.pms.feature.runpayroll.mapper" />
+	<context:component-scan
+		base-package="org.pms.feature.runpayroll.service" />
+
 </beans>
