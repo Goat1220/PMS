@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "org.pms.feature.yearend.mapper.YrtHeaderMapper">
+	
+	<select id = "getList" resultType = "org.pms.feature.yearend.domain.YrtHeaderVO">
+		<![CDATA[
+  SELECT 
+    yrt_id AS yrtId,
+    emp_id AS empId,
+    biz_place AS bizPlace,
+    base_year AS baseYear,
+    tax_apply_type AS taxApplyType,
+    tax_apply_result AS taxApplyResult,
+    confirm_yn AS confirmYn,
+    created_at AS createdAt
+  FROM yrt_header
+  WHERE yrt_id > 0
+		]]>
+	</select>
+
+<select id="countHeader" resultType="int">
+  SELECT COUNT(*) FROM yrt_header
+</select>
+	
+</mapper>
