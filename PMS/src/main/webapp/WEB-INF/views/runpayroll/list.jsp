@@ -8,31 +8,35 @@
 <style>
   :root{--gap:12px;--radius:10px;--border:#e5e7eb;--bg:#f8fafc;--text:#111827;--muted:#6b7280;--total:#eaf7ea}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo",Arial,"맑은 고딕",sans-serif;color:var(--text);background:var(--bg)}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo",Arial,"맑은 고딕",sans-serif;color:var(--text);background:#f8fafc}
   header{padding:16px 20px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
   .container{padding:16px 20px}
-  .row{display:grid;grid-template-columns:2fr 1fr;gap:var(--gap);align-items:start}
-  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-  .card>.card-header{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600}
+  .row{display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:start}
+  .card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .card>.card-header{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px}
   .card>.card-body{padding:12px 14px}
   .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .filters input[type="month"],.filters select,.filters input[type="text"]{padding:8px 10px;border:1px solid var(--border);border-radius:8px}
   .filters button{padding:8px 12px;border:1px solid #0ea5e9;background:#0ea5e9;color:#fff;border-radius:8px;cursor:pointer}
   .filters button.secondary{background:#fff;color:#0ea5e9}
+  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .actions .btn{padding:6px 10px;border:1px solid #334155;background:#334155;color:#fff;border-radius:8px;cursor:pointer;font-size:12px}
+  .actions .btn.alt{background:#fff;color:#334155}
+  .actions .sep{width:1px;height:24px;background:#e5e7eb;margin:0 2px}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px}
   .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px}
-  table{border-collapse:collapse;width:100%;min-width:1600px}
+  table{border-collapse:collapse;width:100%;min-width:1760px}
   thead th{position:sticky;top:0;background:#f1f5f9;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap}
   th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;font-size:13px}
-  tbody tr{cursor:pointer}
   tbody tr:hover{background:#f8fafc}
   tbody tr.active{background:#e0f2fe}
-  .muted{color:var(--muted)}
-  .grid-2{display:grid;grid-template-columns:1fr;gap:var(--gap)}
+  .muted{color:#6b7280}
+  .grid-2{display:grid;grid-template-columns:1fr;gap:12px}
   .list{border:1px solid var(--border);border-radius:8px;overflow:hidden}
   .pill{display:inline-block;padding:2px 8px;font-size:12px;border-radius:999px;border:1px solid var(--border);background:#f8fafc}
   .right-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
   .ghost{opacity:.5}
-  .row-total{background:var(--total)!important;font-weight:600}
+  .row-total{background:#eaf7ea!important;font-weight:600}
   .right-tables table{min-width:100%}
 </style>
 </head>
@@ -60,12 +64,27 @@
   <div class="row">
     <!-- 좌측 요약 -->
     <div class="card">
-      <div class="card-header">사원별 급여 요약</div>
+      <div class="card-header">
+        <span>사원별 급여 요약</span>
+        <div class="actions">
+          <label class="chk"><input type="checkbox" id="chkAll"> 전체선택</label>
+          <span class="sep"></span>
+          <button class="btn" id="btnProcess">급상여처리</button>
+          <button class="btn" id="btnReTax">세금재처리</button>
+          <button class="btn" id="btnApplyYrt">정산세금반영</button>
+          <span class="sep"></span>
+          <button class="btn alt" id="btnConfirm">확정</button>
+          <button class="btn alt" id="btnUnconfirm">확정해제</button>
+        </div>
+      </div>
       <div class="card-body">
         <div class="table-wrap">
           <table id="tblSummary">
             <thead>
               <tr>
+                <th style="width:36px;"><!-- row checkbox -->
+                  <input type="checkbox" id="chkAllHeader">
+                </th>
                 <th>사번</th><th>사원</th><th>부서</th><th>세금적용</th>
                 <th>세액조정율</th><th>프로젝트</th>
                 <th>세금계산안함</th><th>일할계산</th><th>정산반영</th>
@@ -77,7 +96,7 @@
             <tbody></tbody>
           </table>
         </div>
-        <div class="muted" style="margin-top:6px;">행을 클릭하면 우측에 지급/공제 항목이 표시됩니다.</div>
+        <div class="muted" style="margin-top:6px;">행을 클릭하면 우측에 지급/공제 항목이 표시됩니다. (체크박스로 여러 명 선택 가능)</div>
       </div>
     </div>
 
@@ -128,6 +147,10 @@
 <c:url var="summaryUrl"    value="/runpayroll/api/summary"/>
 <c:url var="itemsUrl"      value="/runpayroll/api/items"/>
 <c:url var="deductionsUrl" value="/runpayroll/api/deductions"/>
+<c:url var="processUrl"    value="/runpayroll/api/process"/>
+<c:url var="retaxUrl"      value="/runpayroll/api/recalc-taxes"/>
+<c:url var="confirmUrl"    value="/runpayroll/api/confirm"/>
+<c:url var="applyYrtUrl"   value="/runpayroll/api/apply-yrt"/>
 
 <script>
   // helpers
@@ -135,8 +158,14 @@
   var $$ = function(s, root){ return Array.prototype.slice.call((root||document).querySelectorAll(s)); };
   var fmt= function(n){ return (n==null||n==='') ? '' : Number(n).toLocaleString('ko-KR'); };
   var yn = function(v){ return (v==='Y'||v==='N') ? v : (v ? 'Y' : 'N'); };
+  function post(url, body){
+    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json()});
+  }
 
-  var urls = { summary:'${summaryUrl}', items:'${itemsUrl}', deductions:'${deductionsUrl}' };
+  var urls = {
+    summary:'${summaryUrl}', items:'${itemsUrl}', deductions:'${deductionsUrl}',
+    process:'${processUrl}', retax:'${retaxUrl}', confirm:'${confirmUrl}', applyYrt:'${applyYrtUrl}'
+  };
 
   var state = { yyyymm:$('#yyyymm').value||'2018-08', payType:$('#payType').value||'SALARY', deptCode:'', empNo:'', rows:[], selected:null };
 
@@ -152,6 +181,18 @@
     $('#yyyymm').value='2018-08'; $('#payType').value='SALARY'; $('#deptCode').value=''; $('#empNo').value='';
     state = { yyyymm:'2018-08', payType:'SALARY', deptCode:'', empNo:'', rows:[], selected:null };
     loadSummary();
+  });
+
+  // 전체선택 동기화
+  $('#chkAll').addEventListener('change', function(e){
+    var checked = e.target.checked;
+    $$('#tblSummary tbody input[type="checkbox"]').forEach(function(cb){ cb.checked = checked; });
+    $('#chkAllHeader').checked = checked;
+  });
+  $('#chkAllHeader').addEventListener('change', function(e){
+    var checked = e.target.checked;
+    $$('#tblSummary tbody input[type="checkbox"]').forEach(function(cb){ cb.checked = checked; });
+    $('#chkAll').checked = checked;
   });
 
   function loadSummary(){
@@ -179,7 +220,10 @@
     state.rows.forEach(function(r, idx){
       var tr = document.createElement('tr');
       tr.dataset.empNo = r.empNo;
+
+      // 체크박스 셀 + 나머지
       var html = '';
+      html += '<td><input type="checkbox" class="rowchk" data-empno="' + (r.empNo||'') + '"></td>';
       html += '<td>' + (r.empNo||'') + '</td>';
       html += '<td>' + (r.empName||'') + '</td>';
       html += '<td>' + (r.deptName||'') + '</td>';
@@ -200,16 +244,35 @@
       html += '<td style="text-align:right;">' + fmt(r.dedTotAmt) + '</td>';
       html += '<td style="text-align:right;">' + fmt(r.netPayAmt) + '</td>';
       html += '<td>' + (r.retireYn||'') + '</td>';
+
       tr.innerHTML = html;
-      tr.addEventListener('click', function(){ onSelectRow(tr, r); });
+
+      // 행 클릭 시 상세 로딩
+      tr.addEventListener('click', function(e){
+        // 체크박스 클릭은 행 선택 이벤트와 분리
+        if (e.target && e.target.classList && e.target.classList.contains('rowchk')) return;
+        $$('#tblSummary tbody tr').forEach(function(x){ x.classList.remove('active'); });
+        tr.classList.add('active');
+        onSelectRow(r);
+      });
+
+      // 체크박스 개별 변경 시 전체선택 상태 갱신
+      tr.addEventListener('change', function(e){
+        if (e.target && e.target.classList && e.target.classList.contains('rowchk')) {
+          var all = $$('#tblSummary tbody .rowchk');
+          var checked = all.filter(function(c){return c.checked}).length;
+          var allChecked = checked === all.length && all.length>0;
+          $('#chkAll').checked = allChecked;
+          $('#chkAllHeader').checked = allChecked;
+        }
+      });
+
       tbody.appendChild(tr);
-      if (idx===0) onSelectRow(tr, r); // 첫 행 자동 선택
+      if (idx===0) { tr.classList.add('active'); onSelectRow(r); }
     });
   }
 
-  function onSelectRow(tr, row){
-    $$('#tblSummary tbody tr').forEach(function(x){ x.classList.remove('active'); });
-    tr.classList.add('active');
+  function onSelectRow(row){
     state.selected = row;
     $('#selEmpNo').textContent = row.empNo || '-';
     $('#selEmpNo').classList.remove('ghost');
@@ -263,6 +326,59 @@
         });
       });
   }
+
+  function selectedEmpNos(){
+    return $$('#tblSummary tbody .rowchk')
+            .filter(function(cb){ return cb.checked; })
+            .map(function(cb){ return cb.getAttribute('data-empno'); });
+  }
+
+  // 액션 버튼들 (전표처리 제거됨)
+  $('#btnProcess').addEventListener('click', function(){
+    var empNos = selectedEmpNos();
+    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
+    post('${processUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos })
+      .then(function(){ loadSummary(); });
+  });
+
+  $('#btnReTax').addEventListener('click', function(){
+    var empNos = selectedEmpNos();
+    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
+    post('${retaxUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos })
+      .then(function(){
+        // 활성 행 기준 우측 패널 갱신
+        if (state.selected && state.selected.empNo) {
+          loadItems(state.selected.empNo); loadDeds(state.selected.empNo);
+        }
+        loadSummary();
+      });
+  });
+
+  $('#btnApplyYrt').addEventListener('click', function(){
+    var empNos = selectedEmpNos();
+    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
+    post('${applyYrtUrl}', { yyyymm: state.yyyymm, empNos: empNos, splitMonths: 1 })
+      .then(function(){
+        if (state.selected && state.selected.empNo) {
+          loadItems(state.selected.empNo); loadDeds(state.selected.empNo);
+        }
+        loadSummary();
+      });
+  });
+
+  $('#btnConfirm').addEventListener('click', function(){
+    var empNos = selectedEmpNos();
+    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
+    post('${confirmUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos, confirm: true })
+      .then(function(){ loadSummary(); });
+  });
+
+  $('#btnUnconfirm').addEventListener('click', function(){
+    var empNos = selectedEmpNos();
+    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
+    post('${confirmUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos, confirm: false })
+      .then(function(){ loadSummary(); });
+  });
 
   // 초기 로드
   window.addEventListener('DOMContentLoaded', loadSummary);
