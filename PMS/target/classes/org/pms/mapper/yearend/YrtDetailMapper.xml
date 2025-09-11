@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pms.feature.yearend.mapper.YrtDetailMapper">
+
+	
+
+    <select id="getDetailViewByHeader"
+            parameterType="int"
+            resultType="org.pms.feature.yearend.domain.YrtDetailViewDTO">
+            <![CDATA[
+SELECT 
+        i.category,
+        i.item_name,
+        NVL(d.amount, 0) AS amount,
+        NVL(d.expected_amount, 0) AS expected_amount
+    FROM yrt_item i
+    LEFT JOIN yrt_detail d
+        ON i.yrt_item_id = d.yrt_item_id
+       AND d.yrt_id = #{yrtId}
+    ORDER BY i.category, i.item_name
+        ]]>
+    </select>
+
+</mapper>
