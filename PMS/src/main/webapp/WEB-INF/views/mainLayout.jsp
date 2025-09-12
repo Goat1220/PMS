@@ -68,7 +68,7 @@
       <div style="color:var(--muted);font-size:13px;">v1.0</div>
     </div>
     <div class="content">
-      <iframe name="contentFrame" src="<c:url value='/pages/dashboard.do'/>"></iframe>
+      <iframe name="contentFrame" src="<c:url value='/mainbanner'/>"></iframe>
     </div>
   </section>
 </div>
