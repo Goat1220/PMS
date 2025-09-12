@@ -1,122 +1,172 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ include file="../includes/commonform.jsp"%>
+<%@ include file="../includes/table.jsp"%>
 
 <html>
 <head>
 <title>정산관리결과조회</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@26.2.1/dist/styles/ag-grid.css"/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@26.2.1/dist/styles/ag-theme-alpine.css"/>
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@26.2.1/dist/ag-grid-community.min.noStyle.js"></script>
-
-
-
 <style>
-.container {
-	display: flex;
-	gap: 20px;
-}
-
-.grid-box {
-	flex: 1;
-}
-
-.toolbar {
-	margin-bottom: 10px;
-}
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:var(--gap);
+    height:calc(100vh - 120px);
+  }
+  .card{display:flex;flex-direction:column;height:100%}
+  .card-body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  .table-wrap{flex:1;overflow-y:auto}
+  .right-toolbar{display:flex;gap:8px;align-items:center}
+  .right-toolbar input{padding:6px 8px;border:1px solid var(--border);border-radius:8px}
 </style>
 </head>
 <body>
-	<h2>정산관리결과조회</h2>
+<header>
+  <h2>정산관리결과조회</h2>
+</header>
 
-	<!-- 검색 영역 -->
-	<div class="toolbar">
-		<label>정산년도:</label> <input type="text" id="searchYear" value="2018" />
-		<label>사번:</label> <input type="text" id="searchEmpId" />
-		<button onclick="searchHeader()">검색</button>
-	</div>
+<div class="container">
+  <!-- 검색바(샘플) -->
+  <div class="filters">
+    <label>정산년도</label><input type="text" id="searchYear" value="2018"/>
+    <label>정산사업장</label>
+    <select id="searchBizPlace">
+      <option value="">전체</option>
+      <option value="본사">본사</option>
+      <option value="지사">지사</option>
+    </select>
+    <label>부서</label><input type="text" id="searchDept"/>
+    <label>사원</label><input type="text" id="searchEmp"/>
+    <button onclick="searchHeader()">조회</button>
+  </div>
 
-	<!-- 두 개의 grid를 나란히 배치 -->
-	<div class="container">
-		<!-- header grid -->
-		<div id="headerGrid" class="ag-theme-alpine grid-box"
-			style="height: 500px; width: 50%;"></div>
-		<!-- detail grid -->
-		<div id="detailGrid" class="ag-theme-alpine grid-box"
-			style="height: 500px; width: 50%;"></div>
-	</div>
+  <div class="row">
+    <!-- LEFT : HEADER -->
+    <div class="card">
+      <div class="card-header">연말정산 Header</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table id="headerTable">
+            <thead>
+              <tr>
+                <th>번호</th><th>사원ID</th><th>사업장</th><th>기준년도</th>
+                <th>세금 적용 구분</th><th>세금 적용 결과</th><th>확정 여부</th><th>생성 일시</th>
+              </tr>
+            </thead>
+            <tbody>
+              <c:forEach var="h" items="${list}">
+                <tr data-yrt-id="${h.yrtId}" data-emp-id="${h.empId}">
+                  <td>${h.yrtId}</td>
+                  <td>${h.empId}</td>
+                  <td>${h.bizPlace}</td>
+                  <td>${h.baseYear}</td>
+                  <td>${h.taxApplyType}</td>
+                  <td>${h.taxApplyResult}</td>
+                  <td>${h.confirmYn}</td>
+                  <td>${h.createAt}</td>
+                </tr>
+              </c:forEach>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-	<script>
-  document.addEventListener("DOMContentLoaded", function() {
-	 
-    // Header grid 컬럼 정의
-const headerColumnDefs = [
-  { headerName: "번호", field: "yrtId", width: 80 },
-  { headerName: "사원ID", field: "empId", width: 100 },
-  { headerName: "사업장", field: "bizPlace", width: 120 },
-  { headerName: "기준년도", field: "baseYear", width: 100 },
-  { headerName: "세금 적용 구분", field: "taxApplyType", width: 180 },
-  { headerName: "세금 적용 결과", field: "taxApplyResult", width: 180 },
-  { headerName: "확정 여부", field: "confirmYn", width: 100 },
-  { headerName: "생성 일시", field: "createAt", width: 150 }
-];
+    <!-- RIGHT : DETAIL + 산출근거 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="right-toolbar">
+          <strong>연말정산 Detail</strong>
+          <span class="ghost">|</span>
+          <label class="muted">사번</label>
+          <input id="basisEmpId" type="text" placeholder="더블클릭으로 채워짐" readonly>
+          <button id="btnBasis">산출근거</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table id="detailTable">
+            <thead>
+              <tr>
+                <th>정산항목분류</th><th>정산항목</th><th>금액</th><th>예상금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align:center;color:#666;">대상 행을 더블클릭하세요</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // 서버에서 받은 header 데이터
-    const headerRowData = [
-      <c:forEach var="item" items="${list}" varStatus="s">
-        {
-          yrtId: "<c:out value='${item.yrtId}'/>",
-          empId: "<c:out value='${item.empId}'/>",
-          bizPlace: "<c:out value='${item.bizPlace}'/>",
-          baseYear: "<c:out value='${item.baseYear}'/>",
-          taxApplyType: "<c:out value='${item.taxApplyType}'/>",
-          taxApplyResult: "<c:out value='${item.taxApplyResult}'/>",
-          confirmYn: "<c:out value='${item.confirmYn}'/>",
-          createAt: "<c:out value='${item.createAt}'/>"
-        }<c:if test="${!s.last}">,</c:if>
-      </c:forEach>
-    ];
+<script>
+(function(){
+  let selected = { yrtId:null, empId:null };
 
-    // Header Grid 생성
-    const headerGridOptions = {
-      columnDefs: headerColumnDefs,
-      rowData: headerRowData,
-      defaultColDef: { sortable: true, filter: true, resizable: true },
-      onRowDoubleClicked: params => {
-        // 더블클릭 시 detailGrid 데이터 조회
-        loadDetail(params.data.empId);
-      }
-    };
-    new agGrid.Grid(document.querySelector("#headerGrid"), headerGridOptions);
+  // 헤더 더블클릭 → detail 조회 + 산출근거 입력 채움
+  document.querySelector('#headerTable tbody').addEventListener('dblclick', function(e){
+    const tr = e.target.closest('tr'); if(!tr) return;
+    selected.yrtId = tr.dataset.yrtId || null;
+    selected.empId = tr.dataset.empId || null;
 
-    // Detail grid 컬럼 정의
-   const detailColumnDefs = [
-  { headerName: "정산항목분류", field: "category", width: 120 },
-  { headerName: "정산항목", field: "itemName", width: 200 },
-  { headerName: "금액", field: "amount", width: 120 },
-  { headerName: "예상금액", field: "expectedAmount", width: 120 }
-];
-    const detailGridOptions = {
-      columnDefs: detailColumnDefs,
-      rowData: [],
-      defaultColDef: { sortable: true, filter: true, resizable: true }
-    };
-    new agGrid.Grid(document.querySelector("#detailGrid"), detailGridOptions);
+    document.querySelectorAll('#headerTable tbody tr').forEach(r=>r.classList.remove('active'));
+    tr.classList.add('active');
 
-    // Detail 데이터 로드 (Ajax 호출 자리)
-    window.loadDetail = function(empId) {
-    	  fetch('/yearend/detail?empId=${empId}')
-    	    .then(response => response.json())
-    	    .then(data => {
-    	      detailGridOptions.api.setRowData(data);
-    	    })
-    	    .catch(error => {
-    	      console.error("디테일 데이터 로드 실패:", error);
-    	    });
-    	};
-
+    document.getElementById('basisEmpId').value = selected.empId || '';
+    loadDetail(selected.yrtId);
   });
+
+  // 산출근거 버튼
+  document.getElementById('btnBasis').addEventListener('click', function(){
+    if(!selected.yrtId){
+      alert('왼쪽 헤더에서 행을 먼저 더블클릭해 주세요.');
+      return;
+    }
+    // 실제 산출근거 URL은 프로젝트에 맞게 수정
+    const url = '/yearend/basis?yrtId=' + encodeURIComponent(selected.yrtId);
+    window.open(url, '_blank'); // 새 탭/창으로 열기
+  });
+
+  async function loadDetail(yrtId){
+    try{
+      const res = await fetch('/yearend/detail?yrtId=' + encodeURIComponent(yrtId), {
+        headers:{'Accept':'application/json'}
+      });
+      if(!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      renderDetail(data);
+    }catch(e){
+      console.error('[detail] error:', e);
+      renderDetail([]);
+    }
+  }
+
+  function renderDetail(rows){
+    const tb = document.querySelector('#detailTable tbody');
+    tb.innerHTML = '';
+    if(!rows || rows.length === 0){
+      tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;">데이터 없음</td></tr>';
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+(r.category||'')+'</td>'+
+        '<td>'+(r.itemName||'')+'</td>'+
+        '<td style="text-align:right">'+((r.amount==null?0:r.amount).toLocaleString())+'</td>'+
+        '<td style="text-align:right">'+((r.expectedAmount==null?0:r.expectedAmount).toLocaleString())+'</td>';
+      frag.appendChild(tr);
+    });
+    tb.appendChild(frag);
+  }
+
+  // 공통 유틸(정렬 등) 활성화
+  enableSort('#headerTable');
+  enableSort('#detailTable');
+})();
 </script>
 </body>
 </html>

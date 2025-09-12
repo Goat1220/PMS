@@ -11,11 +11,11 @@
             parameterType="int"
             resultType="org.pms.feature.yearend.domain.YrtDetailViewDTO">
             <![CDATA[
-SELECT 
-        i.category,
-        i.item_name,
+  SELECT 
+        i.category AS category,
+        i.item_name AS itemName,
         NVL(d.amount, 0) AS amount,
-        NVL(d.expected_amount, 0) AS expected_amount
+        NVL(d.expected_amount, 0) AS expectedAmount
     FROM yrt_item i
     LEFT JOIN yrt_detail d
         ON i.yrt_item_id = d.yrt_item_id

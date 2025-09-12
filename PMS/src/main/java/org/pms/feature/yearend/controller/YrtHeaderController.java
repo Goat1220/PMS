@@ -27,19 +27,18 @@ public class YrtHeaderController {
     private YrtDetailService detailService;
 
 	
-	@GetMapping("/list")
-    public void list(Model model) {
-        log.info("연말정산 리스트 조회");
-        List<YrtHeaderVO> list=service.getList();
-
-        // Service에서 전체 리스트 가져오기
-        model.addAttribute("list", list);
+ // 리스트 화면
+    @GetMapping("/list")
+    public String list(Model model) {
+        model.addAttribute("list", service.getList());
+        return "/yearend/list"; // /WEB-INF/views/yearend/list.jsp
     }
-	
+
+    // 디테일 JSON
     @ResponseBody
-    @GetMapping("/detail")
-    public List<YrtDetailViewDTO> getDetail(@RequestParam("yrtId") int yrtId) {
+    @GetMapping(value = "/detail", produces = "application/json;charset=UTF-8")
+    public List<YrtDetailViewDTO> getDetail(@RequestParam int yrtId) {
         return detailService.getDetailView(yrtId);
     }
-	
+
 }
