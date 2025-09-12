@@ -58,13 +58,13 @@
 <body>
 <div class="app">
   <aside class="aside">
-    <div class="logo">공용폼</div>
+    <div class="logo">급여 처리 시스템</div>
     <%@ include file="/WEB-INF/views/includes/leftMenu.jsp" %>
   </aside>
 
   <section class="main">
     <div class="header">
-      <div>콘텐츠 영역</div>
+      <div id="pageTitle">급여 관리</div>
       <div style="color:var(--muted);font-size:13px;">v1.0</div>
     </div>
     <div class="content">
@@ -72,5 +72,41 @@
     </div>
   </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const menu = document.querySelector('.menu');
+    const pageTitle = document.getElementById('pageTitle');
+    const frame = document.querySelector('iframe[name="contentFrame"]');
+
+    // active 상태 업데이트
+    const setActive = (href)=>{
+      [...menu.querySelectorAll('a')].forEach(a=>{
+        a.classList.toggle('active', a.getAttribute('href')===href);
+      });
+    };
+
+    // 메뉴 클릭 시
+    menu.addEventListener('click', (e)=>{
+      const a = e.target.closest('a'); 
+      if(!a) return;
+      setActive(a.getAttribute('href'));
+      pageTitle.textContent = a.textContent.trim();  // ← 제목 갱신
+    });
+
+    // 첫 진입 시 iframe의 src에 맞춰 active & 제목 설정
+    if(frame && frame.getAttribute('src')){
+      const current = [...menu.querySelectorAll('a')]
+        .find(a => a.getAttribute('href') === frame.getAttribute('src'));
+      if(current){
+        setActive(current.getAttribute('href'));
+        pageTitle.textContent = current.textContent.trim();
+      }
+    }
+  });
+</script>
+
+
 </body>
 </html>
+

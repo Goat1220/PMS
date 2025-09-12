@@ -35,8 +35,8 @@ public class HomeController {
 		
 		return "home";
 	}
-	@RequestMapping(value = "/employee", method = RequestMethod.GET)
+	@RequestMapping(value = "/mainLayout", method = RequestMethod.GET)
 	public String employee(Locale locale, Model model) {
-	    return "employee";
+	    return "mainLayout";
 	}
 }
