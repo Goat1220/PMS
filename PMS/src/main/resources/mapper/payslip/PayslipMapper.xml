@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pms.feature.payslip.infra.PayslipMapper">
+
+  <!-- 1) 특정 사번+연월 요약 -->
+  <select id="selectPayslipSummary" resultType="org.pms.feature.payslip.domain.PayslipSummary">
+    SELECT
+      p.payslip_id    AS payslipId,
+      e.emp_no        AS empNo,
+      e.emp_name      AS empName,
+      p.apply_yyyymm  AS periodYm,
+      p.pay_type      AS payType,
+      NVL((SELECT SUM(i.amount) FROM payslip_item i WHERE i.payslip_id = p.payslip_id), 0) AS grossAmount,
+      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum,
+      NVL(p.net_pay_amt, 0) AS netAmount
+    FROM payslip p
+    JOIN emp e ON e.emp_id = p.emp_id
+    WHERE e.emp_no = #{empNo}
+      AND p.apply_yyyymm = #{ym}
+  </select>
+
+  <!-- 2) 지급 항목 -->
+  <select id="selectPayItems" resultType="org.pms.feature.payslip.domain.PayItem">
+    SELECT
+      i.item_name                 AS itemName,
+      NVL(i.is_previous,     'N') AS chkPaid,
+      NVL(i.is_safety_bonus, 'N') AS chkValid,
+      NVL(i.amount, 0)            AS amount
+    FROM payslip_item i
+    WHERE i.payslip_id = #{payslipId}
+    ORDER BY i.item_id
+  </select>
+
+  <!-- 3) 공제 항목 -->
+  <select id="selectDeductionItems" resultType="org.pms.feature.payslip.domain.DeductionItem">
+    SELECT
+      d.deduction_code                        AS itemCode,
+      NVL(d.deduction_name, d.deduction_code) AS itemName,
+      NVL(d.amount, 0)                        AS amount
+    FROM payslip_deduction d
+    WHERE d.payslip_id = #{payslipId}
+    ORDER BY d.pd_id
+  </select>
+
+  <!-- 4) 좌측 목록 -->
+  <select id="selectPayslipList" resultType="org.pms.feature.payslip.domain.PayslipListRow">
+    SELECT
+      p.payslip_id   AS payslipId,
+      p.pay_type     AS payType,
+      pt.name        AS payTypeName,
+      p.apply_yyyymm AS periodYm,
+      NVL(SUM(i.amount), 0) AS grossAmount,
+      NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount ELSE 0 END), 0) AS prevPaidAmount,
+      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum,
+      NVL(p.net_pay_amt, 0) AS netAmount
+    FROM payslip p
+    JOIN emp e ON e.emp_id = p.emp_id
+    LEFT JOIN payslip_item  i  ON i.payslip_id = p.payslip_id
+    LEFT JOIN pay_type_code pt ON pt.pay_type  = p.pay_type
+    WHERE e.emp_no = #{empNo}
+      <if test="fromYm != null and fromYm != ''">
+        AND p.apply_yyyymm &gt;= #{fromYm}
+      </if>
+      <if test="toYm != null and toYm != ''">
+        AND p.apply_yyyymm &lt;= #{toYm}
+      </if>
+      <if test="payType != null and payType != ''">
+        AND p.pay_type = #{payType}
+      </if>
+    GROUP BY p.payslip_id, p.pay_type, pt.name, p.apply_yyyymm, p.net_pay_amt
+    HAVING 1 = 1
+      <if test='"Y".equals(excludeZero)'>
+        AND NVL(p.net_pay_amt, 0) &lt;&gt; 0
+      </if>
+    ORDER BY p.apply_yyyymm DESC, p.payslip_id DESC
+  </select>
+
+  <!-- 5) payslipId로 단건 요약 -->
+  <select id="selectPayslipSummaryById" resultType="org.pms.feature.payslip.domain.PayslipSummary">
+    SELECT
+      p.payslip_id    AS payslipId,
+      e.emp_no        AS empNo,
+      e.emp_name      AS empName,
+      p.apply_yyyymm  AS periodYm,
+      p.pay_type      AS payType,
+      NVL((SELECT SUM(i.amount) FROM payslip_item i WHERE i.payslip_id = p.payslip_id), 0) AS grossAmount,
+      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum,
+      NVL(p.net_pay_amt, 0) AS netAmount
+    FROM payslip p
+    JOIN emp e ON e.emp_id = p.emp_id
+    WHERE p.payslip_id = #{payslipId}
+  </select>
+
+  <!-- 6) 급여유형 코드 목록 (스키마 반영: use_yn / sort_order 없음) -->
+  <select id="selectPayTypeCodes" resultType="org.pms.feature.payslip.domain.PayTypeCode">
+    SELECT
+      pt.pay_type AS code,
+      pt.pay_type AS payType,
+      pt.name     AS name
+    FROM pay_type_code pt
+    ORDER BY pt.pay_type
+  </select>
+
+</mapper>
