@@ -35,8 +35,14 @@ public class HomeController {
 		
 		return "home";
 	}
-	@RequestMapping(value = "/employee", method = RequestMethod.GET)
-	public String employee(Locale locale, Model model) {
-	    return "employee";
+	@RequestMapping(value = "/mainLayout", method = RequestMethod.GET)
+	public String mainLayout(Locale locale, Model model) {
+	    return "mainLayout";
+	}
+
+	
+	@RequestMapping(value = "/mainbanner", method = RequestMethod.GET)
+	public String mainbanner() {
+	    return "mainbanner"; // /WEB-INF/views/mainbanner.jsp
 	}
 }
