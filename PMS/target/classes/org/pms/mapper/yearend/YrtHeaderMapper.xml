@@ -4,24 +4,32 @@
 
 <mapper namespace = "org.pms.feature.yearend.mapper.YrtHeaderMapper">
 	
-	<select id = "getList" resultType = "org.pms.feature.yearend.domain.YrtHeaderVO">
+	<select id = "getList" resultType = "org.pms.feature.yearend.domain.YrtHeaderViewDTO">
 		<![CDATA[
-  SELECT 
-    yrt_id AS yrtId,
-    emp_id AS empId,
-    biz_place AS bizPlace,
-    base_year AS baseYear,
-    tax_apply_type AS taxApplyType,
-    tax_apply_result AS taxApplyResult,
-    confirm_yn AS confirmYn,
-    created_at AS createdAt
-  FROM yrt_header
-  WHERE yrt_id > 0
-		]]>
+ SELECT 
+    h.yrt_id       AS yrtId,
+    e.emp_name     AS empName,
+    e.emp_no       AS empNo,
+    d.dept_name    AS deptName,
+    h.biz_place    AS bizPlace,
+    h.tax_apply_type   AS taxApplyType,
+    h.tax_apply_result AS taxApplyResult,
+    h.confirm_yn       AS confirmYn
+  FROM yrt_header h
+  JOIN emp e ON h.emp_id = e.emp_id
+  LEFT JOIN dept d ON e.dept_id = d.dept_id
+  ]]>
+  <where>
+    <if test="deptName != null and deptName != ''">
+      AND d.dept_name LIKE '%' || #{deptName} || '%'
+    </if>
+    <if test="empName != null and empName != ''">
+      AND e.emp_name LIKE '%' || #{empName} || '%'
+    </if>
+  </where>
+		
 	</select>
 
-<select id="countHeader" resultType="int">
-  SELECT COUNT(*) FROM yrt_header
-</select>
+
 	
 </mapper>

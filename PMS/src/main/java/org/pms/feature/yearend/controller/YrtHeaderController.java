@@ -3,7 +3,7 @@ package org.pms.feature.yearend.controller;
 import java.util.List;
 
 import org.pms.feature.yearend.domain.YrtDetailViewDTO;
-import org.pms.feature.yearend.domain.YrtHeaderVO;
+import org.pms.feature.yearend.domain.YrtHeaderViewDTO;
 import org.pms.feature.yearend.service.YrtDetailService;
 import org.pms.feature.yearend.service.YrtHeaderService;
 import org.springframework.stereotype.Controller;
@@ -17,28 +17,28 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
 @Controller
-@Log4j
 @RequestMapping("/yearend/*")
 @AllArgsConstructor
 public class YrtHeaderController {
 
 	private YrtHeaderService service;
-	
-    private YrtDetailService detailService;
 
-	
- // 리스트 화면
-    @GetMapping("/list")
-    public String list(Model model) {
-        model.addAttribute("list", service.getList());
-        return "/yearend/list"; // /WEB-INF/views/yearend/list.jsp
-    }
+	private YrtDetailService detailService;
 
-    // 디테일 JSON
-    @ResponseBody
-    @GetMapping(value = "/detail", produces = "application/json;charset=UTF-8")
-    public List<YrtDetailViewDTO> getDetail(@RequestParam int yrtId) {
-        return detailService.getDetailView(yrtId);
-    }
+	// 리스트 화면
+	@GetMapping("/yearend/list")
+	public String list(@RequestParam(value = "deptName", required = false, defaultValue="") String deptName,
+			@RequestParam(value = "empName", required = false, defaultValue="") String empName, Model model) {
+		List<YrtHeaderViewDTO> list = service.getList(deptName, empName);
+		model.addAttribute("list", list);
+		return "yearend/list"; // list.jsp // /WEB-INF/views/yearend/list.jsp
+	}
+
+	// 디테일 JSON
+	@ResponseBody
+	@GetMapping(value = "/detail", produces = "application/json;charset=UTF-8")
+	public List<YrtDetailViewDTO> getDetail(@RequestParam int yrtId) {
+		return detailService.getDetailView(yrtId);
+	}
 
 }
