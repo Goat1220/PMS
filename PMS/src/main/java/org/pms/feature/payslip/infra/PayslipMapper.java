@@ -4,28 +4,53 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import org.pms.feature.payslip.domain.*;
 
-// XML namespace: org.pms.feature.payslip.infra.PayslipMapper
+// [KO] XML namespace는 반드시 아래와 같아야 함
+// [JA] XML の namespace は必(かなら)ず下(した)と一致(いっち)
+// <mapper namespace="org.pms.feature.payslip.infra.PayslipMapper">
+
 public interface PayslipMapper {
 
-    // === 개인 상세 조회용 ===
-    // XML: selectPayslipSummary에서 #{empNo}, #{ym}를 사용하므로 @Param 이름을 empNo, ym으로 맞춰야 함
-    PayslipSummary selectPayslipSummary(@Param("empNo") String empNo,
-                                        @Param("ym")    String periodYm);
+    // =========================
+    // [KO] 개인 상세 조회용 (사번+연월)
+    // [JA] 個人サマリー取得（社員番号 + 年月）
+    // XML: <select id="selectPayslipSummary"> で #{empNo}, #{ym} を使用
+    // => @Param 이름과 XML의 #{...} 이름이 정확히 동일해야 함
+    // =========================
+    PayslipSummary selectPayslipSummary(
+            @Param("empNo") String empNo,
+            @Param("ym")    String periodYm
+    );
 
-    // XML: selectPayItems에서 #{payslipId}
+    // [KO] 지급 항목 조회 (payslipId 기준)
+    // [JA] 支給項目一覧
+    // XML: <select id="selectPayItems"> #{payslipId}
     List<PayItem> selectPayItems(@Param("payslipId") Long payslipId);
 
-    // XML: selectDeductionItems에서 #{payslipId}
+    // [KO] 공제 항목 조회 (payslipId 기준)
+    // [JA] 控除項目一覧
+    // XML: <select id="selectDeductionItems"> #{payslipId}
     List<DeductionItem> selectDeductionItems(@Param("payslipId") Long payslipId);
 
-    // === 목록/조회 조건 화면(inquiry)에서 쓰는 것들 (이미 사용 중이면 유지) ===
-    List<PayslipListRow> selectPayslipList(@Param("empNo")       String empNo,
-                                           @Param("fromYm")      String fromYm,
-                                           @Param("toYm")        String toYm,
-                                           @Param("payType")     String payType,
-                                           @Param("excludeZero") String excludeZero);
+    // =========================
+    // [KO] 목록/검색 조건 기반 조회 (inquiry 화면)
+    // [JA] 一覧検索
+    // - excludeZero: "Y" → 0원 항목 제외 / "N" → 포함 (XML에서 조건 분기)
+    // =========================
+    List<PayslipListRow> selectPayslipList(
+            @Param("empNo")       String empNo,
+            @Param("fromYm")      String fromYm,
+            @Param("toYm")        String toYm,
+            @Param("payType")     String payType,
+            @Param("excludeZero") String excludeZero
+    );
 
+    // [KO] payslipId로 단건 요약 조회
+    // [JA] ID 指定サマリー取得
     PayslipSummary selectPayslipSummaryById(@Param("payslipId") Long payslipId);
 
+    // [KO] 급여유형 코드 목록 (드롭다운용)
+    // [JA] 給与種類コード一覧
     List<PayTypeCode> selectPayTypeCodes();
 }
+
+
