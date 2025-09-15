@@ -38,6 +38,8 @@
   .ghost{opacity:.5}
   .row-total{background:#eaf7ea!important;font-weight:600}
   .right-tables table{min-width:100%}
+  /* 접근성용 숨김 라벨 */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
 <body>
@@ -83,7 +85,7 @@
             <thead>
               <tr>
                 <th style="width:36px;"><!-- row checkbox -->
-                  <input type="checkbox" id="chkAllHeader">
+                  <input type="checkbox" id="chkAllHeader" aria-label="전체행 선택">
                 </th>
                 <th>사번</th><th>사원</th><th>부서</th><th>세금적용</th>
                 <th>세액조정율</th><th>프로젝트</th>
@@ -161,6 +163,15 @@
   function post(url, body){
     return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json()});
   }
+  // 체크박스 셀 HTML 생성기
+  function flagBox(field, val, empNo){
+    var checked = yn(val) === 'Y' ? 'checked' : '';
+    return '' +
+      '<label class="chk">' +
+      '  <input type="checkbox" class="flagchk" data-field="'+ field +'" data-empno="'+ (empNo||'') +'" '+ checked +'>' +
+      '  <span class="sr-only">'+ field +'</span>' +
+      '</label>';
+  }
 
   var urls = {
     summary:'${summaryUrl}', items:'${itemsUrl}', deductions:'${deductionsUrl}',
@@ -186,12 +197,12 @@
   // 전체선택 동기화
   $('#chkAll').addEventListener('change', function(e){
     var checked = e.target.checked;
-    $$('#tblSummary tbody input[type="checkbox"]').forEach(function(cb){ cb.checked = checked; });
+    $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function(cb){ cb.checked = checked; });
     $('#chkAllHeader').checked = checked;
   });
   $('#chkAllHeader').addEventListener('change', function(e){
     var checked = e.target.checked;
-    $$('#tblSummary tbody input[type="checkbox"]').forEach(function(cb){ cb.checked = checked; });
+    $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function(cb){ cb.checked = checked; });
     $('#chkAll').checked = checked;
   });
 
@@ -221,8 +232,8 @@
       var tr = document.createElement('tr');
       tr.dataset.empNo = r.empNo;
 
-      // 체크박스 셀 + 나머지
       var html = '';
+      // 행 선택용 체크박스
       html += '<td><input type="checkbox" class="rowchk" data-empno="' + (r.empNo||'') + '"></td>';
       html += '<td>' + (r.empNo||'') + '</td>';
       html += '<td>' + (r.empName||'') + '</td>';
@@ -230,12 +241,15 @@
       html += '<td>' + (r.taxApplyType||'') + '</td>';
       html += '<td style="text-align:right;">' + (r.taxAdjustRate!=null?r.taxAdjustRate:'') + '</td>';
       html += '<td>' + (r.projectName||'') + '</td>';
-      html += '<td>' + yn(r.taxCalcExemptYn) + '</td>';
-      html += '<td>' + yn(r.prorateYn) + '</td>';
-      html += '<td>' + yn(r.settlementReflectYn) + '</td>';
-      html += '<td>' + yn(r.manufTaxExemptYn) + '</td>';
-      html += '<td>' + yn(r.overseasTaxExemptYn) + '</td>';
-      html += '<td>' + yn(r.researcherTaxExemptYn) + '</td>';
+
+      // ▼ 체크박스로 변경된 컬럼들
+      html += '<td>' + flagBox('taxCalcExemptYn',     r.taxCalcExemptYn,     r.empNo) + '</td>'; // 세금계산안함
+      html += '<td>' + flagBox('prorateYn',            r.prorateYn,            r.empNo) + '</td>'; // 일할계산
+      html += '<td>' + flagBox('settlementReflectYn',  r.settlementReflectYn,  r.empNo) + '</td>'; // 정산반영
+      html += '<td>' + flagBox('manufTaxExemptYn',     r.manufTaxExemptYn,     r.empNo) + '</td>'; // 생산직비과세
+      html += '<td>' + flagBox('overseasTaxExemptYn',  r.overseasTaxExemptYn,  r.empNo) + '</td>'; // 국외근로비과세
+      html += '<td>' + flagBox('researcherTaxExemptYn',r.researcherTaxExemptYn,r.empNo) + '</td>'; // 연구원비과세
+
       html += '<td style="text-align:right;">' + (r.incomeTaxReductionRate!=null?r.incomeTaxReductionRate:'') + '</td>';
       html += '<td>' + (r.personalTaxApplyType||'') + '</td>';
       html += '<td style="text-align:right;">' + (r.bonusRate!=null?r.bonusRate:'') + '</td>';
@@ -243,20 +257,23 @@
       html += '<td style="text-align:right;">' + fmt(r.prevPayTotAmt) + '</td>';
       html += '<td style="text-align:right;">' + fmt(r.dedTotAmt) + '</td>';
       html += '<td style="text-align:right;">' + fmt(r.netPayAmt) + '</td>';
-      html += '<td>' + (r.retireYn||'') + '</td>';
+
+      // ▼ 퇴직여부 체크박스
+      html += '<td>' + flagBox('retireYn', r.retireYn, r.empNo) + '</td>';
 
       tr.innerHTML = html;
 
-      // 행 클릭 시 상세 로딩
+      // 행 클릭 시 상세 로딩 (체크박스 클릭은 제외)
       tr.addEventListener('click', function(e){
-        // 체크박스 클릭은 행 선택 이벤트와 분리
-        if (e.target && e.target.classList && e.target.classList.contains('rowchk')) return;
+        if (e.target && e.target.classList) {
+          if (e.target.classList.contains('rowchk') || e.target.classList.contains('flagchk')) return;
+        }
         $$('#tblSummary tbody tr').forEach(function(x){ x.classList.remove('active'); });
         tr.classList.add('active');
         onSelectRow(r);
       });
 
-      // 체크박스 개별 변경 시 전체선택 상태 갱신
+      // 체크박스 개별 변경 시 전체선택 상태 갱신 (행 선택용 체크박스 전용)
       tr.addEventListener('change', function(e){
         if (e.target && e.target.classList && e.target.classList.contains('rowchk')) {
           var all = $$('#tblSummary tbody .rowchk');
@@ -271,6 +288,22 @@
       if (idx===0) { tr.classList.add('active'); onSelectRow(r); }
     });
   }
+
+  // 플래그 체크박스 변경(델리게이션)
+  $('#tblSummary tbody').addEventListener('change', function(e){
+    var t = e.target;
+    if (!t.classList || !t.classList.contains('flagchk')) return;
+    var field = t.getAttribute('data-field');
+    var empNo = t.getAttribute('data-empno');
+    var row = state.rows.find(function(x){ return (x.empNo||'') === empNo; });
+    if (row) {
+      row[field] = t.checked ? 'Y' : 'N';
+      // TODO: 서버 저장 필요 시 여기서 API 호출
+      // post('/runpayroll/api/update-flags', { empNo: empNo, field: field, value: row[field], yyyymm: state.yyyymm, payType: state.payType })
+      //   .then(function(){ /* 저장 후 필요 시 재조회 */ });
+      console.log('flag changed:', empNo, field, row[field]);
+    }
+  });
 
   function onSelectRow(row){
     state.selected = row;
@@ -333,7 +366,7 @@
             .map(function(cb){ return cb.getAttribute('data-empno'); });
   }
 
-  // 액션 버튼들 (전표처리 제거됨)
+  // 액션 버튼들
   $('#btnProcess').addEventListener('click', function(){
     var empNos = selectedEmpNos();
     if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
@@ -346,7 +379,6 @@
     if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
     post('${retaxUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos })
       .then(function(){
-        // 활성 행 기준 우측 패널 갱신
         if (state.selected && state.selected.empNo) {
           loadItems(state.selected.empNo); loadDeds(state.selected.empNo);
         }
