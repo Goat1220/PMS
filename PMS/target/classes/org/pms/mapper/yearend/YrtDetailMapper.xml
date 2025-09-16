@@ -4,24 +4,104 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.pms.feature.yearend.mapper.YrtDetailMapper">
-
 	
+<select id="getDetailViewComputed"
+        parameterType="int"
+        resultType="org.pms.feature.yearend.domain.YrtDetailViewDTO">
+   <![CDATA[
+  WITH PARAM AS (
+    SELECT h.yrt_id, h.emp_id, h.base_year
+    FROM yrt_header h
+    WHERE h.yrt_id = #{yrtId}
+  ),
+  PS AS (
+    SELECT
+      i.item_name,
+      NVL(i.amount,0) AS amount,
+      NVL(i.is_safety_bonus,'N') AS is_safety_bonus,
+      p.apply_yyyymm
+    FROM payslip p
+    JOIN payslip_item i ON i.payslip_id = p.payslip_id
+    JOIN PARAM pa ON pa.emp_id = p.emp_id
+    WHERE SUBSTR(p.apply_yyyymm,1,4) = pa.base_year
+      AND p.pay_type = 'SALARY'
+  ),
+  PSD AS (
+    SELECT
+      d.deduction_name,
+      NVL(d.amount,0) AS amount
+    FROM payslip p
+    JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
+    JOIN PARAM pa ON pa.emp_id = p.emp_id
+    WHERE SUBSTR(p.apply_yyyymm,1,4) = pa.base_year
+      AND p.pay_type = 'SALARY'
+  ),
 
-    <select id="getDetailViewByHeader"
-            parameterType="int"
-            resultType="org.pms.feature.yearend.domain.YrtDetailViewDTO">
-            <![CDATA[
-  SELECT 
-        i.category AS category,
-        i.item_name AS itemName,
-        NVL(d.amount, 0) AS amount,
-        NVL(d.expected_amount, 0) AS expectedAmount
-    FROM yrt_item i
-    LEFT JOIN yrt_detail d
-        ON i.yrt_item_id = d.yrt_item_id
-       AND d.yrt_id = #{yrtId}
-    ORDER BY i.category, i.item_name
-        ]]>
-    </select>
+  /* === 단순화된 과세/비과세 집계: 플래그만 사용 === */
+  PS_AGG AS (
+    SELECT
+      SUM(CASE WHEN is_safety_bonus = 'Y' THEN amount ELSE 0 END) AS sum_nontax,
+      SUM(CASE WHEN is_safety_bonus = 'Y' THEN 0      ELSE amount END) AS sum_tax
+    FROM PS
+  ),
+
+  PSD_AGG AS (
+    SELECT
+      SUM(CASE WHEN deduction_name = '국민연금'         THEN amount ELSE 0 END) AS sum_np,
+      SUM(CASE WHEN deduction_name = '건강보험'         THEN amount ELSE 0 END) AS sum_hi,
+      SUM(CASE WHEN deduction_name = '노인장기요양보험' THEN amount ELSE 0 END) AS sum_ltc,
+      SUM(CASE WHEN deduction_name = '고용보험'         THEN amount ELSE 0 END) AS sum_ui,
+      SUM(CASE WHEN deduction_name = '소득세'           THEN amount ELSE 0 END) AS sum_it,
+      SUM(CASE WHEN deduction_name = '지방소득세'       THEN amount ELSE 0 END) AS sum_lt,
+      SUM(CASE WHEN deduction_name = '농특세'           THEN amount ELSE 0 END) AS sum_rf
+    FROM PSD
+  ),
+  CALC AS (
+    SELECT
+      (SELECT sum_tax    FROM PS_AGG) AS taxable_earn,
+      (SELECT sum_nontax FROM PS_AGG) AS nontax_total
+    FROM dual
+  )
+  SELECT
+    I.category  AS category,
+    I.item_name AS itemName,
+    NVL(DI.amount,
+        CASE I.item_code
+          WHEN 'BAS001'   THEN (SELECT taxable_earn FROM CALC)                                  -- 과세근로소득
+          WHEN 'BAS002'   THEN (SELECT nontax_total  FROM CALC)                                  -- (비과세총액)
+          WHEN 'BAS003'   THEN (SELECT taxable_earn FROM CALC)                                  -- 총급여(=과세근로소득)
+          WHEN 'DED03003' THEN (SELECT sum_np FROM PSD_AGG)                                     -- 기납부-국민연금
+          WHEN 'DED04002' THEN (SELECT sum_hi FROM PSD_AGG)                                     -- 기납부-건강보험
+          WHEN 'DED04005' THEN (SELECT sum_ui FROM PSD_AGG)                                     -- 기납부-고용보험
+          WHEN 'PRE002'   THEN (SELECT sum_it FROM PSD_AGG)                                     -- 기납부세액(소득세)
+          WHEN 'PRE003'   THEN (SELECT sum_lt FROM PSD_AGG)                                     -- 기납부세액(지방소득세)
+          WHEN 'PRE004'   THEN (SELECT sum_rf FROM PSD_AGG)                                     -- 기납부세액(농특세)
+          WHEN 'PRE009'   THEN (SELECT NVL(sum_it,0)+NVL(sum_lt,0)+NVL(sum_rf,0) FROM PSD_AGG)  -- 기납부세액계
+          ELSE 0
+        END
+    ) AS amount,
+    NVL(DI.expected_amount,
+        CASE I.item_code
+          WHEN 'BAS001'   THEN (SELECT taxable_earn FROM CALC)
+          WHEN 'BAS002'   THEN (SELECT nontax_total  FROM CALC)
+          WHEN 'BAS003'   THEN (SELECT taxable_earn FROM CALC)
+          WHEN 'DED03003' THEN (SELECT sum_np FROM PSD_AGG)
+          WHEN 'DED04002' THEN (SELECT sum_hi FROM PSD_AGG)
+          WHEN 'DED04005' THEN (SELECT sum_ui FROM PSD_AGG)
+          WHEN 'PRE002'   THEN (SELECT sum_it FROM PSD_AGG)
+          WHEN 'PRE003'   THEN (SELECT sum_lt FROM PSD_AGG)
+          WHEN 'PRE004'   THEN (SELECT sum_rf FROM PSD_AGG)
+          WHEN 'PRE009'   THEN (SELECT NVL(sum_it,0)+NVL(sum_lt,0)+NVL(sum_rf,0) FROM PSD_AGG)
+          ELSE 0
+        END
+    ) AS expectedAmount
+  FROM yrt_item I
+  LEFT JOIN yrt_detail DI
+    ON DI.yrt_item_id = I.yrt_item_id
+   AND DI.yrt_id      = #{yrtId}
+  ORDER BY I.yrt_item_id
+  ]]>
+</select>
+
 
 </mapper>

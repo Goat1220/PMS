@@ -19,6 +19,6 @@ public class YrtDetailServiceImpl implements YrtDetailService {
 
     @Override
     public List<YrtDetailViewDTO> getDetailView(int yrtId) {
-        return mapper.getDetailViewByHeader(yrtId);
+        return mapper.getDetailViewComputed(yrtId);
     }
 }

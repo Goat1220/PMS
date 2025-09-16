@@ -9,5 +9,5 @@ public interface YrtDetailMapper {
 	/* public List<YrtHeaderVO> getList(); */
 	
     // 특정 YRT_ID에 해당하는 상세 내역 + 항목명 조회
-    List<YrtDetailViewDTO> getDetailViewByHeader(@Param("yrtId") int yrtId);
+    List<YrtDetailViewDTO> getDetailViewComputed(@Param("yrtId") int yrtId);
 }
