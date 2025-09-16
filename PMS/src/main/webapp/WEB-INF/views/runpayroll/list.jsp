@@ -38,7 +38,6 @@
   .ghost{opacity:.5}
   .row-total{background:#eaf7ea!important;font-weight:600}
   .right-tables table{min-width:100%}
-  /* 접근성용 숨김 라벨 */
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
@@ -84,7 +83,7 @@
           <table id="tblSummary">
             <thead>
               <tr>
-                <th style="width:36px;"><!-- row checkbox -->
+                <th style="width:36px;">
                   <input type="checkbox" id="chkAllHeader" aria-label="전체행 선택">
                 </th>
                 <th>사번</th><th>사원</th><th>부서</th><th>세금적용</th>
@@ -145,7 +144,7 @@
   </div>
 </div>
 
-<%-- API URL --%>
+<%-- API URL 바인딩 --%>
 <c:url var="summaryUrl"    value="/runpayroll/api/summary"/>
 <c:url var="itemsUrl"      value="/runpayroll/api/items"/>
 <c:url var="deductionsUrl" value="/runpayroll/api/deductions"/>
@@ -155,265 +154,20 @@
 <c:url var="applyYrtUrl"   value="/runpayroll/api/apply-yrt"/>
 
 <script>
-  // helpers
-  var $  = function(s, root){ return (root||document).querySelector(s); };
-  var $$ = function(s, root){ return Array.prototype.slice.call((root||document).querySelectorAll(s)); };
-  var fmt= function(n){ return (n==null||n==='') ? '' : Number(n).toLocaleString('ko-KR'); };
-  var yn = function(v){ return (v==='Y'||v==='N') ? v : (v ? 'Y' : 'N'); };
-  function post(url, body){
-    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json()});
-  }
-  // 체크박스 셀 HTML 생성기
-  function flagBox(field, val, empNo){
-    var checked = yn(val) === 'Y' ? 'checked' : '';
-    return '' +
-      '<label class="chk">' +
-      '  <input type="checkbox" class="flagchk" data-field="'+ field +'" data-empno="'+ (empNo||'') +'" '+ checked +'>' +
-      '  <span class="sr-only">'+ field +'</span>' +
-      '</label>';
-  }
-
-  var urls = {
-    summary:'${summaryUrl}', items:'${itemsUrl}', deductions:'${deductionsUrl}',
-    process:'${processUrl}', retax:'${retaxUrl}', confirm:'${confirmUrl}', applyYrt:'${applyYrtUrl}'
+  // 외부 JS에서 사용할 런타임 설정만 노출 (비즈니스 로직 없음)
+  window.RunPayrollConfig = {
+    summary:    '${summaryUrl}',
+    items:      '${itemsUrl}',
+    deductions: '${deductionsUrl}',
+    process:    '${processUrl}',
+    retax:      '${retaxUrl}',
+    confirm:    '${confirmUrl}',
+    applyYrt:   '${applyYrtUrl}'
   };
-
-  var state = { yyyymm:$('#yyyymm').value||'2018-08', payType:$('#payType').value||'SALARY', deptCode:'', empNo:'', rows:[], selected:null };
-
-  $('#btnSearch').addEventListener('click', function(){
-    state.yyyymm  = $('#yyyymm').value || '2018-08';
-    state.payType = $('#payType').value || '';
-    state.deptCode= $('#deptCode').value.trim();
-    state.empNo   = $('#empNo').value.trim();
-    loadSummary();
-  });
-
-  $('#btnReset').addEventListener('click', function(){
-    $('#yyyymm').value='2018-08'; $('#payType').value='SALARY'; $('#deptCode').value=''; $('#empNo').value='';
-    state = { yyyymm:'2018-08', payType:'SALARY', deptCode:'', empNo:'', rows:[], selected:null };
-    loadSummary();
-  });
-
-  // 전체선택 동기화
-  $('#chkAll').addEventListener('change', function(e){
-    var checked = e.target.checked;
-    $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function(cb){ cb.checked = checked; });
-    $('#chkAllHeader').checked = checked;
-  });
-  $('#chkAllHeader').addEventListener('change', function(e){
-    var checked = e.target.checked;
-    $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function(cb){ cb.checked = checked; });
-    $('#chkAll').checked = checked;
-  });
-
-  function loadSummary(){
-    var p = new URLSearchParams();
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
-    if (state.deptCode) p.set('deptCode', state.deptCode);
-    if (state.empNo) p.set('empNo', state.empNo);
-
-    fetch(urls.summary + '?' + p.toString(), { headers:{'Accept':'application/json'} })
-      .then(function(res){ if(!res.ok) throw new Error('요약 조회 실패'); return res.json(); })
-      .then(function(data){
-        state.rows = Array.isArray(data)? data : [];
-        $('#summaryCount').textContent = '총 ' + state.rows.length + ' 건';
-        renderSummary();
-        $('#selYyyymm').textContent = state.yyyymm;
-        $('#selPayType').textContent = state.payType || 'ALL';
-      })
-      .catch(function(e){ alert(e.message); });
-  }
-
-  function renderSummary(){
-    var tbody = $('#tblSummary tbody');
-    tbody.innerHTML = '';
-    state.rows.forEach(function(r, idx){
-      var tr = document.createElement('tr');
-      tr.dataset.empNo = r.empNo;
-
-      var html = '';
-      // 행 선택용 체크박스
-      html += '<td><input type="checkbox" class="rowchk" data-empno="' + (r.empNo||'') + '"></td>';
-      html += '<td>' + (r.empNo||'') + '</td>';
-      html += '<td>' + (r.empName||'') + '</td>';
-      html += '<td>' + (r.deptName||'') + '</td>';
-      html += '<td>' + (r.taxApplyType||'') + '</td>';
-      html += '<td style="text-align:right;">' + (r.taxAdjustRate!=null?r.taxAdjustRate:'') + '</td>';
-      html += '<td>' + (r.projectName||'') + '</td>';
-
-      // ▼ 체크박스로 변경된 컬럼들
-      html += '<td>' + flagBox('taxCalcExemptYn',     r.taxCalcExemptYn,     r.empNo) + '</td>'; // 세금계산안함
-      html += '<td>' + flagBox('prorateYn',            r.prorateYn,            r.empNo) + '</td>'; // 일할계산
-      html += '<td>' + flagBox('settlementReflectYn',  r.settlementReflectYn,  r.empNo) + '</td>'; // 정산반영
-      html += '<td>' + flagBox('manufTaxExemptYn',     r.manufTaxExemptYn,     r.empNo) + '</td>'; // 생산직비과세
-      html += '<td>' + flagBox('overseasTaxExemptYn',  r.overseasTaxExemptYn,  r.empNo) + '</td>'; // 국외근로비과세
-      html += '<td>' + flagBox('researcherTaxExemptYn',r.researcherTaxExemptYn,r.empNo) + '</td>'; // 연구원비과세
-
-      html += '<td style="text-align:right;">' + (r.incomeTaxReductionRate!=null?r.incomeTaxReductionRate:'') + '</td>';
-      html += '<td>' + (r.personalTaxApplyType||'') + '</td>';
-      html += '<td style="text-align:right;">' + (r.bonusRate!=null?r.bonusRate:'') + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.payTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.prevPayTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.dedTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.netPayAmt) + '</td>';
-
-      // ▼ 퇴직여부 체크박스
-      html += '<td>' + flagBox('retireYn', r.retireYn, r.empNo) + '</td>';
-
-      tr.innerHTML = html;
-
-      // 행 클릭 시 상세 로딩 (체크박스 클릭은 제외)
-      tr.addEventListener('click', function(e){
-        if (e.target && e.target.classList) {
-          if (e.target.classList.contains('rowchk') || e.target.classList.contains('flagchk')) return;
-        }
-        $$('#tblSummary tbody tr').forEach(function(x){ x.classList.remove('active'); });
-        tr.classList.add('active');
-        onSelectRow(r);
-      });
-
-      // 체크박스 개별 변경 시 전체선택 상태 갱신 (행 선택용 체크박스 전용)
-      tr.addEventListener('change', function(e){
-        if (e.target && e.target.classList && e.target.classList.contains('rowchk')) {
-          var all = $$('#tblSummary tbody .rowchk');
-          var checked = all.filter(function(c){return c.checked}).length;
-          var allChecked = checked === all.length && all.length>0;
-          $('#chkAll').checked = allChecked;
-          $('#chkAllHeader').checked = allChecked;
-        }
-      });
-
-      tbody.appendChild(tr);
-      if (idx===0) { tr.classList.add('active'); onSelectRow(r); }
-    });
-  }
-
-  // 플래그 체크박스 변경(델리게이션)
-  $('#tblSummary tbody').addEventListener('change', function(e){
-    var t = e.target;
-    if (!t.classList || !t.classList.contains('flagchk')) return;
-    var field = t.getAttribute('data-field');
-    var empNo = t.getAttribute('data-empno');
-    var row = state.rows.find(function(x){ return (x.empNo||'') === empNo; });
-    if (row) {
-      row[field] = t.checked ? 'Y' : 'N';
-      // TODO: 서버 저장 필요 시 여기서 API 호출
-      // post('/runpayroll/api/update-flags', { empNo: empNo, field: field, value: row[field], yyyymm: state.yyyymm, payType: state.payType })
-      //   .then(function(){ /* 저장 후 필요 시 재조회 */ });
-      console.log('flag changed:', empNo, field, row[field]);
-    }
-  });
-
-  function onSelectRow(row){
-    state.selected = row;
-    $('#selEmpNo').textContent = row.empNo || '-';
-    $('#selEmpNo').classList.remove('ghost');
-    $('#selEmpName').textContent = row.empName || '-';
-    $('#selEmpName').classList.remove('ghost');
-    Promise.all([loadItems(row.empNo), loadDeds(row.empNo)]).catch(function(){});
-  }
-
-  function loadItems(empNo){
-    var p = new URLSearchParams();
-    p.set('empNo', empNo);
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
-
-    return fetch(urls.items + '?' + p.toString(), { headers:{'Accept':'application/json'} })
-      .then(function(res){ return res.ok ? res.json() : []; })
-      .then(function(list){
-        var tbody = $('#tblItems tbody'); tbody.innerHTML = '';
-        (Array.isArray(list)?list:[]).forEach(function(r){
-          var tr = document.createElement('tr');
-          if ((r.itemName||'') === 'TOTAL') { tr.className='row-total'; }
-          var html = '';
-          html += '<td>' + (r.itemName||'') + '</td>';
-          html += '<td>' + (r.nonTaxType||'') + '</td>';
-          html += '<td>' + (r.previousYn||'') + '</td>';
-          html += '<td style="text-align:right;">' + fmt(r.amount) + '</td>';
-          tr.innerHTML = html;
-          tbody.appendChild(tr);
-        });
-      });
-  }
-
-  function loadDeds(empNo){
-    var p = new URLSearchParams();
-    p.set('empNo', empNo);
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
-
-    return fetch(urls.deductions + '?' + p.toString(), { headers:{'Accept':'application/json'} })
-      .then(function(res){ return res.ok ? res.json() : []; })
-      .then(function(list){
-        var tbody = $('#tblDeds tbody'); tbody.innerHTML = '';
-        (Array.isArray(list)?list:[]).forEach(function(r){
-          var tr = document.createElement('tr');
-          if ((r.deductionName||'') === 'TOTAL') { tr.className='row-total'; }
-          var html = '';
-          html += '<td>' + (r.deductionName||'') + '</td>';
-          html += '<td style="text-align:right;">' + fmt(r.amount) + '</td>';
-          tr.innerHTML = html;
-          tbody.appendChild(tr);
-        });
-      });
-  }
-
-  function selectedEmpNos(){
-    return $$('#tblSummary tbody .rowchk')
-            .filter(function(cb){ return cb.checked; })
-            .map(function(cb){ return cb.getAttribute('data-empno'); });
-  }
-
-  // 액션 버튼들
-  $('#btnProcess').addEventListener('click', function(){
-    var empNos = selectedEmpNos();
-    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
-    post('${processUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos })
-      .then(function(){ loadSummary(); });
-  });
-
-  $('#btnReTax').addEventListener('click', function(){
-    var empNos = selectedEmpNos();
-    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
-    post('${retaxUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos })
-      .then(function(){
-        if (state.selected && state.selected.empNo) {
-          loadItems(state.selected.empNo); loadDeds(state.selected.empNo);
-        }
-        loadSummary();
-      });
-  });
-
-  $('#btnApplyYrt').addEventListener('click', function(){
-    var empNos = selectedEmpNos();
-    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
-    post('${applyYrtUrl}', { yyyymm: state.yyyymm, empNos: empNos, splitMonths: 1 })
-      .then(function(){
-        if (state.selected && state.selected.empNo) {
-          loadItems(state.selected.empNo); loadDeds(state.selected.empNo);
-        }
-        loadSummary();
-      });
-  });
-
-  $('#btnConfirm').addEventListener('click', function(){
-    var empNos = selectedEmpNos();
-    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
-    post('${confirmUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos, confirm: true })
-      .then(function(){ loadSummary(); });
-  });
-
-  $('#btnUnconfirm').addEventListener('click', function(){
-    var empNos = selectedEmpNos();
-    if (empNos.length===0){ alert('대상 사원을 선택하세요.'); return; }
-    post('${confirmUrl}', { yyyymm: state.yyyymm, payType: state.payType, empNos: empNos, confirm: false })
-      .then(function(){ loadSummary(); });
-  });
-
-  // 초기 로드
-  window.addEventListener('DOMContentLoaded', loadSummary);
 </script>
+
+<%-- 외부 JS 파일 로드 (경로는 프로젝트 구조에 맞게 조정) --%>
+<script src="${pageContext.request.contextPath}/resources/js/runpayroll.js" defer></script>
+
 </body>
 </html>
