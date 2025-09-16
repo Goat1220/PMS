@@ -1,11 +1,11 @@
-package org.pms.feature.payslip.application;
+package org.pms.feature.payslip.service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.pms.feature.payslip.domain.*;
-import org.pms.feature.payslip.infra.PayslipMapper;
+import org.pms.feature.payslip.mapper.PayslipMapper;
 
 /*
  * [KO] 급여명세 상세 조회 서비스

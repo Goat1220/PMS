@@ -1,4 +1,4 @@
-package org.pms.feature.payslip.web;
+package org.pms.feature.payslip.controller;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;

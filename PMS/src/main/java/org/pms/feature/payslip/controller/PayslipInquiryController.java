@@ -1,9 +1,10 @@
-package org.pms.feature.payslip.web;
+package org.pms.feature.payslip.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.pms.feature.payslip.application.PayslipInquiryService;
-import org.pms.feature.payslip.application.PayslipQueryService;
+
 import org.pms.feature.payslip.domain.PayslipSummary;
+import org.pms.feature.payslip.service.PayslipInquiryService;
+import org.pms.feature.payslip.service.PayslipQueryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

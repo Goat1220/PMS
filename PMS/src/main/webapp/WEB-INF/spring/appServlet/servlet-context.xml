@@ -1,28 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans xmlns="http://www.springframework.org/schema/mvc"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:beans="http://www.springframework.org/schema/beans"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xsi:schemaLocation="
-      http://www.springframework.org/schema/mvc   https://www.springframework.org/schema/mvc/spring-mvc.xsd
-      http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-      http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="
+               http://www.springframework.org/schema/mvc   https://www.springframework.org/schema/mvc/spring-mvc.xsd
+               http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+               http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
-  <!-- @Controller/@GetMapping 활성화 -->
-  <annotation-driven />
+  <!-- Spring MVC 기본 -->
+  <annotation-driven/>
+  <default-servlet-handler/>
 
   <!-- 정적 리소스 -->
-  <resources mapping="/resources/**" location="/resources/" />
+  <resources mapping="/resources/**" location="/resources/"/>
 
-  <!-- JSP 뷰 리졸버 -->
+  <!-- JSP ViewResolver (프로젝트 경로에 맞게 유지/수정) -->
   <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
     <beans:property name="prefix" value="/WEB-INF/views/"/>
     <beans:property name="suffix" value=".jsp"/>
+    <beans:property name="order"  value="2"/>
   </beans:bean>
 
-  <!-- ★ 여기 수정: 우리 패키지 전체 스캔 -->
-  <context:component-scan base-package="org.pms" />
+  <!-- Controller 전용 스캔 (Service/Repository는 root-context에서 스캔) -->
+  <context:component-scan base-package="org.pms">
+    <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"/>
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+  </context:component-scan>
 
-  <!-- (선택) 루트 진입 시 개인 명세서 화면으로 이동 -->
-  <view-controller path="/" view-name="redirect:/feature/payslip/view" />
+  <!-- 루트로 들어오면 명세서 화면으로 리다이렉트 -->
+  <view-controller path="/" view-name="redirect:/feature/payslip/view"/>
 </beans:beans>

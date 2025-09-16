@@ -2,7 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.pms.feature.payslip.infra.PayslipMapper">
+<!-- mapper 인터페이스 FQCN과 100% 일치해야 함 -->
+<mapper namespace="org.pms.feature.payslip.mapper.PayslipMapper">
 
   <!-- 1) 특정 사번+연월 요약 -->
   <select id="selectPayslipSummary" resultType="org.pms.feature.payslip.domain.PayslipSummary">
@@ -93,7 +94,7 @@
     WHERE p.payslip_id = #{payslipId}
   </select>
 
-  <!-- 6) 급여유형 코드 목록 (스키마 반영: use_yn / sort_order 없음) -->
+  <!-- 6) 급여유형 코드 목록 -->
   <select id="selectPayTypeCodes" resultType="org.pms.feature.payslip.domain.PayTypeCode">
     SELECT
       pt.pay_type AS code,
