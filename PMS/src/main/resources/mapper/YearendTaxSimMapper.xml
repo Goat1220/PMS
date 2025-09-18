@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.pms.feature.yearendtaxsimulation.mapper.YearendTaxSimMapper">
+
+  <!-- 최종 탭(확정) -->
+  <select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
+    SELECT i.item_class AS itemClass, i.item_name AS itemName,
+           i.amount AS amount, i.expected_amount AS expectedAmount
+    FROM ytsim_header h
+    JOIN ytsim_item   i ON i.yrt_id = h.yrt_id
+    WHERE h.emp_id = #{empId}
+      AND h.base_year = #{baseYear}
+      AND h.confirm_yn = 'Y'
+    ORDER BY i.item_class, i.item_name
+  </select>
+
+  <!-- 시뮬 탭(미확정 최신 또는 특정 yrtId) -->
+  <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
+    SELECT i.item_class AS itemClass, i.item_name AS itemName,
+           i.amount AS amount, i.expected_amount AS expectedAmount
+    FROM ytsim_header h
+    JOIN ytsim_item   i ON i.yrt_id = h.yrt_id
+    WHERE h.emp_id = #{empId}
+      AND h.base_year = #{baseYear}
+      AND (
+            (#{yrtId} IS NULL AND h.confirm_yn='N')
+         OR (#{yrtId} IS NOT NULL AND h.yrt_id = #{yrtId})
+          )
+    ORDER BY i.item_class, i.item_name
+  </select>
+
+  <!-- 최신 헤더 1건 (XE 호환: ROWNUM) -->
+  <select id="selectLatestHeader" resultType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini">
+    SELECT * FROM (
+      SELECT yrt_id AS yrtId, emp_id AS empId, base_year AS baseYear, run_label AS runLabel,
+             confirm_yn AS confirmYn, created_at AS createdAt, updated_at AS updatedAt
+      FROM ytsim_header
+      WHERE emp_id = #{empId}
+        AND base_year = #{baseYear}
+        AND (#{confirmedOnly} = 0 OR confirm_yn='Y')
+      ORDER BY confirm_yn DESC, updated_at DESC
+    ) WHERE ROWNUM = 1
+  </select>
+
+  <select id="selectResultTotal" resultType="org.pms.feature.yearendtaxsimulation.domain.ResultTotal">
+    SELECT add_national_tax AS addNational, add_local_tax AS addLocal
+    FROM yrt_result_total WHERE yrt_id = #{yrtId}
+  </select>
+
+  <!-- ===== 시뮬 실행/삭제 간이 구현 ===== -->
+  <delete id="deleteUnconfirmedForEmpYear">
+    DELETE FROM ytsim_item WHERE yrt_id IN (
+      SELECT yrt_id FROM ytsim_header
+      WHERE emp_id = #{empId} AND base_year = #{baseYear} AND confirm_yn='N'
+    );
+    DELETE FROM yrt_result_total WHERE yrt_id IN (
+      SELECT yrt_id FROM ytsim_header
+      WHERE emp_id = #{empId} AND base_year = #{baseYear} AND confirm_yn='N'
+    );
+    DELETE FROM ytsim_header
+    WHERE emp_id = #{empId} AND base_year = #{baseYear} AND confirm_yn='N';
+  </delete>
+
+  <insert id="insertHeader" parameterType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini">
+    <selectKey keyProperty="yrtId" resultType="long" order="BEFORE">
+      SELECT seq_ytsim_header.NEXTVAL FROM dual
+    </selectKey>
+    INSERT INTO ytsim_header(yrt_id, emp_id, base_year, run_label, confirm_yn, created_at, updated_at)
+    VALUES (#{yrtId}, #{empId}, #{baseYear}, NVL(#{runLabel}, 'AUTO'), 'N', SYSDATE, SYSDATE)
+  </insert>
+
+  <insert id="insertItem">
+    INSERT INTO ytsim_item(sim_id, yrt_id, item_class, item_name, amount, expected_amount)
+    VALUES (seq_ytsim_item.NEXTVAL, #{yrtId}, #{cls}, #{name}, #{amt}, #{exp})
+  </insert>
+
+  <insert id="upsertResultTotal">
+    MERGE INTO yrt_result_total t
+    USING (SELECT #{yrtId} AS yrt_id, #{nat} AS nat, #{loc} AS loc FROM dual) s
+    ON (t.yrt_id = s.yrt_id)
+    WHEN MATCHED THEN UPDATE SET t.add_national_tax = s.nat, t.add_local_tax = s.loc
+    WHEN NOT MATCHED THEN INSERT(yrt_id, add_national_tax, add_local_tax)
+                         VALUES (s.yrt_id, s.nat, s.loc)
+  </insert>
+
+  <delete id="deleteByYrtId">
+    DELETE FROM ytsim_item WHERE yrt_id = #{yrtId};
+    DELETE FROM yrt_result_total WHERE yrt_id = #{yrtId};
+    DELETE FROM ytsim_header WHERE yrt_id = #{yrtId} AND confirm_yn='N';
+  </delete>
+
+  <!-- ===== 세금적용결과 판정 ===== -->
+  <select id="selectTaxCreditSum" resultType="long">
+    SELECT NVL(SUM(i.expected_amount),0)
+    FROM ytsim_header h
+    JOIN ytsim_item   i ON i.yrt_id = h.yrt_id
+    WHERE h.emp_id = #{empId}
+      AND h.base_year = #{baseYear}
+      AND (
+            (#{yrtId} IS NOT NULL AND h.yrt_id = #{yrtId})
+         OR (#{yrtId} IS NULL     AND h.confirm_yn = 'N')
+          )
+      AND i.item_class = '세액공제'
+  </select>
+
+  <select id="selectStandardCredit" resultType="long">
+    SELECT NVL(standard_credit, 0) FROM tax_policy WHERE base_year = #{baseYear}
+  </select>
+
+</mapper>
