@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>
 
-<!-- ==================== 기본 스타일: 심플 웹페이지 ==================== -->
+<!-- ==================== 기본 스타일 ==================== -->
 <style>
   html,body{
     margin:0; background:#ffffff; color:#222;
@@ -10,10 +10,8 @@
   }
   .container{ width:100%; max-width:1280px; margin:0 auto; padding:16px; }
 
-  /* 페이지 타이틀 */
   .page-title{ font-size:18px; font-weight:700; margin:6px 0 14px 0; }
 
-  /* 조회영역: 테두리 최소화 */
   .searchbar{
     padding:10px 0; border-bottom:1px solid #e5e7eb; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
   }
@@ -30,67 +28,113 @@
   .btn.alt{ background:#3d4f91; border-color:#3d4f91; color:#fff; }
   .btn.small{ height:30px; padding:0 10px; }
 
-  /* 탭: 간단한 하이라이트만 */
   .tabs{ display:flex; gap:6px; margin:12px 0 0 0; }
   .tab{ padding:6px 10px; border:1px solid #e5e7eb; background:#f6f7fb; border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; }
   .tab.active{ background:#2f74ff; border-color:#2f74ff; color:#fff; font-weight:600; }
 
-  /* 패널: 아주 얇은 상단 보더만 */
   .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; }
   .meta{ color:#777; font-size:12.5px; margin:6px 0 4px 0; }
 
-  /* 표: 기본 테이블 */
   table.grid{ width:100%; border-collapse:collapse; margin-top:6px; }
   table.grid th, table.grid td{ border:1px solid #e5e7eb; padding:8px 10px; background:#fff; }
   table.grid th{ background:#f4f6fa; text-align:left; }
   td.right{text-align:right}
+
+  /* ===== 요청 반영 커스터마이징 ===== */
+  /* 정산연도 라벨만 빨강 */
+  .field-year > span{ color:#e11d48; font-weight:700; }
+
+  /* 읽기전용 회색 */
+  .readonly-gray{
+    background:#f3f4f6 !important;
+    color:#777 !important;
+    border-color:#e5e7eb !important;
+  }
+
+  /* 사원 입력 하늘색 래퍼 + 아이콘 버튼 */
+  .input-wrap.sky{
+    background:#e6f3ff; border:1px solid #b6d9ff; border-radius:4px;
+    position:relative; display:inline-flex; align-items:center;
+    height:30px; padding-right:28px;
+  }
+  .input-wrap.sky input{
+    background:transparent !important; border:0 !important; outline:none;
+    height:100%; padding:0 8px; width:180px;   /* 필요 시 너비 조정 */
+  }
+  .input-wrap.sky .icon-btn{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:0; background:transparent; font-size:14px; opacity:.75;
+    cursor:pointer; padding:0; width:22px; height:22px; line-height:22px;
+  }
+  .input-wrap.sky:focus-within{
+    box-shadow:0 0 0 2px rgba(45,120,255,.15);
+    border-color:#8fc0ff;
+  }
 </style>
 
 <div class="container">
 
   <div class="page-title">연말정산시뮬레이션(개인원본)</div>
 
-  <!-- 서버에서 내려준 최신 실행 ID -->
+  <!-- 최신 실행 ID -->
   <input type="hidden" id="yrtId" value="${simHeader.yrtId}" />
 
   <!-- ==================== 조회 바 ==================== -->
   <div class="searchbar">
-    <div class="field">
+    <!-- 정산연도: 라벨 빨강, 입력 흰색 -->
+    <div class="field field-year">
       <span>정산연도</span>
       <input id="baseYear" class="w-yr" type="text" value="${baseYear}" placeholder="YYYY">
     </div>
+
+    <!-- 사원: 하늘색 입력(검색 버튼 클릭 훅만 제공) -->
     <div class="field">
-      <span>사업</span>
-      <select id="bizDept" class="w-mid">
-        <option>마부장</option>
-      </select>
+      <span>사원</span>
+      <span class="input-wrap sky">
+        <input id="empName" type="text" value="${empName}" placeholder="사원 이름" aria-label="사원 이름">
+        <button type="button" class="icon-btn" aria-label="사원 검색" onclick="onClickEmpSearch()">🔍</button>
+      </span>
     </div>
+
+    <!-- 사번: 자동표시(읽기전용 회색) -->
     <div class="field">
       <span>사번</span>
-      <input id="empId" class="w-emp" type="text" value="${empId}" placeholder="사번">
-      <button class="btn small" type="button" onclick="openEmpPopup()">🔍</button>
+      <input id="empId" class="w-emp readonly-gray" type="text" value="${empId}" placeholder="사번" readonly>
     </div>
+
+    <!-- 정산사업장: 회색 + 비활성 -->
     <div class="field">
       <span>정산사업장</span>
-      <select id="bizPlace" class="w-biz"><option>본사</option></select>
+      <select id="bizPlace" class="w-biz readonly-gray" disabled>
+        <option>본사</option>
+      </select>
     </div>
-    <div class="field" style="gap:12px;color:#444;">
+
+    <!-- 체크박스: 비활성 -->
+    <div class="field" style="gap:12px;color:#888;">
       <label><input type="checkbox" disabled> 개인마감</label>
       <label><input type="checkbox" disabled> 담당자마감</label>
       <label><input type="checkbox" checked disabled> 정산대상자</label>
     </div>
+
+    <!-- 조회구분: 회색 + 비활성 -->
     <div class="field">
       <span>조회구분</span>
-      <select id="searchType" class="w-emp" disabled><option selected>정산</option></select>
+      <select id="searchType" class="w-emp readonly-gray" disabled>
+        <option selected>정산</option>
+      </select>
     </div>
+
+    <!-- 세금적용결과: 읽기전용 회색 -->
     <div class="field">
       <span>세금적용결과</span>
-      <input id="taxApplyResult" class="w-biz" type="text"
+      <input id="taxApplyResult" class="w-biz readonly-gray" type="text"
              value="${empty taxApplyResult ? '표준세액공제' : taxApplyResult}" readonly>
     </div>
 
     <div class="spacer"></div>
 
+    <!-- 우측 버튼 -->
     <div class="field" style="gap:8px;">
       <button class="btn primary" onclick="onReason()">산출근거</button>
       <button class="btn alt" onclick="onSim()">정산시뮬레이션처리</button>
@@ -159,9 +203,9 @@
 
 </div>
 
-<!-- ==================== 스크립트 (JSP 파서 안전) ==================== -->
+<!-- ==================== 스크립트 ==================== -->
 <script>
-  /* 컨텍스트 경로: '/앱컨텍스트' → 끝 슬래시 제거 */
+  /* 컨텍스트/헬퍼 */
   var CTX = '<c:url value="/" />'.replace(/\/$/, '');
   function ctx(){ return CTX; }
   function emp(){ return document.getElementById('empId').value.trim(); }
@@ -175,7 +219,7 @@
     if(!/^\d{4}$/.test(v)){ var d=new Date(); document.getElementById('baseYear').value=d.getFullYear()-1; }
   })();
 
-  /* 탭 전환 */
+  /* 탭 */
   function showTab(t){
     document.getElementById('tab-final').classList.remove('active');
     document.getElementById('tab-sim').classList.remove('active');
@@ -184,7 +228,28 @@
     document.getElementById('tab-'+t).classList.add('active');
   }
 
-  function openEmpPopup(){ alert('사원 검색 팝업은 기존 공통 팝업 재사용!'); }
+  /* 검색 아이콘 클릭 훅: 타팀 구현 함수(openEmpSearch)만 호출 */
+  function onClickEmpSearch(){
+    if (typeof window.openEmpSearch === 'function') {
+      window.openEmpSearch(function(res){
+        if(!res) return;
+        setEmp(res.name, res.id);
+      });
+    } else {
+      // 구현 전 임시 안내
+      alert('사원 검색은 외부 기능입니다.');
+    }
+  }
+
+  /* 이름/사번 동시 세팅 */
+  function setEmp(name, id){
+    var nameEl = document.getElementById('empName');
+    var idEl   = document.getElementById('empId');
+    if(nameEl) nameEl.value = name || '';
+    if(idEl)   idEl.value   = id   || '';
+    // 필요 시 후처리: refreshTaxApplyResult();
+  }
+
   function needEmp(){ if(!emp()){ alert('선택된 사원이 없습니다.'); return true; } return false; }
 
   /* 산출근거 조회 */
@@ -273,4 +338,3 @@
       ["catch"](function(){document.getElementById('taxApplyResult').value='미판정';});
   }
 </script>
-
