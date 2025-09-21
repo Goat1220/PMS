@@ -1,268 +1,356 @@
-// runpayroll.js
+/* global RunPayrollConfig */
 (function () {
-  // DOM 헬퍼
-  var $  = function (s, root) { return (root || document).querySelector(s); };
-  var $$ = function (s, root) { return Array.prototype.slice.call((root || document).querySelectorAll(s)); };
-  var fmt = function (n) { return (n == null || n === '') ? '' : Number(n).toLocaleString('ko-KR'); };
-  var yn  = function (v) { return (v === 'Y' || v === 'N') ? v : (v ? 'Y' : 'N'); };
-  function post(url, body) {
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    }).then(function (r) { return r.json(); });
-  }
-  function flagBox(field, val, empNo) {
-    var checked = yn(val) === 'Y' ? 'checked' : '';
-    return '' +
-      '<label class="chk">' +
-      '  <input type="checkbox" class="flagchk" data-field="' + field + '" data-empno="' + (empNo || '') + '" ' + checked + '>' +
-      '  <span class="sr-only">' + field + '</span>' +
-      '</label>';
-  }
+  'use strict';
 
-  // JSP에서 주입한 URL들
-  var urls = (window.RunPayrollConfig || {});
+  // ===================== 공통 =====================
+  var cfg = window.RunPayrollConfig || {};
+  function $(sel, p) { return (p || document).querySelector(sel); }
+  function $$(sel, p) { return Array.prototype.slice.call((p || document).querySelectorAll(sel)); }
 
-  // 상태
-  var state = {
-    yyyymm: '',
-    payType: '',
-    deptCode: '',
-    empNo: '',
-    rows: [],
-    selected: null
-  };
+  function toast(msg) { alert(msg); }
 
-  // 초기 바인딩 및 이벤트
-  function init() {
-    state.yyyymm  = $('#yyyymm').value || '2018-08';
-    state.payType = $('#payType').value || 'SALARY';
-    state.deptCode= $('#deptCode').value.trim();
-    state.empNo   = $('#empNo').value.trim();
-
-    $('#btnSearch').addEventListener('click', onSearch);
-    $('#btnReset').addEventListener('click', onReset);
-
-    // 전체선택 동기화
-    $('#chkAll').addEventListener('change', function (e) {
-      var checked = e.target.checked;
-      $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function (cb) { cb.checked = checked; });
-      $('#chkAllHeader').checked = checked;
-    });
-    $('#chkAllHeader').addEventListener('change', function (e) {
-      var checked = e.target.checked;
-      $$('#tblSummary tbody input[type="checkbox"].rowchk').forEach(function (cb) { cb.checked = checked; });
-      $('#chkAll').checked = checked;
-    });
-
-    // 플래그 델리게이션
-    $('#tblSummary tbody').addEventListener('change', function (e) {
-      var t = e.target;
-      if (!t.classList || !t.classList.contains('flagchk')) return;
-      var field = t.getAttribute('data-field');
-      var empNo = t.getAttribute('data-empno');
-      var row = state.rows.find(function (x) { return (x.empNo || '') === empNo; });
-      if (row) {
-        row[field] = t.checked ? 'Y' : 'N';
-        // 필요 시 서버 반영:
-        // post('/runpayroll/api/update-flags', { empNo, field, value: row[field], yyyymm: state.yyyymm, payType: state.payType })
-        //   .then(function(){ /* 재조회 등 */ });
-        console.log('flag changed:', empNo, field, row[field]);
+  function qs(params) {
+    var sp = [];
+    if (!params) return '';
+    for (var k in params) {
+      if (!params.hasOwnProperty(k)) continue;
+      var v = params[k];
+      if (v !== undefined && v !== null && String(v).trim() !== '') {
+        sp.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
       }
-    });
-
-    // 액션 버튼
-    $('#btnProcess').addEventListener('click', function () { bulkAction(urls.process, { yyyymm: state.yyyymm, payType: state.payType }); });
-    $('#btnReTax').addEventListener('click', function () {
-      bulkAction(urls.retax, { yyyymm: state.yyyymm, payType: state.payType }, true);
-    });
-    $('#btnApplyYrt').addEventListener('click', function () {
-      bulkAction(urls.applyYrt, { yyyymm: state.yyyymm, splitMonths: 1 }, true);
-    });
-    $('#btnConfirm').addEventListener('click', function () {
-      bulkAction(urls.confirm, { yyyymm: state.yyyymm, payType: state.payType, confirm: true });
-    });
-    $('#btnUnconfirm').addEventListener('click', function () {
-      bulkAction(urls.confirm, { yyyymm: state.yyyymm, payType: state.payType, confirm: false });
-    });
-
-    // 첫 로드
-    loadSummary();
+    }
+    return sp.join('&');
   }
 
-  function onSearch() {
-    state.yyyymm  = $('#yyyymm').value || '2018-08';
-    state.payType = $('#payType').value || '';
-    state.deptCode= $('#deptCode').value.trim();
-    state.empNo   = $('#empNo').value.trim();
-    loadSummary();
+  function getVal(el) { return el ? el.value : ''; }
+
+  function getForm() {
+    return {
+      yyyymm: getVal($('#yyyymm')) || '',
+      payType: getVal($('#payType')) || '',
+      deptCode: getVal($('#deptCode')) || '',
+      empNo: getVal($('#empNo')) || ''
+    };
   }
 
-  function onReset() {
-    $('#yyyymm').value = '2018-08';
-    $('#payType').value = 'SALARY';
-    $('#deptCode').value = '';
-    $('#empNo').value = '';
-    state = { yyyymm: '2018-08', payType: 'SALARY', deptCode: '', empNo: '', rows: [], selected: null };
-    loadSummary();
+  function getSelectedEmpNos() {
+    var arr = [];
+    $$('#tblSummary tbody input[name="empCheck"]:checked').forEach(function (chk) {
+      arr.push(chk.getAttribute('data-empno'));
+    });
+    return arr;
   }
 
-  function loadSummary() {
-    var p = new URLSearchParams();
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
-    if (state.deptCode) p.set('deptCode', state.deptCode);
-    if (state.empNo) p.set('empNo', state.empNo);
-
-    fetch(urls.summary + '?' + p.toString(), { headers: { 'Accept': 'application/json' } })
-      .then(function (res) { if (!res.ok) throw new Error('요약 조회 실패'); return res.json(); })
-      .then(function (data) {
-        state.rows = Array.isArray(data) ? data : [];
-        $('#summaryCount').textContent = '총 ' + state.rows.length + ' 건';
-        renderSummary();
-        $('#selYyyymm').textContent = state.yyyymm;
-        $('#selPayType').textContent = state.payType || 'ALL';
-      })
-      .catch(function (e) { alert(e.message); });
+  function setButtonsDisabled(disabled) {
+    ['#btnProcess', '#btnReTax', '#btnApplyYrt', '#btnConfirm', '#btnUnconfirm', '#btnSearch', '#btnReset']
+      .forEach(function (id) {
+        var el = $(id);
+        if (el) el.disabled = disabled;
+      });
   }
 
-  function renderSummary() {
+  function ajaxGET(url, params, onDone) {
+    var full = params ? (url + '?' + qs(params)) : url;
+    fetch(full, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
+      .then(function (data) { onDone && onDone(data); })
+      .catch(function (e) { toast('요청 실패: ' + e); });
+  }
+
+  function ajaxPOST(url, payload, onDone) {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload || {})
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
+      .then(function (data) { onDone && onDone(data); })
+      .catch(function (e) { toast('요청 실패: ' + e); });
+  }
+
+  function formatAmt(n) {
+    if (n === null || n === undefined) return '';
+    var v = Number(n);
+    if (isNaN(v)) return String(n);
+    try { return v.toLocaleString('ko-KR'); } catch (e) { return String(v); }
+  }
+
+  function safeVal(v) {
+    return (v === null || v === undefined) ? '' : String(v);
+  }
+
+  function yn(v) {
+    return (String(v || '').toUpperCase() === 'Y') ? 'checked' : '';
+  }
+
+  // ===================== 렌더: 요약 =====================
+  function renderSummary(rows) {
     var tbody = $('#tblSummary tbody');
     tbody.innerHTML = '';
-    state.rows.forEach(function (r, idx) {
+    var cnt = 0;
+    (rows || []).forEach(function (row) {
+      cnt++;
       var tr = document.createElement('tr');
-      tr.dataset.empNo = r.empNo;
+      tr.setAttribute('data-empno', row.empNo || '');
+      tr.setAttribute('data-empname', row.empName || '');
 
-      var html = '';
-      html += '<td><input type="checkbox" class="rowchk" data-empno="' + (r.empNo || '') + '"></td>';
-      html += '<td>' + (r.empNo || '') + '</td>';
-      html += '<td>' + (r.empName || '') + '</td>';
-      html += '<td>' + (r.deptName || '') + '</td>';
-      html += '<td>' + (r.taxApplyType || '') + '</td>';
-      html += '<td style="text-align:right;">' + (r.taxAdjustRate != null ? r.taxAdjustRate : '') + '</td>';
-      html += '<td>' + (r.projectName || '') + '</td>';
+      var html = ''
+        + '<td><input type="checkbox" name="empCheck" data-empno="' + (row.empNo || '') + '" aria-label="선택"></td>'
+        + '<td class="emp-no">' + (row.empNo || '') + '</td>'
+        + '<td>' + (row.empName || '') + '</td>'
+        + '<td>' + (row.deptName || '') + '</td>'
+        + '<td>' + (row.taxApplyType || '-') + '</td>'
 
-      html += '<td>' + flagBox('taxCalcExemptYn',      r.taxCalcExemptYn,      r.empNo) + '</td>';
-      html += '<td>' + flagBox('prorateYn',             r.prorateYn,            r.empNo) + '</td>';
-      html += '<td>' + flagBox('settlementReflectYn',   r.settlementReflectYn,  r.empNo) + '</td>';
-      html += '<td>' + flagBox('manufTaxExemptYn',      r.manufTaxExemptYn,     r.empNo) + '</td>';
-      html += '<td>' + flagBox('overseasTaxExemptYn',   r.overseasTaxExemptYn,  r.empNo) + '</td>';
-      html += '<td>' + flagBox('researcherTaxExemptYn', r.researcherTaxExemptYn,r.empNo) + '</td>';
+        + '<td><input type="number" step="0.001" name="taxAdjustRate" value="' + safeVal(row.taxAdjustRate) + '" style="width:90px"></td>'
+        + '<td><input type="text" name="projectName" value="' + safeVal(row.projectName) + '" style="width:120px"></td>'
 
-      html += '<td style="text-align:right;">' + (r.incomeTaxReductionRate != null ? r.incomeTaxReductionRate : '') + '</td>';
-      html += '<td>' + (r.personalTaxApplyType || '') + '</td>';
-      html += '<td style="text-align:right;">' + (r.bonusRate != null ? r.bonusRate : '') + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.payTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.prevPayTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.dedTotAmt) + '</td>';
-      html += '<td style="text-align:right;">' + fmt(r.netPayAmt) + '</td>';
-      html += '<td>' + flagBox('retireYn', r.retireYn, r.empNo) + '</td>';
+        + '<td class="center"><input type="checkbox" name="taxCalcExemptYn" ' + yn(row.taxCalcExemptYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="prorateYn" ' + yn(row.prorateYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="settlementYn" ' + yn(row.settlementYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="nonTaxProdYn" ' + yn(row.nonTaxProdYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="foreignWorkYn" ' + yn(row.foreignWorkYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="researcherYn" ' + yn(row.researcherYn) + '></td>'
+
+        + '<td><input type="number" step="0.001" name="incomeTaxReductionRate" value="' + safeVal(row.incomeTaxReductionRate) + '" style="width:90px"></td>'
+        + '<td><input type="text" name="personalTaxApplyType" value="' + safeVal(row.personalTaxApplyType) + '" style="width:110px"></td>'
+        + '<td><input type="number" step="0.001" name="bonusRate" value="' + safeVal(row.bonusRate) + '" style="width:90px"></td>'
+
+        + '<td style="text-align:right">' + formatAmt(row.payTotAmt) + '</td>'
+        + '<td style="text-align:right">' + formatAmt(row.prevPayTotAmt) + '</td>'
+        + '<td style="text-align:right">' + formatAmt(row.dedTotAmt) + '</td>'
+        + '<td style="text-align:right">' + formatAmt(row.netPayAmt) + '</td>'
+        + '<td>' + (row.retireYn === 'Y' ? '퇴직' : '') + '</td>';
 
       tr.innerHTML = html;
 
-      tr.addEventListener('click', function (e) {
-        if (e.target && e.target.classList) {
-          if (e.target.classList.contains('rowchk') || e.target.classList.contains('flagchk')) return;
-        }
-        $$('#tblSummary tbody tr').forEach(function (x) { x.classList.remove('active'); });
+      tr.addEventListener('click', function (ev) {
+        if (ev.target && ev.target.name === 'empCheck') return;
+        $$('#tblSummary tbody tr').forEach(function (r) { r.classList.remove('active'); });
         tr.classList.add('active');
-        onSelectRow(r);
-      });
-
-      tr.addEventListener('change', function (e) {
-        if (e.target && e.target.classList && e.target.classList.contains('rowchk')) {
-          var all = $$('#tblSummary tbody .rowchk');
-          var checked = all.filter(function (c) { return c.checked; }).length;
-          var allChecked = checked === all.length && all.length > 0;
-          $('#chkAll').checked = allChecked;
-          $('#chkAllHeader').checked = allChecked;
-        }
+        loadDetails(row.empNo);
       });
 
       tbody.appendChild(tr);
-      if (idx === 0) { tr.classList.add('active'); onSelectRow(r); }
+    });
+    var sc = $('#summaryCount');
+    if (sc) sc.textContent = '총 ' + cnt + '명';
+    var chkAllHeader = $('#chkAllHeader');
+    if (chkAllHeader) chkAllHeader.checked = false;
+  }
+
+  // ===================== 렌더: 상세 =====================
+  function renderItems(rows) {
+    var tbody = $('#tblItems tbody');
+    tbody.innerHTML = '';
+    (rows || []).forEach(function (r) {
+      var tr = document.createElement('tr');
+      var isTotal = (r.itemName === 'TOTAL');
+      if (isTotal) tr.classList.add('row-total');
+      tr.innerHTML = ''
+        + '<td>' + (r.itemName || '') + '</td>'
+        + '<td>' + (r.nonTaxType || '') + '</td>'
+        + '<td>' + (r.previousYn || '') + '</td>'
+        + '<td style="text-align:right">' + formatAmt(r.amount) + '</td>';
+      tbody.appendChild(tr);
     });
   }
 
-  function onSelectRow(row) {
-    state.selected = row;
-    $('#selEmpNo').textContent = row.empNo || '-';
-    $('#selEmpNo').classList.remove('ghost');
-    $('#selEmpName').textContent = row.empName || '-';
-    $('#selEmpName').classList.remove('ghost');
-    Promise.all([loadItems(row.empNo), loadDeds(row.empNo)]).catch(function () { });
+  function renderDeds(rows) {
+    var tbody = $('#tblDeds tbody');
+    tbody.innerHTML = '';
+    (rows || []).forEach(function (r) {
+      var tr = document.createElement('tr');
+      var isTotal = (r.deductionName === 'TOTAL');
+      if (isTotal) tr.classList.add('row-total');
+      tr.innerHTML = ''
+        + '<td>' + (r.deductionName || '') + '</td>'
+        + '<td style="text-align:right">' + formatAmt(r.amount) + '</td>';
+      tbody.appendChild(tr);
+    });
   }
 
-  function loadItems(empNo) {
-    var p = new URLSearchParams();
-    p.set('empNo', empNo);
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
-
-    return fetch(urls.items + '?' + p.toString(), { headers: { 'Accept': 'application/json' } })
-      .then(function (res) { return res.ok ? res.json() : []; })
-      .then(function (list) {
-        var tbody = $('#tblItems tbody'); tbody.innerHTML = '';
-        (Array.isArray(list) ? list : []).forEach(function (r) {
-          var tr = document.createElement('tr');
-          if ((r.itemName || '') === 'TOTAL') { tr.className = 'row-total'; }
-          var html = '';
-          html += '<td>' + (r.itemName || '') + '</td>';
-          html += '<td>' + (r.nonTaxType || '') + '</td>';
-          html += '<td>' + (r.previousYn || '') + '</td>';
-          html += '<td style="text-align:right;">' + fmt(r.amount) + '</td>';
-          tr.innerHTML = html;
-          tbody.appendChild(tr);
-        });
-      });
+  // ===================== 데이터 로드 =====================
+  function doSearch() {
+    var f = getForm();
+    var params = {
+      yyyymm: f.yyyymm,
+      payType: f.payType,
+      deptCode: f.deptCode,
+      empNo: f.empNo
+    };
+    setButtonsDisabled(true);
+    ajaxGET(cfg.summary, params, function (rows) {
+      renderSummary(rows || []);
+      var selY = $('#selYyyymm'); if (selY) selY.textContent = f.yyyymm || '-';
+      var selP = $('#selPayType'); if (selP) selP.textContent = f.payType || '-';
+      var selNo = $('#selEmpNo'); if (selNo) selNo.textContent = '-';
+      var selNm = $('#selEmpName'); if (selNm) selNm.textContent = '-';
+      renderItems([]);
+      renderDeds([]);
+      setButtonsDisabled(false);
+    });
   }
 
-  function loadDeds(empNo) {
-    var p = new URLSearchParams();
-    p.set('empNo', empNo);
-    p.set('yyyymm', state.yyyymm);
-    if (state.payType) p.set('payType', state.payType);
+  function loadDetails(empNo) {
+    var f = getForm();
+    var elNo = $('#selEmpNo'); if (elNo) elNo.textContent = empNo || '-';
+    var tr = $('#tblSummary tbody tr[data-empno="' + empNo + '"]');
+    var nm = tr ? tr.getAttribute('data-empname') : '-';
+    var elNm = $('#selEmpName'); if (elNm) elNm.textContent = nm || '-';
+    var elY = $('#selYyyymm'); if (elY) elY.textContent = f.yyyymm || '-';
+    var elP = $('#selPayType'); if (elP) elP.textContent = f.payType || '-';
 
-    return fetch(urls.deductions + '?' + p.toString(), { headers: { 'Accept': 'application/json' } })
-      .then(function (res) { return res.ok ? res.json() : []; })
-      .then(function (list) {
-        var tbody = $('#tblDeds tbody'); tbody.innerHTML = '';
-        (Array.isArray(list) ? list : []).forEach(function (r) {
-          var tr = document.createElement('tr');
-          if ((r.deductionName || '') === 'TOTAL') { tr.className = 'row-total'; }
-          var html = '';
-          html += '<td>' + (r.deductionName || '') + '</td>';
-          html += '<td style="text-align:right;">' + fmt(r.amount) + '</td>';
-          tr.innerHTML = html;
-          tbody.appendChild(tr);
-        });
-      });
+    var baseParams = { empNo: empNo, yyyymm: f.yyyymm, payType: f.payType };
+    ajaxGET(cfg.items, baseParams, renderItems);
+    ajaxGET(cfg.deductions, baseParams, renderDeds);
   }
 
-  function selectedEmpNos() {
-    return $$('#tblSummary tbody .rowchk')
-      .filter(function (cb) { return cb.checked; })
-      .map(function (cb) { return cb.getAttribute('data-empno'); });
-  }
-
-  function bulkAction(url, basePayload, refreshRight) {
-    var empNos = selectedEmpNos();
-    if (empNos.length === 0) { alert('대상 사원을 선택하세요.'); return; }
-    var payload = Object.assign({}, basePayload, { empNos: empNos });
-    post(url, payload).then(function () {
-      if (refreshRight && state.selected && state.selected.empNo) {
-        loadItems(state.selected.empNo);
-        loadDeds(state.selected.empNo);
+  // ===================== EmpFlag 수집 =====================
+  function collectFlags() {
+    var flags = [];
+    $$('#tblSummary tbody tr[data-empno]').forEach(function (tr) {
+      var empNo = tr.getAttribute('data-empno');
+      if (!empNo) return;
+      function get(name) { return tr.querySelector('[name="' + name + '"]'); }
+      function val(name) {
+        var el = get(name);
+        if (!el) return null;
+        if (el.type === 'checkbox') return el.checked ? 'Y' : 'N';
+        return (el.value || '').trim();
       }
-      loadSummary();
+      flags.push({
+        empNo: empNo,
+        taxAdjustRate: val('taxAdjustRate'),
+        projectName: val('projectName'),
+        taxCalcExemptYn: val('taxCalcExemptYn'),
+        prorateYn: val('prorateYn'),
+        settlementYn: val('settlementYn'),
+        nonTaxProdYn: val('nonTaxProdYn'),
+        foreignWorkYn: val('foreignWorkYn'),
+        researcherYn: val('researcherYn'),
+        incomeTaxReductionRate: val('incomeTaxReductionRate'),
+        personalTaxApplyType: val('personalTaxApplyType'),
+        bonusRate: val('bonusRate'),
+        retiredYn: null
+      });
+    });
+    return flags;
+  }
+
+  // ===================== 액션 =====================
+  function handleSimpleResult(res, fallbackMsg) {
+    if (!res) { toast('응답이 비었습니다.'); return; }
+    if (res.success) {
+      var msg = (res.message || fallbackMsg);
+      if (res.affected !== null && res.affected !== undefined) msg += ' [' + res.affected + '건]';
+      toast(msg);
+      doSearch();
+    } else {
+      toast(res.message || '처리에 실패했습니다.');
+    }
+  }
+
+  function doProcessPayroll() {
+    var f = getForm();
+    var empNos = getSelectedEmpNos();
+    if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+    if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+    if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+
+    var payload = { yyyymm: f.yyyymm, payType: f.payType, empNos: empNos, flags: collectFlags() };
+    setButtonsDisabled(true);
+    ajaxPOST(cfg.process, payload, function (res) {
+      setButtonsDisabled(false);
+      handleSimpleResult(res, '급상여 처리가 완료되었습니다.');
     });
   }
 
-  // DOM 준비 후 초기화
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  function doReTax() {
+    var f = getForm();
+    var empNos = getSelectedEmpNos();
+    if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+    if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+    if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+
+    var payload = { yyyymm: f.yyyymm, payType: f.payType, empNos: empNos };
+    setButtonsDisabled(true);
+    ajaxPOST(cfg.retax, payload, function (res) {
+      setButtonsDisabled(false);
+      handleSimpleResult(res, '세금 재처리가 완료되었습니다.');
+    });
   }
+
+  function doApplyYrt() {
+    var f = getForm();
+    var empNos = getSelectedEmpNos();
+    if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+    if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+    if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+
+    var payload = { yyyymm: f.yyyymm, payType: f.payType, empNos: empNos };
+    setButtonsDisabled(true);
+    ajaxPOST(cfg.applyYrt, payload, function (res) {
+      setButtonsDisabled(false);
+      handleSimpleResult(res, '정산세금 반영이 완료되었습니다.');
+    });
+  }
+
+  function doConfirm() {
+    var f = getForm();
+    var empNos = getSelectedEmpNos();
+    if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+    if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+    if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+    if (!window.confirm('선택 사원의 급여명세를 확정하시겠습니까? 확정 후에는 급상여 처리가 불가합니다.')) { return; }
+
+    var payload = { yyyymm: f.yyyymm, payType: f.payType, empNos: empNos };
+    setButtonsDisabled(true);
+    ajaxPOST(cfg.confirm, payload, function (res) {
+      setButtonsDisabled(false);
+      handleSimpleResult(res, '확정되었습니다.');
+    });
+  }
+
+  // ===================== 이벤트 바인딩 =====================
+  function bindEvents() {
+    var btn;
+    btn = $('#btnSearch');   if (btn) btn.addEventListener('click', doSearch);
+    btn = $('#btnReset');    if (btn) btn.addEventListener('click', function () {
+      var d = $('#deptCode'); if (d) d.value = '';
+      var e = $('#empNo');    if (e) e.value = '';
+      doSearch();
+    });
+
+    btn = $('#btnProcess');  if (btn) btn.addEventListener('click', doProcessPayroll);
+    btn = $('#btnReTax');    if (btn) btn.addEventListener('click', doReTax);
+    btn = $('#btnApplyYrt'); if (btn) btn.addEventListener('click', doApplyYrt);
+    btn = $('#btnConfirm');  if (btn) btn.addEventListener('click', doConfirm);
+
+    var chkAll = $('#chkAll');
+    var chkAllHeader = $('#chkAllHeader');
+    function syncAll(checked) {
+      $$('#tblSummary tbody input[name="empCheck"]').forEach(function (chk) { chk.checked = checked; });
+    }
+    if (chkAll) {
+      chkAll.addEventListener('change', function (e) {
+        var checked = e.target.checked;
+        syncAll(checked);
+        if (chkAllHeader) chkAllHeader.checked = checked;
+      });
+    }
+    if (chkAllHeader) {
+      chkAllHeader.addEventListener('change', function (e) {
+        var checked = e.target.checked;
+        syncAll(checked);
+        if (chkAll) chkAll.checked = checked;
+      });
+    }
+  }
+
+  // ===================== 초기화 =====================
+  document.addEventListener('DOMContentLoaded', function () {
+    bindEvents();
+    doSearch();
+  });
 })();

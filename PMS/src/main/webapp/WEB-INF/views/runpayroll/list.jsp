@@ -154,7 +154,6 @@
 <c:url var="applyYrtUrl"   value="/runpayroll/api/apply-yrt"/>
 
 <script>
-  // 외부 JS에서 사용할 런타임 설정만 노출 (비즈니스 로직 없음)
   window.RunPayrollConfig = {
     summary:    '${summaryUrl}',
     items:      '${itemsUrl}',
@@ -166,7 +165,6 @@
   };
 </script>
 
-<%-- 외부 JS 파일 로드 (경로는 프로젝트 구조에 맞게 조정) --%>
 <script src="${pageContext.request.contextPath}/resources/js/runpayroll.js" defer></script>
 
 </body>
