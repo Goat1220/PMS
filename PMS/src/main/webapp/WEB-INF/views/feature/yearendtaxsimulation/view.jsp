@@ -1,57 +1,57 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %> <%-- JSP 페이지 설정 / JSP ページ設定 --%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>       <%-- JSTL Core 태그 / JSTL Core タグ --%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>     <%-- 숫자/날짜 포맷 / 数値・日付フォーマット --%>
 
-<!-- ==================== 기본 스타일 ==================== -->
 <style>
+  /* ===== 기본 레이아웃 / 基本レイアウト ===== */
   html,body{
     margin:0; background:#ffffff; color:#222;
     font-family:system-ui, Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif;
   }
-  .container{ width:100%; max-width:1280px; margin:0 auto; padding:16px; }
+  .container{ width:100%; max-width:1280px; margin:0 auto; padding:16px; } /* 중앙 고정 폭 / 中央固定幅 */
 
-  .page-title{ font-size:18px; font-weight:700; margin:6px 0 14px 0; }
+  .page-title{ font-size:18px; font-weight:700; margin:6px 0 14px 0; } /* 페이지 제목 / ページタイトル */
 
+  /* ===== 검색바 / 検索バー ===== */
   .searchbar{
     padding:10px 0; border-bottom:1px solid #e5e7eb; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
   }
-  .field{ display:flex; gap:6px; align-items:center; }
+  .field{ display:flex; gap:6px; align-items:center; } /* 라벨+입력 묶음 / ラベル+入力の塊 */
   .field input[type=text], .field select{
     height:30px; padding:0 8px; border:1px solid #d9dce3; border-radius:4px; background:#fff;
   }
-  .w-yr{width:90px} .w-emp{width:120px} .w-mid{width:180px} .w-biz{width:140px}
-  .spacer{ flex:1 1 auto; }
+  .w-yr{width:90px} .w-emp{width:120px} .w-mid{width:180px} .w-biz{width:140px} /* 폭 프리셋 / 幅プリセット */
+  .spacer{ flex:1 1 auto; } /* 오른쪽 버튼 밀어내기 / 右側ボタンを押し出す */
   .btn{
     height:32px; padding:0 12px; border:1px solid #d0d5dd; background:#fff; border-radius:4px; cursor:pointer;
   }
-  .btn.primary{ background:#2f74ff; border-color:#2f74ff; color:#fff; font-weight:600; }
+  .btn.primary{ background:#2f74ff; border-color:#2f74ff; color:#fff; font-weight:600; } /* 주요 버튼 / 主要ボタン */
   .btn.alt{ background:#3d4f91; border-color:#3d4f91; color:#fff; }
   .btn.small{ height:30px; padding:0 10px; }
 
+  /* ===== 탭 / タブ ===== */
   .tabs{ display:flex; gap:6px; margin:12px 0 0 0; }
   .tab{ padding:6px 10px; border:1px solid #e5e7eb; background:#f6f7fb; border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; }
   .tab.active{ background:#2f74ff; border-color:#2f74ff; color:#fff; font-weight:600; }
 
-  .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; }
-  .meta{ color:#777; font-size:12.5px; margin:6px 0 4px 0; }
+  .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; } /* 탭 내용 영역 / タブ内容領域 */
+  .meta{ color:#777; font-size:12.5px; margin:6px 0 4px 0; }    /* 메타 정보 / メタ情報 */
 
+  /* ===== 표 / テーブル ===== */
   table.grid{ width:100%; border-collapse:collapse; margin-top:6px; }
   table.grid th, table.grid td{ border:1px solid #e5e7eb; padding:8px 10px; background:#fff; }
   table.grid th{ background:#f4f6fa; text-align:left; }
   td.right{text-align:right}
 
-  /* ===== 요청 반영 커스터마이징 ===== */
-  /* 정산연도 라벨만 빨강 */
-  .field-year > span{ color:#e11d48; font-weight:700; }
+  .field-year > span{ color:#e11d48; font-weight:700; } /* 연도 라벨 강조 / 年度ラベル強調 */
 
-  /* 읽기전용 회색 */
   .readonly-gray{
     background:#f3f4f6 !important;
     color:#777 !important;
     border-color:#e5e7eb !important;
-  }
+  } /* 읽기전용 스타일 / 読み取り専用スタイル */
 
-  /* 사원 입력 하늘색 래퍼 + 아이콘 버튼 */
+  /* ===== 사원 입력(하늘색) / 社員入力（空色） ===== */
   .input-wrap.sky{
     background:#e6f3ff; border:1px solid #b6d9ff; border-radius:4px;
     position:relative; display:inline-flex; align-items:center;
@@ -59,7 +59,7 @@
   }
   .input-wrap.sky input{
     background:transparent !important; border:0 !important; outline:none;
-    height:100%; padding:0 8px; width:180px;   /* 필요 시 너비 조정 */
+    height:100%; padding:0 8px; width:180px;   /* 필요 시 너비 조정 / 必要なら幅調整 */
   }
   .input-wrap.sky .icon-btn{
     position:absolute; right:6px; top:50%; transform:translateY(-50%);
@@ -74,20 +74,19 @@
 
 <div class="container">
 
-  <div class="page-title">연말정산시뮬레이션(개인원본)</div>
+  <div class="page-title">연말정산시뮬레이션(개인원본)</div> <!-- 페이지 제목 / ページタイトル -->
 
-  <!-- 최신 실행 ID -->
-  <input type="hidden" id="yrtId" value="${simHeader.yrtId}" />
+  <input type="hidden" id="yrtId" value="${simHeader.yrtId}" /> <!-- 실행ID 보관 / 実行IDの保持 -->
 
-  <!-- ==================== 조회 바 ==================== -->
+  <!-- ===== 검색 영역 / 検索エリア ===== -->
   <div class="searchbar">
-    <!-- 정산연도: 라벨 빨강, 입력 흰색 -->
+    <!-- 정산연도 / 精算年度 -->
     <div class="field field-year">
       <span>정산연도</span>
       <input id="baseYear" class="w-yr" type="text" value="${baseYear}" placeholder="YYYY">
     </div>
 
-    <!-- 사원: 하늘색 입력(검색 버튼 클릭 훅만 제공) -->
+    <!-- 사원명 + 검색 아이콘 / 社員名 + 検索アイコン -->
     <div class="field">
       <span>사원</span>
       <span class="input-wrap sky">
@@ -96,13 +95,13 @@
       </span>
     </div>
 
-    <!-- 사번: 자동표시(읽기전용 회색) -->
+    <!-- 사번(읽기전용) / 社員番号（読取専用） -->
     <div class="field">
       <span>사번</span>
       <input id="empId" class="w-emp readonly-gray" type="text" value="${empId}" placeholder="사번" readonly>
     </div>
 
-    <!-- 정산사업장: 회색 + 비활성 -->
+    <!-- 정산사업장(고정) / 精算事業所（固定） -->
     <div class="field">
       <span>정산사업장</span>
       <select id="bizPlace" class="w-biz readonly-gray" disabled>
@@ -110,14 +109,14 @@
       </select>
     </div>
 
-    <!-- 체크박스: 비활성 -->
+    <!-- 상태 체크(읽기전용) / 状態チェック（読取専用） -->
     <div class="field" style="gap:12px;color:#888;">
       <label><input type="checkbox" disabled> 개인마감</label>
       <label><input type="checkbox" disabled> 담당자마감</label>
       <label><input type="checkbox" checked disabled> 정산대상자</label>
     </div>
 
-    <!-- 조회구분: 회색 + 비활성 -->
+    <!-- 조회구분(고정) / 照会区分（固定） -->
     <div class="field">
       <span>조회구분</span>
       <select id="searchType" class="w-emp readonly-gray" disabled>
@@ -125,16 +124,16 @@
       </select>
     </div>
 
-    <!-- 세금적용결과: 읽기전용 회색 -->
+    <!-- 세금적용결과 표시 / 税適用結果の表示 -->
     <div class="field">
       <span>세금적용결과</span>
       <input id="taxApplyResult" class="w-biz readonly-gray" type="text"
              value="${empty taxApplyResult ? '표준세액공제' : taxApplyResult}" readonly>
     </div>
 
-    <div class="spacer"></div>
+    <div class="spacer"></div> <!-- 우측 버튼 정렬용 여백 / 右側ボタン用スペーサー -->
 
-    <!-- 우측 버튼 -->
+    <!-- 동작 버튼 모음 / 操作ボタン群 -->
     <div class="field" style="gap:8px;">
       <button class="btn primary" onclick="onReason()">산출근거</button>
       <button class="btn alt" onclick="onSim()">정산시뮬레이션처리</button>
@@ -143,13 +142,13 @@
     </div>
   </div>
 
-  <!-- ==================== 탭 ==================== -->
+  <!-- ===== 탭 / タブ ===== -->
   <div class="tabs">
     <div id="tab-final" class="tab active" onclick="showTab('final')">최종</div>
     <div id="tab-sim"   class="tab" onclick="showTab('sim')">시뮬레이션</div>
   </div>
 
-  <!-- ==================== 최종 탭 ==================== -->
+  <!-- 최종 탭 패널 / 最終タブパネル -->
   <div id="panel-final" class="panel">
     <div class="meta">
       실행라벨: <strong><c:out value="${simHeader != null ? simHeader.runLabel : '-'}"/></strong>
@@ -183,7 +182,7 @@
     </table>
   </div>
 
-  <!-- ==================== 시뮬레이션 탭 ==================== -->
+  <!-- 시뮬레이션 탭 패널 / シミュレーションタブパネル -->
   <div id="panel-sim" class="panel" style="display:none;">
     <table class="grid">
       <thead>
@@ -198,28 +197,27 @@
         <tr><td colspan="4" style="text-align:center;">버튼으로 조회하세요</td></tr>
       </tbody>
     </table>
-    <div id="installmentBox" style="margin-top:10px;"></div>
+    <div id="installmentBox" style="margin-top:10px;"></div> <!-- 분납 결과 영역 / 分納結果エリア -->
   </div>
 
 </div>
 
-<!-- ==================== 스크립트 ==================== -->
 <script>
-  /* 컨텍스트/헬퍼 */
-  var CTX = '<c:url value="/" />'.replace(/\/$/, '');
+  /* ===== JS 유틸 / JS ユーティリティ ===== */
+  var CTX = '<c:url value="/" />'.replace(/\/$/, '');           // 컨텍스트 루트 / コンテキストルート
   function ctx(){ return CTX; }
-  function emp(){ return document.getElementById('empId').value.trim(); }
-  function yrt(){ return document.getElementById('yrtId').value; }
-  function validYear(y){ return /^\d{4}$/.test(y) && (+y>=2000 && +y<=2100); }
-  function fmt(n){ if(n==null) return ''; return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function emp(){ return document.getElementById('empId').value.trim(); } // 사번 / 社員番号
+  function yrt(){ return document.getElementById('yrtId').value; }        // 실행ID / 実行ID
+  function validYear(y){ return /^\d{4}$/.test(y) && (+y>=2000 && +y<=2100); } // 연도 검증 / 年度検証
+  function fmt(n){ if(n==null) return ''; return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); } // 3자리 구분 / 3桁区切り
 
-  /* 기본 연도: 올해-1 자동 */
+  /* 초기 연도 보정: 4자리 아니면 작년으로 / 初期年度補正：4桁でなければ前年に */
   (function(){
     var v=document.getElementById('baseYear').value;
     if(!/^\d{4}$/.test(v)){ var d=new Date(); document.getElementById('baseYear').value=d.getFullYear()-1; }
   })();
 
-  /* 탭 */
+  /* 탭 전환 / タブ切替 */
   function showTab(t){
     document.getElementById('tab-final').classList.remove('active');
     document.getElementById('tab-sim').classList.remove('active');
@@ -228,7 +226,7 @@
     document.getElementById('tab-'+t).classList.add('active');
   }
 
-  /* 검색 아이콘 클릭 훅: 타팀 구현 함수(openEmpSearch)만 호출 */
+  /* 사원 검색(외부 기능 연동) / 社員検索（外部機能連携） */
   function onClickEmpSearch(){
     if (typeof window.openEmpSearch === 'function') {
       window.openEmpSearch(function(res){
@@ -236,23 +234,24 @@
         setEmp(res.name, res.id);
       });
     } else {
-      // 구현 전 임시 안내
+      // 실제 검색은 타 파트 구현 / 実検索は他パート実装
       alert('사원 검색은 외부 기능입니다.');
     }
   }
 
-  /* 이름/사번 동시 세팅 */
+  /* 사원 세팅 / 社員セット */
   function setEmp(name, id){
     var nameEl = document.getElementById('empName');
     var idEl   = document.getElementById('empId');
     if(nameEl) nameEl.value = name || '';
     if(idEl)   idEl.value   = id   || '';
-    // 필요 시 후처리: refreshTaxApplyResult();
+    // 선택 반영만 수행 / 選択反映のみ実施
   }
 
+  /* 사원 선택 여부 확인 / 社員選択チェック */
   function needEmp(){ if(!emp()){ alert('선택된 사원이 없습니다.'); return true; } return false; }
 
-  /* 산출근거 조회 */
+  /* 산출근거 조회 → 시뮬 탭 표시 / 算出根拠取得 → シミュタブ表示 */
   function onReason(){
     if(needEmp()) return;
     var y=document.getElementById('baseYear').value.trim();
@@ -264,7 +263,7 @@
       ["catch"](function(){alert('산출근거 조회 실패 또는 API 미구현');});
   }
 
-  /* 시뮬레이션 처리 */
+  /* 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
   function onSim(){
     if(needEmp()) return;
     var y=document.getElementById('baseYear').value.trim();
@@ -277,7 +276,7 @@
       ["catch"](function(){alert('시뮬레이션 처리 실패 또는 API 미구현');});
   }
 
-  /* 결과 삭제 */
+  /* 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
   function onDelete(){
     var id=yrt();
     if(!id){alert('삭제할 실행이 없습니다.');return;}
@@ -288,7 +287,7 @@
       ["catch"](function(){alert('삭제 실패 또는 API 미구현');});
   }
 
-  /* 분납 시뮬레이션 */
+  /* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
   function onInstallment(){
     var id=yrt(); if(!id){alert('시뮬레이션 실행이 없습니다.');return;}
     var months=prompt('분납 개월수(2~3):','2');
@@ -301,7 +300,7 @@
     showTab('sim');
   }
 
-  /* 그리드 렌더 */
+  /* 시뮬 표 렌더링 / シミュ表の描画 */
   function renderSim(rows){
     var tb=document.getElementById('simBody');tb.innerHTML='';
     if(!rows||rows.length===0){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#777;">데이터 없음</td></tr>';return;}
@@ -316,7 +315,7 @@
     });
   }
 
-  /* 분납 표 렌더 */
+  /* 분납 결과 렌더링 / 分納結果の描画 */
   function renderInstallment(res){
     var box=document.getElementById('installmentBox');
     if(!res||!res.schedule){box.innerHTML='';return;}
@@ -327,7 +326,7 @@
     html+='</table>'; box.innerHTML=html;
   }
 
-  /* 세금적용결과 갱신 */
+  /* 세금적용결과 갱신 / 税適用結果の更新 */
   function refreshTaxApplyResult(yrtId){
     var y=document.getElementById('baseYear').value.trim();
     if(!validYear(y)||!emp()){document.getElementById('taxApplyResult').value='미판정';return;}
@@ -338,3 +337,4 @@
       ["catch"](function(){document.getElementById('taxApplyResult').value='미판정';});
   }
 </script>
+
