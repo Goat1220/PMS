@@ -2,6 +2,64 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt"%>
 
+<!-- ==========================================
+     	 공용 버튼 폼 (스타일 + 팩토리)
+     [共通ボタン] スタイル＋ファクトリ
+========================================== -->
+<style>
+  .common-btn {
+    padding: 8px 16px;
+    margin: 4px;
+    border: none;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+  .common-btn:hover { background-color: #45a049; }
+</style>
+<script>
+  /**
+   * 공용 버튼 생성 함수 / 共通ボタン生成
+   * @param {string} label - 버튼에 표시될 텍스트
+   * @param {string} onClickFn - 버튼 클릭 시 실행할 전역 함수 이름
+   * @returns {HTMLButtonElement} 버튼 DOM
+   */
+  function createCommonButton(label, onClickFn) {
+    const btn = document.createElement("button");
+    btn.className = "common-btn";
+    btn.textContent = label;
+    btn.setAttribute("onclick", onClickFn + "()");
+    return btn;
+  }
+</script>
+
+<!-- ==========================================
+     AG Grid CSS/JS + 초기화 헬퍼
+     AG Grid リソース＋初期化ヘルパ
+     ※ 현재 화면은 커스텀 테이블 유지, 필요 시 바로 초기화 호출 가능
+========================================== -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"/>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+<script>
+  /**
+   * 공용 그리드 초기화(기본형) / 共通グリッド初期化（基本）
+   * #commonGrid 컨테이너를 대상으로 columnDefs/rowData만 넘기면 동작
+   */
+  function initCommonGrid(columnDefs, rowData) {
+    const gridOptions = {
+      columnDefs: columnDefs,
+      rowData: rowData || [],
+      defaultColDef: { sortable: true, filter: true, resizable: true }
+    };
+    new agGrid.Grid(document.querySelector("#commonGrid"), gridOptions);
+    return gridOptions;
+  }
+</script>
+<!-- (옵션) AG Grid 컨테이너: 필요시 표시 / 必要時に可視化 -->
+<div id="commonGrid" class="ag-theme-alpine" style="height:0;width:100%;overflow:hidden;"></div>
+
 <style>
   /* ============================
      레이아웃/테이블 기본 스타일
@@ -62,8 +120,16 @@
 ========================================== -->
 <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;">
   <h2 style="margin:0;font-size:18px;">급여명세서(조회/출력)(개인)</h2> <!-- 제목 / タイトル -->
-  <button class="btn" onclick="downloadPayslipExcel()">엑셀 추출</button> <!-- 엑셀(CSV) 다운로드 / Excel(CSV) ダウンロード -->
+  <!-- 엑셀(CSV) 다운로드 / Excel(CSV) ダウンロード -->
+  <div id="pageHeadBtnArea"></div>
 </div>
+<script>
+  // 공용 버튼으로 Excel 버튼 주입 / 共通ボタンでExcelボタンを挿入
+  (function mountHeadButtons(){
+    var area = document.getElementById('pageHeadBtnArea');
+    area.appendChild(createCommonButton('엑셀 추출', 'downloadPayslipExcel'));
+  })();
+</script>
 
 <!-- ==========================================
      조회 폼 영역
