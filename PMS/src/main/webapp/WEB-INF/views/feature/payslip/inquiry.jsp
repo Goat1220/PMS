@@ -3,6 +3,39 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt"%>
 
 <!-- ==========================================
+     	 Design Tokens (서비스 가이드 설정)
+     [デザイントークン] サービスガイド設定
+     ※ 가이드 값으로 교체하세요 (색/폰트/폭/브레이크포인트)
+========================================== -->
+<style>
+  :root{
+    /* 컨테이너 폭 / コンテナ幅 */
+    --container-max: 1280px;            /* 가이드 폭: 1200/1280/1366/1440 등 */
+    --container-padding-x: 16px;
+
+    /* 컬러 / カラー */
+    --brand-primary: #4CAF50;           /* 공통 버튼/탭 활성 색 */
+    --brand-primary-hover: #45a049;
+    --neutral-0: #ffffff;
+    --neutral-700: #222222;
+    --border-200: #e5e7eb;
+    --border-300: #cfd8dc;
+    --bg-soft: #f5f7fa;
+
+    /* 폰트 / フォント */
+    --font-family: system-ui, Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif;
+    --font-size-body: 14px;
+    --font-size-title: 18px;
+    --line-height: 1.5;
+
+    /* 브레이크포인트 / ブレークポイント */
+    --bp-sm: 600px;
+    --bp-md: 900px;
+    --bp-lg: 1280px;
+  }
+</style>
+
+<!-- ==========================================
      	 공용 버튼 폼 (스타일 + 팩토리)
      [共通ボタン] スタイル＋ファクトリ
 ========================================== -->
@@ -12,11 +45,14 @@
     margin: 4px;
     border: none;
     border-radius: 4px;
-    background-color: #4CAF50;
+    background-color: var(--brand-primary);
     color: white;
     cursor: pointer;
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height);
   }
-  .common-btn:hover { background-color: #45a049; }
+  .common-btn:hover { background-color: var(--brand-primary-hover); }
 </style>
 <script>
   /**
@@ -60,12 +96,53 @@
 <!-- (옵션) AG Grid 컨테이너: 필요시 표시 / 必要時に可視化 -->
 <div id="commonGrid" class="ag-theme-alpine" style="height:0;width:100%;overflow:hidden;"></div>
 
+<!-- ==========================================
+     베이스/레이아웃/컴포넌트 스타일 (토큰 적용)
+     ベース／レイアウト／コンポーネント
+========================================== -->
 <style>
-  /* ============================
-     레이아웃/테이블 기본 스타일
-     レイアウト／テーブル基本スタイル
-  ============================ */
-  .qbar { margin:10px 0 12px; display:flex; gap:10px; align-items:center; } /* 조회 조건 영역 / 検索条件バー */
+  /* 페이지 베이스 / ページベース */
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: var(--neutral-700);
+    background: var(--neutral-0);
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height);
+  }
+  body > *:first-child { margin-top:0; padding-top:0; } /* 페이지 첫 요소 상단여백 차단 / ページ先頭マージン対策 */
+
+  /* 컨테이너 (가로 길이 통일) / コンテナ（横幅統一） */
+  .container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding-left: var(--container-padding-x);
+    padding-right: var(--container-padding-x);
+  }
+
+  /* 페이지 헤드 / ページヘッダー */
+  .page-head {
+    display:flex; align-items:center; justify-content:space-between;
+    margin: 6px 0 10px;
+  }
+  .page-head h2 {
+    margin:0; font-size: var(--font-size-title);
+  }
+
+  /* 조회 바 / 検索バー */
+  .qbar { margin:10px 0 12px; display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+  .btn{ padding:6px 10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; }
+  .input{ height:28px; padding:0 8px; border:1px solid #ccc; border-radius:4px; }
+  .sel{ height:30px; padding:0 6px; border:1px solid #ccc; border-radius:4px; }
+  .muted{ color:#888; }
+
+  /* 카드 / カード */
+  .card{ border:1px solid var(--border-200); border-radius:6px; background:#fff; overflow:hidden; }
+  .card .title{ padding:10px 12px; font-weight:700; background:var(--bg-soft); border-bottom:1px solid var(--border-200); }
+
+  /* 레이아웃 그리드 / レイアウトグリッド */
   .grid {
     display:grid; gap:16px;
     grid-template-columns: 1.2fr 1fr;
@@ -74,246 +151,262 @@
   }
   .left{grid-area:left;} .right-top{grid-area:rightTop;} .right-btm{grid-area:rightBottom;}
 
-  .card{ border:1px solid #ddd; border-radius:6px; background:#fff; overflow:hidden; } /* 카드 컨테이너 / カードコンテナ */
-  .card .title{ padding:10px 12px; font-weight:700; background:#f5f7fa; border-bottom:1px solid #eee; } /* 카드 제목 / カード見出し */
+  /* 반응형 / レスポンシブ */
+  @media (max-width: calc(var(--bp-md) - 1px)) {
+    .grid {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "left"
+        "rightTop"
+        "rightBottom";
+    }
+  }
+  @media (min-width: var(--bp-lg)) {
+    .grid { grid-template-columns: 1.4fr 1fr; }
+  }
 
-  table{ width:100%; border-collapse:collapse; table-layout:fixed; } /* 고정 레이아웃 / 固定レイアウト */
-  th,td{ border:1px solid #cfd8dc; padding:6px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  thead th{ background:#fafbfc; text-align:center; } /* 헤더 배경 / ヘッダー背景 */
+  /* 테이블 / テーブル */
+  table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  th,td{ border:1px solid var(--border-300); padding:6px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  thead th{ background:#fafbfc; text-align:center; }
   .right{ text-align:right; } .center{ text-align:center; }
 
-  /* 좌측 월별급상여내역 테이블
-     左側 月別支給・賞与一覧テーブル */
+  /* 좌측 테이블 특화 / 左側テーブル特化 */
   #listTbl { table-layout: fixed; }
   #listTbl thead th:first-child,
-  #listTbl tbody td:first-child { width:36px; text-align:center; background:#f5f5f5; } /* 번호 열 / 番号列 */
-  #listTbl tbody tr.active td { background:#fff799; } /* 선택 행 강조 / 選択行の強調 */
+  #listTbl tbody td:first-child { width:36px; text-align:center; background:#f5f5f5; }
+  #listTbl tbody tr.active td { background:#fff799; }
   #listTbl tbody tr.active td:first-child { background:#f5f5f5; }
 
-  /* 입력 컨트롤 공통
-     入力コントロール共通 */
-  .btn{ padding:6px 10px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; }
-  .input{ height:28px; padding:0 8px; border:1px solid #ccc; border-radius:4px; }
-  .sel{ height:30px; padding:0 6px; border:1px solid #ccc; border-radius:4px; }
-  .muted{ color:#888; }
-
-  /* 읽기전용 입력
-     読み取り専用入力 */
+  /* 읽기전용 / 読み取り専用 */
   .readonly{ background:#f3f4f6; color:#6b7280; cursor:not-allowed; }
   .readonly:focus{ outline:none; box-shadow:none; }
   .emp-block{ display:flex; align-items:center; gap:6px; }
   .emp-name{ width:110px; } .emp-no{ width:110px; }
 
-  /* 합계(0번행) 강조 스타일
-     合計(0行目)強調スタイル */
+  /* 합계(0번행) 강조 / 合計(0行目)強調 */
   .total-row th, .total-row td{ background:#e8f5e9; font-weight:700; }
 
-  /* 페이지 첫 요소 상단여백 차단(안전)
-     ページ先頭マージン対策(安全策) */
-  html, body { margin:0; padding:0; }
-  body > *:first-child { margin-top:0; padding-top:0; }
+  /* 탭 / タブ */
+  .tabs{ display:flex; gap:6px; margin:12px 0 0 0; }
+  .tab{
+    padding:6px 10px; border:1px solid var(--border-200); background:#f6f7fb;
+    border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer;
+  }
+  /* 활성 색상을 공통 버튼과 통일 / アクティブ色を共通ボタンに統一 */
+  .tab.active{ background:var(--brand-primary); border-color:var(--brand-primary); color:#fff; font-weight:600; }
+
+  /* 포커스 접근성 / フォーカスアクセシビリティ */
+  .common-btn:focus-visible, .tab:focus-visible, .btn:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand-primary), transparent 60%);
+    outline-offset: 2px;
+  }
 </style>
 
-<!-- ==========================================
-     페이지 헤더: 제목 + 엑셀 추출 버튼
-     ページヘッダー：タイトル＋Excel出力ボタン
-========================================== -->
-<div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;">
-  <h2 style="margin:0;font-size:18px;">급여명세서(조회/출력)(개인)</h2> <!-- 제목 / タイトル -->
-  <!-- 엑셀(CSV) 다운로드 / Excel(CSV) ダウンロード -->
-  <div id="pageHeadBtnArea"></div>
-</div>
-<script>
-  // 공용 버튼으로 Excel 버튼 주입 / 共通ボタンでExcelボタンを挿入
-  (function mountHeadButtons(){
-    var area = document.getElementById('pageHeadBtnArea');
-    area.appendChild(createCommonButton('엑셀 추출', 'downloadPayslipExcel'));
-  })();
-</script>
+<div class="container"><!-- 가로 길이 일원화 컨테이너 / 横幅統一コンテナ -->
 
-<!-- ==========================================
-     조회 폼 영역
-     検索フォーム領域
-========================================== -->
-<form id="searchForm" method="get" action="">
-  <div class="qbar">
-    <div>적용연월: <!-- 適用年月 -->
-      <input class="input" type="text" name="fromYm" value="${fromYm}" placeholder="YYYY-MM / yyyymm" style="width:110px;">
-      ~
-      <input class="input" type="text" name="toYm"   value="${toYm}"   placeholder="YYYY-MM / yyyymm" style="width:110px;">
-    </div>
-
-    <div>급상여종류: <!-- 支給／賞与区分 -->
-      <select class="sel" name="payType">
-        <option value="" <c:if test="${empty payType}">selected</c:if>>전체</option> <!-- 全体 -->
-        <c:forEach var="c" items="${payTypeCodes}">
-          <option value="${c.code}" <c:if test="${payType == c.code}">selected</c:if>>
-            ${c.name} (${c.code})
-          </option>
-        </c:forEach>
-      </select>
-    </div>
-
-    <div class="emp-block">
-      <span>사원:</span> <!-- 社員 -->
-      <input class="input readonly emp-name" type="text" value="${empName}" readonly aria-readonly="true">
-      <input class="input readonly emp-no"   type="text" name="empNo" value="${empNo}" readonly aria-readonly="true">
-    </div>
-
-    <label style="user-select:none;">
-      <input type="checkbox" name="excludeZero" value="Y" <c:if test="${excludeZero == 'Y'}">checked</c:if> />
-      금액 0 미출력 <!-- 金額0を非表示 -->
-    </label>
-
-    <button type="submit" class="btn">조회</button> <!-- 検索 -->
-    <input type="hidden" name="selectedId" id="selectedId"
-           value="<c:out value='${selected != null ? selected.payslipId : param.selectedId}'/>"><!-- 현재 선택 payslipId / 現在選択のpayslipId -->
+  <!-- ==========================================
+       페이지 헤더: 제목 + 엑셀 추출 버튼
+       ページヘッダー：タイトル＋Excel出力ボタン
+  ========================================== -->
+  <div class="page-head">
+    <h2>급여명세서(조회/출력)(개인)</h2> <!-- 제목 / タイトル -->
+    <!-- 엑셀(CSV) 다운로드 / Excel(CSV) ダウンロード -->
+    <div id="pageHeadBtnArea"></div>
   </div>
-</form>
+  <script>
+    // 공용 버튼으로 Excel 버튼 주입 / 共通ボタンでExcelボタンを挿入
+    (function mountHeadButtons(){
+      var area = document.getElementById('pageHeadBtnArea');
+      area.appendChild(createCommonButton('엑셀 추출', 'downloadPayslipExcel'));
+    })();
+  </script>
 
-<!-- ==========================================
-     본문: 좌/우 그리드
-     本文：左／右グリッド
-========================================== -->
-<div class="grid">
+  <!-- ==========================================
+       조회 폼 영역
+       検索フォーム領域
+  ========================================== -->
+  <form id="searchForm" method="get" action="">
+    <div class="qbar">
+      <div>적용연월: <!-- 適用年月 -->
+        <input class="input" type="text" name="fromYm" value="${fromYm}" placeholder="YYYY-MM / yyyymm" style="width:110px;">
+        ~
+        <input class="input" type="text" name="toYm"   value="${toYm}"   placeholder="YYYY-MM / yyyymm" style="width:110px;">
+      </div>
 
-  <!-- 좌측: 월별급상여내역 / 左：月別支給・賞与一覧 -->
-  <div class="card left">
-    <div class="title">월별급상여내역</div>
-    <table id="listTbl">
-      <thead>
-        <tr>
-          <th>⚙</th>
-          <th>급상여종류</th>
-          <th>적용연월</th>
-          <th class="right">지급총액</th>
-          <th class="right">기지급액</th>
-          <th class="right">공제총액</th>
-          <th class="right">실지급액</th>
-        </tr>
-      </thead>
-      <tbody>
-        <c:forEach var="row" items="${rows}" varStatus="st">
-          <tr class="row-select" data-id="${row.payslipId}"> <!-- 클릭 시 상세 갱신 / クリックで詳細更新 -->
-            <td class="center">${st.index + 1}</td>
-            <td><c:out value="${empty row.payTypeName ? row.payType : row.payTypeName}"/></td>
-            <td><c:out value="${row.periodYm}"/></td>
-            <td class="right"><fmt:formatNumber value="${row.grossAmount}"   pattern="#,###"/></td>
-            <td class="right"><fmt:formatNumber value="${row.prevPaidAmount}" pattern="#,###"/></td>
-            <td class="right"><fmt:formatNumber value="${row.deductionSum}"   pattern="#,###"/></td>
-            <td class="right"><fmt:formatNumber value="${row.netAmount}"      pattern="#,###"/></td>
+      <div>급상여종류: <!-- 支給／賞与区分 -->
+        <select class="sel" name="payType">
+          <option value="" <c:if test="${empty payType}">selected</c:if>>전체</option> <!-- 全体 -->
+          <c:forEach var="c" items="${payTypeCodes}">
+            <option value="${c.code}" <c:if test="${payType == c.code}">selected</c:if>>
+              ${c.name} (${c.code})
+            </option>
+          </c:forEach>
+        </select>
+      </div>
+
+      <div class="emp-block">
+        <span>사원:</span> <!-- 社員 -->
+        <input class="input readonly emp-name" type="text" value="${empName}" readonly aria-readonly="true">
+        <input class="input readonly emp-no"   type="text" name="empNo" value="${empNo}" readonly aria-readonly="true">
+      </div>
+
+      <label style="user-select:none;">
+        <input type="checkbox" name="excludeZero" value="Y" <c:if test="${excludeZero == 'Y'}">checked</c:if> />
+        금액 0 미출력 <!-- 金額0を非表示 -->
+      </label>
+
+      <button type="submit" class="btn">조회</button> <!-- 検索 -->
+      <input type="hidden" name="selectedId" id="selectedId"
+             value="<c:out value='${selected != null ? selected.payslipId : param.selectedId}'/>"><!-- 현재 선택 payslipId / 現在選択のpayslipId -->
+    </div>
+  </form>
+
+  <!-- ==========================================
+       본문: 좌/우 그리드
+       本文：左／右グリッド
+  ========================================== -->
+  <div class="grid">
+
+    <!-- 좌측: 월별급상여내역 / 左：月別支給・賞与一覧 -->
+    <div class="card left">
+      <div class="title">월별급상여내역</div>
+      <table id="listTbl">
+        <thead>
+          <tr>
+            <th>⚙</th>
+            <th>급상여종류</th>
+            <th>적용연월</th>
+            <th class="right">지급총액</th>
+            <th class="right">기지급액</th>
+            <th class="right">공제총액</th>
+            <th class="right">실지급액</th>
           </tr>
+        </thead>
+        <tbody>
+          <c:forEach var="row" items="${rows}" varStatus="st">
+            <tr class="row-select" data-id="${row.payslipId}"> <!-- 클릭 시 상세 갱신 / クリックで詳細更新 -->
+              <td class="center">${st.index + 1}</td>
+              <td><c:out value="${empty row.payTypeName ? row.payType : row.payTypeName}"/></td>
+              <td><c:out value="${row.periodYm}"/></td>
+              <td class="right"><fmt:formatNumber value="${row.grossAmount}"   pattern="#,###"/></td>
+              <td class="right"><fmt:formatNumber value="${row.prevPaidAmount}" pattern="#,###"/></td>
+              <td class="right"><fmt:formatNumber value="${row.deductionSum}"   pattern="#,###"/></td>
+              <td class="right"><fmt:formatNumber value="${row.netAmount}"      pattern="#,###"/></td>
+            </tr>
+          </c:forEach>
+          <c:if test="${empty rows}">
+            <tr><td colspan="7" class="muted">데이터가 없습니다. (사번/연월을 확인하세요)</td></tr> <!-- データなし -->
+          </c:if>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 우측 상단: 지급항목내역(0번행=합계) / 右上：支給項目(0行目=合計) -->
+    <div class="card right-top">
+      <div class="title">지급항목내역</div>
+
+      <!-- 합계 계산 / 合計計算 -->
+      <c:set var="payTotal" value="0"/>
+      <c:if test="${not empty selected and not empty selected.payItems}">
+        <c:forEach var="pi" items="${selected.payItems}">
+          <c:set var="payTotal" value="${payTotal + pi.amount}"/>
         </c:forEach>
-        <c:if test="${empty rows}">
-          <tr><td colspan="7" class="muted">데이터가 없습니다. (사번/연월을 확인하세요)</td></tr> <!-- データなし -->
-        </c:if>
-      </tbody>
-    </table>
-  </div>
+      </c:if>
 
-  <!-- 우측 상단: 지급항목내역(0번행=합계) / 右上：支給項目(0行目=合計) -->
-  <div class="card right-top">
-    <div class="title">지급항목내역</div>
+      <table id="payTbl">
+        <thead>
+          <tr>
+            <th>⚙</th>
+            <th>기지급여부</th>
+            <th>인정상여여부</th>
+            <th class="right">금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 0번 라인: 합계 표시 / 0行目：合計表示 -->
+          <tr class="total-row">
+            <td>0</td>
+            <td class="center">-</td>
+            <td class="center">-</td>
+            <td class="right"><fmt:formatNumber value="${payTotal}" pattern="#,###"/></td>
+          </tr>
 
-    <!-- 합계 계산 / 合計計算 -->
-    <c:set var="payTotal" value="0"/>
-    <c:if test="${not empty selected and not empty selected.payItems}">
-      <c:forEach var="pi" items="${selected.payItems}">
-        <c:set var="payTotal" value="${payTotal + pi.amount}"/>
-      </c:forEach>
-    </c:if>
+          <c:choose>
+            <c:when test="${not empty selected and not empty selected.payItems}">
+              <c:forEach var="it" items="${selected.payItems}" varStatus="st">
+                <tr>
+                  <td>${st.index + 1}</td>
+                  <td class="center">
+                    <input type="checkbox" disabled <c:if test="${it.chkPaid=='Y'}">checked</c:if> />
+                  </td>
+                  <td class="center">
+                    <input type="checkbox" disabled <c:if test="${it.chkValid=='Y'}">checked</c:if> />
+                  </td>
+                  <td class="right"><fmt:formatNumber value="${it.amount}" pattern="#,###"/></td>
+                </tr>
+              </c:forEach>
+            </c:when>
+            <c:otherwise>
+              <tr><td colspan="4" class="muted">지급 내역이 없습니다.</td></tr> <!-- 支給内訳なし -->
+            </c:otherwise>
+          </c:choose>
+        </tbody>
+      </table>
+    </div>
 
-    <table id="payTbl">
-      <thead>
-        <tr>
-          <th>⚙</th>
-          <th>기지급여부</th>
-          <th>인정상여여부</th>
-          <th class="right">금액</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- 0번 라인: 합계 표시 / 0行目：合計表示 -->
-        <tr class="total-row">
-          <td>0</td>
-          <td class="center">-</td>
-          <td class="center">-</td>
-          <td class="right"><fmt:formatNumber value="${payTotal}" pattern="#,###"/></td>
-        </tr>
+    <!-- 우측 하단: 공제항목내역(0번행=TOTAL) / 右下：控除項目(0行目=TOTAL) -->
+    <div class="card right-btm">
+      <div class="title">공제항목내역</div>
 
-        <c:choose>
-          <c:when test="${not empty selected and not empty selected.payItems}">
-            <c:forEach var="it" items="${selected.payItems}" varStatus="st">
-              <tr>
-                <td>${st.index + 1}</td>
-                <td class="center">
-                  <input type="checkbox" disabled <c:if test="${it.chkPaid=='Y'}">checked</c:if> />
-                </td>
-                <td class="center">
-                  <input type="checkbox" disabled <c:if test="${it.chkValid=='Y'}">checked</c:if> />
-                </td>
-                <td class="right"><fmt:formatNumber value="${it.amount}" pattern="#,###"/></td>
-              </tr>
-            </c:forEach>
-          </c:when>
-          <c:otherwise>
-            <tr><td colspan="4" class="muted">지급 내역이 없습니다.</td></tr> <!-- 支給内訳なし -->
-          </c:otherwise>
-        </c:choose>
-      </tbody>
-    </table>
-  </div>
+      <!-- 합계 계산 / 合計計算 -->
+      <c:set var="dedTotal" value="0"/>
+      <c:if test="${not empty selected and not empty selected.deductionItems}">
+        <c:forEach var="dx" items="${selected.deductionItems}">
+          <c:set var="dedTotal" value="${dedTotal + dx.amount}"/>
+        </c:forEach>
+      </c:if>
 
-  <!-- 우측 하단: 공제항목내역(0번행=TOTAL) / 右下：控除項目(0行目=TOTAL) -->
-  <div class="card right-btm">
-    <div class="title">공제항목내역</div>
+      <table id="dedTbl">
+        <thead>
+          <tr>
+            <th>⚙</th>
+            <th>공제항목</th>
+            <th>공제항목코드</th>
+            <th class="right">금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 0번 라인: TOTAL / 0行目：TOTAL -->
+          <tr class="total-row">
+            <td>0</td>
+            <td>TOTAL</td>
+            <td></td>
+            <td class="right"><fmt:formatNumber value="${dedTotal}" pattern="#,###"/></td>
+          </tr>
 
-    <!-- 합계 계산 / 合計計算 -->
-    <c:set var="dedTotal" value="0"/>
-    <c:if test="${not empty selected and not empty selected.deductionItems}">
-      <c:forEach var="dx" items="${selected.deductionItems}">
-        <c:set var="dedTotal" value="${dedTotal + dx.amount}"/>
-      </c:forEach>
-    </c:if>
+          <c:choose>
+            <c:when test="${not empty selected and not empty selected.deductionItems}">
+              <c:forEach var="d" items="${selected.deductionItems}" varStatus="st">
+                <tr>
+                  <td>${st.index + 1}</td>
+                  <td><c:out value="${d.itemName}"/></td>
+                  <td><c:out value="${empty d.itemCode ? '-' : d.itemCode}"/></td>
+                  <td class="right"><fmt:formatNumber value="${d.amount}" pattern="#,###"/></td>
+                </tr>
+              </c:forEach>
+            </c:when>
+            <c:otherwise>
+              <tr><td colspan="4" class="muted">공제 내역이 없습니다.</td></tr> <!-- 控除内訳なし -->
+            </c:otherwise>
+          </c:choose>
+        </tbody>
+      </table>
+    </div>
 
-    <table id="dedTbl">
-      <thead>
-        <tr>
-          <th>⚙</th>
-          <th>공제항목</th>
-          <th>공제항목코드</th>
-          <th class="right">금액</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- 0번 라인: TOTAL / 0行目：TOTAL -->
-        <tr class="total-row">
-          <td>0</td>
-          <td>TOTAL</td>
-          <td></td>
-          <td class="right"><fmt:formatNumber value="${dedTotal}" pattern="#,###"/></td>
-        </tr>
+  </div><!-- /.grid -->
 
-        <c:choose>
-          <c:when test="${not empty selected and not empty selected.deductionItems}">
-            <c:forEach var="d" items="${selected.deductionItems}" varStatus="st">
-              <tr>
-                <td>${st.index + 1}</td>
-                <td><c:out value="${d.itemName}"/></td>
-                <td><c:out value="${empty d.itemCode ? '-' : d.itemCode}"/></td>
-                <td class="right"><fmt:formatNumber value="${d.amount}" pattern="#,###"/></td>
-              </tr>
-            </c:forEach>
-          </c:when>
-          <c:otherwise>
-            <tr><td colspan="4" class="muted">공제 내역이 없습니다.</td></tr> <!-- 控除内訳なし -->
-          </c:otherwise>
-        </c:choose>
-      </tbody>
-    </table>
-  </div>
-
-</div>
+</div><!-- /.container -->
 
 <script>
   (function(){
@@ -478,3 +571,4 @@
   <%@ include file="/WEB-INF/views/includes/form.jsp" %>
   <%@ include file="/WEB-INF/views/includes/table.jsp" %>
 </div>
+
