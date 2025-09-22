@@ -2,6 +2,67 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>       <%-- JSTL Core 태그 / JSTL Core タグ --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>     <%-- 숫자/날짜 포맷 / 数値・日付フォーマット --%>
 
+<!-- ==========================================
+     [공통1] 공용 버튼 폼 적용: 스타일 + 팩토리
+     共通ボタン：スタイル＋ファクトリ
+========================================== -->
+<style>
+  .common-btn {
+    padding: 8px 16px;
+    margin: 4px;
+    border: none;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+  .common-btn:hover { background-color: #45a049; }
+</style>
+<script>
+  /**
+   * 공용 버튼 생성 함수
+   * 共通ボタン生成
+   * @param {string} label - 버튼 텍스트
+   * @param {string} onClickFn - 클릭 시 실행할 전역 함수명
+   * @returns {HTMLButtonElement} 버튼 DOM
+   */
+  function createCommonButton(label, onClickFn) {
+    const btn = document.createElement("button");
+    btn.className = "common-btn";
+    btn.textContent = label;
+    btn.setAttribute("onclick", onClickFn + "()");
+    return btn;
+  }
+</script>
+
+<!-- ==========================================
+     [공통2] AG Grid 초기화 적용: CSS/JS + initCommonGrid
+     AG Grid 初期化：リソース＋initCommonGrid
+     ※ 현재 화면은 커스텀 테이블이므로 리소스만 로드(필요 시 즉시 전환 가능)
+========================================== -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"/>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+<script>
+  /**
+   * 공용 그리드 초기화(기본)
+   * 共通グリッド初期化（基本）
+   * @param {Array} columnDefs
+   * @param {Array} rowData
+   */
+  function initCommonGrid(columnDefs, rowData) {
+    const gridOptions = {
+      columnDefs: columnDefs,
+      rowData: rowData || [],
+      defaultColDef: { sortable: true, filter: true, resizable: true }
+    };
+    new agGrid.Grid(document.querySelector("#commonGrid"), gridOptions);
+    return gridOptions;
+  }
+</script>
+<!-- (숨김) AG Grid 컨테이너: 레이아웃 영향 제거 / 非表示コンテナ -->
+<div id="commonGrid" class="ag-theme-alpine" style="height:0;width:100%;overflow:hidden;"></div>
+
 <style>
   /* ===== 기본 레이아웃 / 基本レイアウト ===== */
   html,body{
@@ -32,12 +93,13 @@
   /* ===== 탭 / タブ ===== */
   .tabs{ display:flex; gap:6px; margin:12px 0 0 0; }
   .tab{ padding:6px 10px; border:1px solid #e5e7eb; background:#f6f7fb; border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; }
-  .tab.active{ background:#2f74ff; border-color:#2f74ff; color:#fff; font-weight:600; }
+  /* ★ 변경: 활성 탭 색상을 공통 버튼(#4CAF50)과 동일하게 맞춤 */
+  .tab.active{ background:#4CAF50; border-color:#4CAF50; color:#fff; font-weight:600; }
 
   .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; } /* 탭 내용 영역 / タブ内容領域 */
   .meta{ color:#777; font-size:12.5px; margin:6px 0 4px 0; }    /* 메타 정보 / メタ情報 */
 
-  /* ===== 표 / テーブル ===== */
+  /* ===== 표 / テ이블 ===== */
   table.grid{ width:100%; border-collapse:collapse; margin-top:6px; }
   table.grid th, table.grid td{ border:1px solid #e5e7eb; padding:8px 10px; background:#fff; }
   table.grid th{ background:#f4f6fa; text-align:left; }
@@ -133,13 +195,18 @@
 
     <div class="spacer"></div> <!-- 우측 버튼 정렬용 여백 / 右側ボタン用スペーサー -->
 
-    <!-- 동작 버튼 모음 / 操作ボタン群 -->
-    <div class="field" style="gap:8px;">
-      <button class="btn primary" onclick="onReason()">산출근거</button>
-      <button class="btn alt" onclick="onSim()">정산시뮬레이션처리</button>
-      <button class="btn alt" onclick="onDelete()">정산시뮬레이션결과삭제</button>
-      <button class="btn alt" onclick="onInstallment()">납부특례세액시뮬레이션처리</button>
-    </div>
+    <!-- 동작 버튼 모음(공용 버튼으로 주입) / 操作ボタン群（共通ボタンで挿入） -->
+    <div class="field" id="opsBtnArea" style="gap:8px;"></div>
+    <script>
+      // 공용 버튼으로 기존 동작 주입 / 既存動作を共通ボタンで注入
+      (function mountOps(){
+        var area = document.getElementById('opsBtnArea');
+        area.appendChild(createCommonButton('산출근거', 'onReason'));
+        area.appendChild(createCommonButton('정산시뮬레이션처리', 'onSim'));
+        area.appendChild(createCommonButton('정산시뮬레이션결과삭제', 'onDelete'));
+        area.appendChild(createCommonButton('납부특례세액시뮬레이션처리', 'onInstallment'));
+      })();
+    </script>
   </div>
 
   <!-- ===== 탭 / タブ ===== -->
@@ -337,4 +404,3 @@
       ["catch"](function(){document.getElementById('taxApplyResult').value='미판정';});
   }
 </script>
-
