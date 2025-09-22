@@ -5,7 +5,7 @@
 <style>
   /* ============================
      레이아웃/테이블 기본 스타일
-     레이アウト／テーブル基本スタイル
+     レイアウト／テーブル基本スタイル
   ============================ */
   .qbar { margin:10px 0 12px; display:flex; gap:10px; align-items:center; } /* 조회 조건 영역 / 検索条件バー */
   .grid {
@@ -412,4 +412,3 @@
   <%@ include file="/WEB-INF/views/includes/form.jsp" %>
   <%@ include file="/WEB-INF/views/includes/table.jsp" %>
 </div>
-

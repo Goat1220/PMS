@@ -2,83 +2,83 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- mapper 인터페이스 FQCN과 100% 일치해야 함 -->
+<!-- 매퍼 인터페이스 FQCN과 100% 일치 / マッパーInterfaceのFQCNと完全一致 -->
 <mapper namespace="org.pms.feature.payslip.mapper.PayslipMapper">
 
-  <!-- 1) 특정 사번+연월 요약 -->
+  <!-- 1) 특정 사번+연월 요약 / 特定の社員番号＋年月のサマリー -->
   <select id="selectPayslipSummary" resultType="org.pms.feature.payslip.domain.PayslipSummary">
     SELECT
-      p.payslip_id    AS payslipId,
-      e.emp_no        AS empNo,
-      e.emp_name      AS empName,
-      p.apply_yyyymm  AS periodYm,
-      p.pay_type      AS payType,
-      NVL((SELECT SUM(i.amount) FROM payslip_item i WHERE i.payslip_id = p.payslip_id), 0) AS grossAmount,
-      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum,
-      NVL(p.net_pay_amt, 0) AS netAmount
+      p.payslip_id    AS payslipId,   <!-- 급여명세ID / 明細ID -->
+      e.emp_no        AS empNo,       <!-- 사번 / 社員番号 -->
+      e.emp_name      AS empName,     <!-- 사원명 / 社員名 -->
+      p.apply_yyyymm  AS periodYm,    <!-- 귀속연월 / 対象年月 -->
+      p.pay_type      AS payType,     <!-- 급여유형 / 給与種類 -->
+      NVL((SELECT SUM(i.amount) FROM payslip_item i WHERE i.payslip_id = p.payslip_id), 0) AS grossAmount,   <!-- 총지급 / 総支給 -->
+      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum, <!-- 총공제 / 総控除 -->
+      NVL(p.net_pay_amt, 0) AS netAmount  <!-- 실지급액 / 手取り額 -->
     FROM payslip p
     JOIN emp e ON e.emp_id = p.emp_id
-    WHERE e.emp_no = #{empNo}
-      AND p.apply_yyyymm = #{ym}
+    WHERE e.emp_no = #{empNo}  <!-- 파라미터: 사번 / パラメータ：社員番号 -->
+      AND p.apply_yyyymm = #{ym} <!-- 파라미터: 연월 / パラメータ：年月 -->
   </select>
 
-  <!-- 2) 지급 항목 -->
+  <!-- 2) 지급 항목 / 支給項目 -->
   <select id="selectPayItems" resultType="org.pms.feature.payslip.domain.PayItem">
     SELECT
-      i.item_name                 AS itemName,
-      NVL(i.is_previous,     'N') AS chkPaid,
-      NVL(i.is_safety_bonus, 'N') AS chkValid,
-      NVL(i.amount, 0)            AS amount
+      i.item_name                 AS itemName,  <!-- 항목명 / 項目名 -->
+      NVL(i.is_previous,     'N') AS chkPaid,   <!-- 전월기지급 여부 / 前月既支給フラグ -->
+      NVL(i.is_safety_bonus, 'N') AS chkValid,  <!-- 안전수당 등 유효 플래그 / 安全手当等の有効フラグ -->
+      NVL(i.amount, 0)            AS amount     <!-- 금액 / 金額 -->
     FROM payslip_item i
-    WHERE i.payslip_id = #{payslipId}
+    WHERE i.payslip_id = #{payslipId}  <!-- 파라미터: payslipId / パラメータ：payslipId -->
     ORDER BY i.item_id
   </select>
 
-  <!-- 3) 공제 항목 -->
+  <!-- 3) 공제 항목 / 控除項目 -->
   <select id="selectDeductionItems" resultType="org.pms.feature.payslip.domain.DeductionItem">
     SELECT
-      d.deduction_code                        AS itemCode,
-      NVL(d.deduction_name, d.deduction_code) AS itemName,
-      NVL(d.amount, 0)                        AS amount
+      d.deduction_code                        AS itemCode,  <!-- 코드 / コード -->
+      NVL(d.deduction_name, d.deduction_code) AS itemName,  <!-- 명칭(없으면 코드) / 名称（無ければコード） -->
+      NVL(d.amount, 0)                        AS amount     <!-- 금액 / 金額 -->
     FROM payslip_deduction d
     WHERE d.payslip_id = #{payslipId}
     ORDER BY d.pd_id
   </select>
 
-  <!-- 4) 좌측 목록 -->
+  <!-- 4) 좌측 목록 / 左側リスト（条件検索） -->
   <select id="selectPayslipList" resultType="org.pms.feature.payslip.domain.PayslipListRow">
     SELECT
       p.payslip_id   AS payslipId,
       p.pay_type     AS payType,
       pt.name        AS payTypeName,
       p.apply_yyyymm AS periodYm,
-      NVL(SUM(i.amount), 0) AS grossAmount,
-      NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount ELSE 0 END), 0) AS prevPaidAmount,
-      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum,
-      NVL(p.net_pay_amt, 0) AS netAmount
+      NVL(SUM(i.amount), 0) AS grossAmount,  <!-- 총지급 합계 / 総支給合計 -->
+      NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount ELSE 0 END), 0) AS prevPaidAmount, <!-- 전월기지급 합계 / 前月既支給合計 -->
+      NVL((SELECT SUM(d.amount) FROM payslip_deduction d WHERE d.payslip_id = p.payslip_id), 0) AS deductionSum, <!-- 총공제 / 総控除 -->
+      NVL(p.net_pay_amt, 0) AS netAmount  <!-- 실지급액 / 手取り額 -->
     FROM payslip p
     JOIN emp e ON e.emp_id = p.emp_id
     LEFT JOIN payslip_item  i  ON i.payslip_id = p.payslip_id
     LEFT JOIN pay_type_code pt ON pt.pay_type  = p.pay_type
     WHERE e.emp_no = #{empNo}
       <if test="fromYm != null and fromYm != ''">
-        AND p.apply_yyyymm &gt;= #{fromYm}
+        AND p.apply_yyyymm &gt;= #{fromYm}   <!-- 시작 연월 / 開始年月 -->
       </if>
       <if test="toYm != null and toYm != ''">
-        AND p.apply_yyyymm &lt;= #{toYm}
+        AND p.apply_yyyymm &lt;= #{toYm}     <!-- 종료 연월 / 終了年月 -->
       </if>
       <if test="payType != null and payType != ''">
-        AND p.pay_type = #{payType}
+        AND p.pay_type = #{payType}         <!-- 급여유형 필터 / 給与種類フィルタ -->
       </if>
     GROUP BY p.payslip_id, p.pay_type, pt.name, p.apply_yyyymm, p.net_pay_amt
     HAVING 1 = 1
       <if test='"Y".equals(excludeZero)'>
-        AND NVL(p.net_pay_amt, 0) &lt;&gt; 0
+        AND NVL(p.net_pay_amt, 0) &lt;&gt; 0  <!-- 0원 제외 / 0金額を除外 -->
       </if>
     ORDER BY p.apply_yyyymm DESC, p.payslip_id DESC
   </select>
 
-  <!-- 5) payslipId로 단건 요약 -->
+  <!-- 5) payslipId로 단건 요약 / ID指定サマリー -->
   <select id="selectPayslipSummaryById" resultType="org.pms.feature.payslip.domain.PayslipSummary">
     SELECT
       p.payslip_id    AS payslipId,
@@ -94,7 +94,7 @@
     WHERE p.payslip_id = #{payslipId}
   </select>
 
-  <!-- 6) 급여유형 코드 목록 -->
+  <!-- 6) 급여유형 코드 목록 / 給与種類コード一覧 -->
   <select id="selectPayTypeCodes" resultType="org.pms.feature.payslip.domain.PayTypeCode">
     SELECT
       pt.pay_type AS code,
@@ -105,3 +105,4 @@
   </select>
 
 </mapper>
+
