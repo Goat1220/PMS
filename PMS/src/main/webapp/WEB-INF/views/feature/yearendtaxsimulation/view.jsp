@@ -72,7 +72,22 @@
   }
   .container{ width:100%; max-width:1280px; margin:0 auto; padding:16px; } /* 중앙 고정 폭 / 中央固定幅 */
 
-  .page-title{ font-size:18px; font-weight:700; margin:6px 0 14px 0; } /* 페이지 제목 / ページタイトル */
+  .page-title{ font-size:18px; font-weight:700; } /* 페이지 제목 / ページタイトル */
+
+  /* ===== 제목 오른쪽 엑셀 버튼 정렬 / タイトル右側のボタン配置 ===== */
+  .page-header{
+    display:flex; align-items:center; gap:12px;
+    margin:6px 0 14px 0; /* 기존 제목 마진 대체 */
+  }
+  #titleBtnAreaExcel{
+    margin-left:auto;           /* 오른쪽 끝으로 / 右端へ */
+    display:flex; gap:8px;
+    white-space:nowrap;         /* 줄바꿈 방지 / 折り返し防止 */
+  }
+  @media (max-width: 980px){
+    .page-header{ flex-wrap:wrap; }
+    #titleBtnAreaExcel{ width:100%; justify-content:flex-end; }
+  }
 
   /* ===== 검색바 / 検索バー ===== */
   .searchbar{
@@ -137,7 +152,11 @@
 
 <div class="container">
 
-  <div class="page-title">연말정산시뮬레이션(개인원본)</div>
+  <!-- 제목 + 우측 엑셀 버튼 / タイトル＋右側のエクセルボタン -->
+  <div class="page-header">
+    <div class="page-title">연말정산시뮬레이션(개인원본)</div>
+    <div id="titleBtnAreaExcel"></div>
+  </div>
 
   <input type="hidden" id="yrtId" value="${simHeader.yrtId}" />
 
@@ -189,18 +208,31 @@
 
     <div class="spacer"></div>
 
-    <!-- 공용 버튼 주입 -->
+    <!-- 공용 버튼 주입: 검색바 쪽(기존 기능 유지) / 共通ボタン注入：検索バー側（既存機能維持） -->
     <div class="field" id="opsBtnArea" style="gap:8px;"></div>
-    <script>
-      (function mountOps(){
-        var area = document.getElementById('opsBtnArea');
+  </div>
+
+  <!-- 공용 버튼 및 엑셀 버튼 주입 / 共通ボタン＋エクセルボタン注入 -->
+  <script>
+    (function mountOps(){
+      var area = document.getElementById('opsBtnArea');
+      if (area && !area.dataset.inited) {
+        area.dataset.inited = '1';
         area.appendChild(createCommonButton('산출근거', 'onReason'));
         area.appendChild(createCommonButton('정산시뮬레이션처리', 'onSim'));
         area.appendChild(createCommonButton('정산시뮬레이션결과삭제', 'onDelete'));
         area.appendChild(createCommonButton('납부특례세액시뮬레이션처리', 'onInstallment'));
-      })();
-    </script>
-  </div>
+      }
+
+      // 제목 오른쪽 전용 엑셀 버튼 / タイトル右側の専用エクセルボタン
+      var titleArea = document.getElementById('titleBtnAreaExcel');
+      if (titleArea && !titleArea.querySelector('button[data-role="export-csv"]')) {
+        var btn = createCommonButton('엑셀 추출', 'onExportCsv');
+        btn.dataset.role = 'export-csv';
+        titleArea.appendChild(btn);
+      }
+    })();
+  </script>
 
   <!-- ===== 탭 ===== -->
   <div class="tabs">
@@ -399,6 +431,70 @@
       .then(function(r){return r.ok?r.text():Promise.reject(r);})
       .then(function(t){document.getElementById('taxApplyResult').value=t||'미판정';})
       ["catch"](function(){document.getElementById('taxApplyResult').value='미판정';});
+  }
+</script>
+
+<script>
+  /**
+   * 표를 CSV로 추출 (UTF-8 BOM 포함)
+   * テーブルをCSVに出力（UTF-8 BOM付与：Excel文字化け対策）
+   * @param {HTMLTableElement} tbl - 대상 테이블 / 対象テーブル
+   * @param {string} filename    - 저장 파일명 / 保存ファイル名
+   */
+  function exportTableToCsv(tbl, filename){
+    if(!tbl){ alert('내보낼 표를 찾지 못했습니다.'); return; }
+
+    // 행 데이터 수집 / 行データ収集
+    var rows = Array.prototype.slice.call(tbl.querySelectorAll('tr'));
+    var csvLines = rows.map(function(tr){
+      var cells = Array.prototype.slice.call(tr.querySelectorAll('th,td'));
+      return cells.map(function(td){
+        // 셀 텍스트 정제 / セル文字列整形（改行→空白、前後トリム）
+        var text = (td.innerText || '').replace(/\r?\n|\r/g, ' ').trim();
+        // CSV 안전 처리: " 로 감싸고 내부의 " 는 "" 로 이스케이프
+        // CSV 安全化：ダブルクォートで囲み、内部の " は "" に
+        text = '"' + text.replace(/"/g, '""') + '"';
+        return text;
+      }).join(',');
+    }).join('\r\n');
+
+    // UTF-8 BOM 추가 (엑셀 한글/일본어 깨짐 방지) / BOM付与でExcel文字化け回避
+    var blob = new Blob(["\uFEFF" + csvLines], {type: 'text/csv;charset=utf-8;'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'export.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  /**
+   * 현재 활성 탭의 table.grid를 CSV로 저장
+   * アクティブタブの table.grid をCSV保存
+   */
+  function onExportCsv(){
+    // 어떤 탭이 활성인지 판별 / どのタブがアクティブか判定
+    var isFinalActive = document.getElementById('tab-final').classList.contains('active');
+
+    // 보이는 표 선택 / 可視テーブル選択
+    var tbl = document.querySelector(isFinalActive
+      ? '#panel-final table.grid'
+      : '#panel-sim table.grid');
+
+    // 파일명 생성: yearend_YYYY_[final|simulation]_yyyyMMdd_HHmmss.csv
+    var baseYearEl = document.getElementById('baseYear');
+    var y = (baseYearEl && baseYearEl.value ? baseYearEl.value : '').trim() || 'YEAR';
+    var tabLabel = isFinalActive ? 'final' : 'simulation';
+    var now = new Date();
+    var ts = now.getFullYear()
+             + String(now.getMonth()+1).padStart(2,'0')
+             + String(now.getDate()).padStart(2,'0') + '_'
+             + String(now.getHours()).padStart(2,'0')
+             + String(now.getMinutes()).padStart(2,'0')
+             + String(now.getSeconds()).padStart(2,'0');
+    var fname = 'yearend_' + y + '_' + tabLabel + '_' + ts + '.csv';
+
+    exportTableToCsv(tbl, fname);
   }
 </script>
 
