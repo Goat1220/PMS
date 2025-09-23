@@ -371,7 +371,9 @@
     btn = $('#btnApplyYrt'); if (btn) btn.addEventListener('click', doApplyYrt);
     btn = $('#btnConfirm');  if (btn) btn.addEventListener('click', doConfirm);
     btn = $('#btnUnconfirm');if (btn) btn.addEventListener('click', doUnconfirm);
-
+    btn = $('#btnUnconfirm');if (btn) btn.addEventListener('click', doUnconfirm);
+    btn = $('#btnSearchEmp');if (btn) btn.addEventListener('click', openEmployeePopup);
+    
     // cfg.unconfirm이 없으면 버튼 비활성화
     if (!cfg.unconfirm) {
       var unBtn = $('#btnUnconfirm');
@@ -414,6 +416,36 @@
 	  });
 	}
 
+// 팝업에서 호출할 콜백 (이미 popup-common.js에서 window.opener.onEmployeePicked 호출)
+// function onEmployeePicked(row) {
+// console.log('선택된 사원:', row);
+// // 예시: 화면의 입력칸에 채우기
+// document.getElementById('empNo').value = row.empNo || '';
+// document.getElementById('empName').value = row.empName || '';
+// document.getElementById('deptName').value= row.deptName || '';
+// // 필요 시 추가 필드들 매핑
+// }
+//  
+  window.onEmployeePicked = function(row) {
+    console.log("화면 업데이트");
+    document.getElementById('empNo').value   = row.empNo || '';
+    document.getElementById('empName').value = row.empName || '';
+    document.getElementById('deptName').value= row.deptName || '';
+    };
+
+  // 사원 검색 팝업 열기
+  function openEmployeePopup() {
+    const w = 1100, h = 700;
+    const x = (screen.availWidth  - w) / 2;
+    const y = (screen.availHeight - h) / 2;
+    window.open(
+      'popups/employees',  // JSP 경로
+      'empPopup',
+      `width=${w},height=${h},left=${x},top=${y},resizable=yes,scrollbars=yes`
+    );
+  }
+  
+  
   // ===================== 초기화 =====================
   document.addEventListener('DOMContentLoaded', function () {
     bindEvents();

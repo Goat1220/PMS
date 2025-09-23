@@ -76,9 +76,10 @@ var POPUP = (function () {
 
         tr.appendChild(td);
       }
-
+      
+      
       // 행 더블클릭 → 선택 콜백
-      (function (r) { tr.ondblclick = function () { cfg.onRowClick(r); }; })(row);
+      (function (r) { tr.ondblclick = function () {  console.log(r); cfg.onRowClick(r); }; })(row);
 
       body.appendChild(tr);
     }
