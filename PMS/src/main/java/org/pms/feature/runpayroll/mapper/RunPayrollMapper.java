@@ -62,6 +62,12 @@ public interface RunPayrollMapper {
     int confirmPayslips(@Param("yyyymm") String yyyymm,
                         @Param("payType") String payType,
                         @Param("empNos") List<String> empNos);
+    
+    int unconfirmPayslips(
+            @Param("yyyymm") String yyyymm,
+            @Param("payType") String payType,
+            @Param("empNos") List<String> empNos
+    );
 
     // ===== 월집계(pay_month_summary) =====
     Map<String, Object> calcMonthRollup(@Param("yyyymm") String yyyymm,
@@ -107,4 +113,12 @@ public interface RunPayrollMapper {
                             @Param("code") String code,
                             @Param("name") String name,
                             @Param("amount") Long amount);
+    
+    int updateEmpRetiredYn(@Param("empId") Long empId,
+            @Param("yyyymm") String yyyymm,
+            @Param("retiredYn") String retiredYn);
+    
+    //월별 합계 업서트
+    int upsertMonthSummary(@Param("yyyymm") String yyyymm,
+                           @Param("payType") String payType);
 }

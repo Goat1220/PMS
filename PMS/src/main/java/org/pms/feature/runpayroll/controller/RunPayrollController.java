@@ -58,4 +58,12 @@ public class RunPayrollController {
     public SimpleResult confirm(@RequestBody BatchEmpRequest req){
         return service.confirm(req);
     }
+    
+    @PostMapping("/unconfirm")
+    public SimpleResult unconfirm(
+            @RequestParam String yyyymm,
+            @RequestParam String payType,
+            @RequestBody List<String> empNos) {
+        return service.unconfirmPayslips(yyyymm, payType, empNos);
+    }
 }

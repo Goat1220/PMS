@@ -63,49 +63,98 @@
 
 	<!-- emp_tax_profile 플래그 upsert (필요 컬럼만 갱신) -->
 	<update id="upsertPayslipFlags">
-		MERGE INTO emp_tax_profile t
-		USING (SELECT #{empId}
-		emp_id FROM dual) x
-		ON (t.emp_id = x.emp_id)
-		WHEN MATCHED THEN UPDATE
-		SET
-		t.tax_adjust_rate = #{f.taxAdjustRate},
-		t.project_name =
-		#{f.projectName},
-		t.tax_calc_exempt_yn = NVL(#{f.taxCalcExemptYn},
-		t.tax_calc_exempt_yn),
-		t.prorate_yn = NVL(#{f.prorateYn},
-		t.prorate_yn),
-		t.settlement_reflect_yn = NVL(#{f.settlementYn},
-		t.settlement_reflect_yn),
-		t.manuf_tax_exempt_yn =
-		NVL(#{f.nonTaxProdYn}, t.manuf_tax_exempt_yn),
-		t.overseas_tax_exempt_yn = NVL(#{f.foreignWorkYn},
-		t.overseas_tax_exempt_yn),
-		t.researcher_tax_exempt_yn =
-		NVL(#{f.researcherYn}, t.researcher_tax_exempt_yn),
-		t.income_tax_reduction_rate= #{f.incomeTaxReductionRate},
-		t.personal_tax_apply_type = #{f.personalTaxApplyType},
-		t.bonus_rate =
-		#{f.bonusRate}
-		WHEN NOT MATCHED THEN INSERT
-		(etp_id, emp_id,
-		tax_adjust_rate, project_name,
-		tax_calc_exempt_yn, prorate_yn,
-		settlement_reflect_yn,
-		manuf_tax_exempt_yn, overseas_tax_exempt_yn,
-		researcher_tax_exempt_yn,
-		income_tax_reduction_rate,
-		personal_tax_apply_type, bonus_rate)
-		VALUES
-		(/* 시퀀스 필요시 교체: */
-		SEQ_ETP_ID.NEXTVAL, #{empId}, #{f.taxAdjustRate},
-		#{f.projectName},
-		#{f.taxCalcExemptYn}, #{f.prorateYn}, #{f.settlementYn},
-		#{f.nonTaxProdYn}, #{f.foreignWorkYn}, #{f.researcherYn},
-		#{f.incomeTaxReductionRate}, #{f.personalTaxApplyType},
-		#{f.bonusRate});
+  <![CDATA[
+  MERGE INTO emp_tax_profile t
+  USING (SELECT #{empId} emp_id FROM dual) x
+     ON (t.emp_id = x.emp_id)
+  WHEN MATCHED THEN UPDATE SET
+       t.tax_adjust_rate           = NVL(#{f.taxAdjustRate,           jdbcType=NUMERIC}, t.tax_adjust_rate),
+       t.project_name              = NVL(#{f.projectName,             jdbcType=VARCHAR}, t.project_name),
+       t.tax_calc_exempt_yn        = NVL(#{f.taxCalcExemptYn,         jdbcType=VARCHAR}, t.tax_calc_exempt_yn),
+       t.prorate_yn                = NVL(#{f.prorateYn,               jdbcType=VARCHAR}, t.prorate_yn),
+       t.settlement_reflect_yn     = NVL(#{f.settlementReflectYn,     jdbcType=VARCHAR}, t.settlement_reflect_yn),
+       t.manuf_tax_exempt_yn       = NVL(#{f.manufTaxExemptYn,        jdbcType=VARCHAR}, t.manuf_tax_exempt_yn),
+       t.overseas_tax_exempt_yn    = NVL(#{f.overseasTaxExemptYn,     jdbcType=VARCHAR}, t.overseas_tax_exempt_yn),
+       t.researcher_tax_exempt_yn  = NVL(#{f.researcherTaxExemptYn,   jdbcType=VARCHAR}, t.researcher_tax_exempt_yn),
+       t.income_tax_reduction_rate = NVL(#{f.incomeTaxReductionRate,  jdbcType=NUMERIC}, t.income_tax_reduction_rate),
+       t.personal_tax_apply_type   = NVL(#{f.personalTaxApplyType,    jdbcType=VARCHAR}, t.personal_tax_apply_type),
+       t.bonus_rate                = NVL(#{f.bonusRate,               jdbcType=NUMERIC}, t.bonus_rate)
+  WHEN NOT MATCHED THEN INSERT
+       (etp_id, emp_id, tax_adjust_rate, project_name,
+        tax_calc_exempt_yn, prorate_yn, settlement_reflect_yn,
+        manuf_tax_exempt_yn, overseas_tax_exempt_yn, researcher_tax_exempt_yn,
+        income_tax_reduction_rate, personal_tax_apply_type, bonus_rate)
+  VALUES
+       (seq_etp.NEXTVAL, #{empId},
+        NVL(#{f.taxAdjustRate,          jdbcType=NUMERIC}, NULL),
+        NVL(#{f.projectName,            jdbcType=VARCHAR}, NULL),
+        NVL(#{f.taxCalcExemptYn,        jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.prorateYn,              jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.settlementReflectYn,    jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.manufTaxExemptYn,       jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.overseasTaxExemptYn,    jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.researcherTaxExemptYn,  jdbcType=VARCHAR}, 'N'),
+        NVL(#{f.incomeTaxReductionRate, jdbcType=NUMERIC}, NULL),
+        NVL(#{f.personalTaxApplyType,   jdbcType=VARCHAR}, NULL),
+        NVL(#{f.bonusRate,              jdbcType=NUMERIC}, NULL)
+       )
+  ]]>
 	</update>
+
+
+	<!-- ========================= 월별 합계 업서트 ========================= -->
+	<update id="upsertMonthSummary">
+		MERGE INTO pay_month_summary s
+		USING (
+		SELECT
+		#{payType} AS pay_type,
+		#{yyyymm} AS apply_yyyymm,
+		NVL(SUM(i.amount),0)
+		AS total_pay_amt,
+		NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount
+		ELSE 0 END),0) AS
+		prev_paid_amt,
+		NVL(SUM(d.amount),0) AS total_ded_amt,
+		NVL(SUM(i.amount),0) - NVL(SUM(d.amount),0) AS net_pay_amt
+		FROM payslip
+		p
+		LEFT JOIN payslip_item i ON i.payslip_id = p.payslip_id
+		LEFT JOIN
+		payslip_deduction d ON d.payslip_id = p.payslip_id
+		WHERE p.apply_yyyymm
+		= #{yyyymm}
+		AND p.pay_type = #{payType}
+		) x
+		ON (s.pay_type = x.pay_type
+		AND s.apply_yyyymm = x.apply_yyyymm)
+		WHEN MATCHED THEN
+		UPDATE SET
+		s.total_pay_amt = x.total_pay_amt,
+		s.prev_paid_amt = x.prev_paid_amt,
+		s.total_ded_amt = x.total_ded_amt,
+		s.net_pay_amt = x.net_pay_amt
+		WHEN
+		NOT MATCHED THEN
+		INSERT (pay_month_id, pay_type, apply_yyyymm,
+		total_pay_amt, prev_paid_amt,
+		total_ded_amt, net_pay_amt)
+		VALUES
+		(seq_pms.NEXTVAL, x.pay_type, x.apply_yyyymm, x.total_pay_amt,
+		x.prev_paid_amt, x.total_ded_amt, x.net_pay_amt)
+	</update>
+
+
+	<!-- 퇴직여부 업데이트: 'Y'면 해당 yyyymm의 말일로 설정, 'N'이면 해제 -->
+	<update id="updateEmpRetiredYn">
+		UPDATE emp
+		SET retire_date = CASE WHEN #{retiredYn} =
+		'Y'
+		THEN LAST_DAY(TO_DATE(#{yyyymm}||'-01','YYYY-MM-DD'))
+		ELSE NULL
+		END
+		WHERE emp_id = #{empId}
+	</update>
+
 
 	<!-- ========================= ① 요약 ========================= -->
 	<select id="selectPayrollSummary"
@@ -144,10 +193,10 @@
       etp.project_name               AS projectName,
       NVL(etp.tax_calc_exempt_yn,'N')       AS taxCalcExemptYn,
       NVL(etp.prorate_yn,'N')               AS prorateYn,
-      NVL(etp.settlement_reflect_yn,'N')    AS settlementYn,
-      NVL(etp.manuf_tax_exempt_yn,'N')      AS nonTaxProdYn,
-      NVL(etp.overseas_tax_exempt_yn,'N')   AS foreignWorkYn,
-      NVL(etp.researcher_tax_exempt_yn,'N') AS researcherYn,
+      NVL(etp.settlement_reflect_yn,'N')    AS settlementReflectYn,
+      NVL(etp.manuf_tax_exempt_yn,'N')      AS manufTaxExemptYn,
+      NVL(etp.overseas_tax_exempt_yn,'N')   AS overseasTaxExemptYn,
+      NVL(etp.researcher_tax_exempt_yn,'N') AS researcherTaxExemptYn,
       etp.income_tax_reduction_rate  AS incomeTaxReductionRate,
       etp.personal_tax_apply_type    AS personalTaxApplyType,
       etp.bonus_rate                 AS bonusRate,
@@ -522,6 +571,25 @@
 		WHERE e.emp_no IN
 		<foreach collection="empNos" item="no" open="(" close=")"
 			separator=",">
+			#{no}
+		</foreach>
+		)
+	</update>
+
+	<!-- 확정 해제 -->
+	<update id="unconfirmPayslips">
+		UPDATE payslip p
+		SET p.confirmed_yn = 'N',
+		p.confirmed_at = NULL
+		WHERE
+		p.apply_yyyymm = #{yyyymm}
+		AND p.pay_type = #{payType}
+		AND p.emp_id IN (
+		SELECT e.emp_id
+		FROM emp e
+		WHERE e.emp_no IN
+		<foreach collection="empNos" item="no" open="(" separator=","
+			close=")">
 			#{no}
 		</foreach>
 		)

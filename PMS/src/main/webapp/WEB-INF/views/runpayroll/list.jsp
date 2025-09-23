@@ -152,6 +152,7 @@
 <c:url var="retaxUrl"      value="/runpayroll/api/recalc-taxes"/>
 <c:url var="confirmUrl"    value="/runpayroll/api/confirm"/>
 <c:url var="applyYrtUrl"   value="/runpayroll/api/apply-yrt"/>
+<c:url var="unconfirmUrl" value="/runpayroll/api/unconfirm"/>
 
 <script>
   window.RunPayrollConfig = {
@@ -161,7 +162,8 @@
     process:    '${processUrl}',
     retax:      '${retaxUrl}',
     confirm:    '${confirmUrl}',
-    applyYrt:   '${applyYrtUrl}'
+    applyYrt:   '${applyYrtUrl}',
+    unconfirm:   '${unconfirmUrl}'
   };
 </script>
 

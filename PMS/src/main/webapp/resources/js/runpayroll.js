@@ -53,7 +53,7 @@
     var full = params ? (url + '?' + qs(params)) : url;
     fetch(full, { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
-      .then(function (data) { onDone && onDone(data); })
+      .then(function (data) { if (onDone) onDone(data); })
       .catch(function (e) { toast('요청 실패: ' + e); });
   }
 
@@ -65,7 +65,7 @@
       body: JSON.stringify(payload || {})
     })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
-      .then(function (data) { onDone && onDone(data); })
+      .then(function (data) { if (onDone) onDone(data); })
       .catch(function (e) { toast('요청 실패: ' + e); });
   }
 
@@ -107,10 +107,10 @@
 
         + '<td class="center"><input type="checkbox" name="taxCalcExemptYn" ' + yn(row.taxCalcExemptYn) + '></td>'
         + '<td class="center"><input type="checkbox" name="prorateYn" ' + yn(row.prorateYn) + '></td>'
-        + '<td class="center"><input type="checkbox" name="settlementYn" ' + yn(row.settlementYn) + '></td>'
-        + '<td class="center"><input type="checkbox" name="nonTaxProdYn" ' + yn(row.nonTaxProdYn) + '></td>'
-        + '<td class="center"><input type="checkbox" name="foreignWorkYn" ' + yn(row.foreignWorkYn) + '></td>'
-        + '<td class="center"><input type="checkbox" name="researcherYn" ' + yn(row.researcherYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="settlementReflectYn" ' + yn(row.settlementReflectYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="manufTaxExemptYn" ' + yn(row.manufTaxExemptYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="overseasTaxExemptYn" ' + yn(row.overseasTaxExemptYn) + '></td>'
+        + '<td class="center"><input type="checkbox" name="researcherTaxExemptYn" ' + yn(row.researcherTaxExemptYn) + '></td>'
 
         + '<td><input type="number" step="0.001" name="incomeTaxReductionRate" value="' + safeVal(row.incomeTaxReductionRate) + '" style="width:90px"></td>'
         + '<td><input type="text" name="personalTaxApplyType" value="' + safeVal(row.personalTaxApplyType) + '" style="width:110px"></td>'
@@ -120,7 +120,7 @@
         + '<td style="text-align:right">' + formatAmt(row.prevPayTotAmt) + '</td>'
         + '<td style="text-align:right">' + formatAmt(row.dedTotAmt) + '</td>'
         + '<td style="text-align:right">' + formatAmt(row.netPayAmt) + '</td>'
-        + '<td>' + (row.retireYn === 'Y' ? '퇴직' : '') + '</td>';
+        + '<td class="center"><input type="checkbox" name="retiredYn" ' + yn(row.retireYn) + '></td>'; 
 
       tr.innerHTML = html;
 
@@ -136,7 +136,8 @@
     var sc = $('#summaryCount');
     if (sc) sc.textContent = '총 ' + cnt + '명';
     var chkAllHeader = $('#chkAllHeader');
-    if (chkAllHeader) chkAllHeader.checked = false;
+    if (chkAllHeader) { chkAllHeader.checked = false; chkAllHeader.indeterminate = false; }
+    bindRowCheckSync();
   }
 
   // ===================== 렌더: 상세 =====================
@@ -207,11 +208,12 @@
   }
 
   // ===================== EmpFlag 수집 =====================
-  function collectFlags() {
+  function collectFlags(selectedSet) {
     var flags = [];
     $$('#tblSummary tbody tr[data-empno]').forEach(function (tr) {
       var empNo = tr.getAttribute('data-empno');
-      if (!empNo) return;
+      if (!empNo || (selectedSet && !selectedSet.has(empNo))) return;
+
       function get(name) { return tr.querySelector('[name="' + name + '"]'); }
       function val(name) {
         var el = get(name);
@@ -219,26 +221,28 @@
         if (el.type === 'checkbox') return el.checked ? 'Y' : 'N';
         return (el.value || '').trim();
       }
+
       flags.push({
         empNo: empNo,
-        taxAdjustRate: val('taxAdjustRate'),
-        projectName: val('projectName'),
-        taxCalcExemptYn: val('taxCalcExemptYn'),
-        prorateYn: val('prorateYn'),
-        settlementYn: val('settlementYn'),
-        nonTaxProdYn: val('nonTaxProdYn'),
-        foreignWorkYn: val('foreignWorkYn'),
-        researcherYn: val('researcherYn'),
-        incomeTaxReductionRate: val('incomeTaxReductionRate'),
-        personalTaxApplyType: val('personalTaxApplyType'),
-        bonusRate: val('bonusRate'),
-        retiredYn: null
+        taxAdjustRate:            val('taxAdjustRate'),
+        projectName:              val('projectName'),
+        taxCalcExemptYn:          val('taxCalcExemptYn'),
+        prorateYn:                val('prorateYn'),
+        settlementReflectYn:      val('settlementReflectYn'),
+        manufTaxExemptYn:         val('manufTaxExemptYn'),
+        overseasTaxExemptYn:      val('overseasTaxExemptYn'),
+        researcherTaxExemptYn:    val('researcherTaxExemptYn'),
+        incomeTaxReductionRate:   val('incomeTaxReductionRate'),
+        personalTaxApplyType:     val('personalTaxApplyType'),
+        bonusRate:                val('bonusRate'),
+        retiredYn:                val('retiredYn')
       });
     });
     return flags;
   }
 
-  // ===================== 액션 =====================
+
+  // ===================== 공통 결과 처리 =====================
   function handleSimpleResult(res, fallbackMsg) {
     if (!res) { toast('응답이 비었습니다.'); return; }
     if (res.success) {
@@ -251,20 +255,28 @@
     }
   }
 
+  // ===================== 액션 =====================
   function doProcessPayroll() {
-    var f = getForm();
-    var empNos = getSelectedEmpNos();
-    if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
-    if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
-    if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+	  var f = getForm();
+	  var empNos = getSelectedEmpNos();
+	  if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+	  if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+	  if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
 
-    var payload = { yyyymm: f.yyyymm, payType: f.payType, empNos: empNos, flags: collectFlags() };
-    setButtonsDisabled(true);
-    ajaxPOST(cfg.process, payload, function (res) {
-      setButtonsDisabled(false);
-      handleSimpleResult(res, '급상여 처리가 완료되었습니다.');
-    });
-  }
+	  var selected = new Set(empNos);
+	  var payload = {
+	    yyyymm: f.yyyymm,
+	    payType: f.payType,
+	    empNos: empNos,
+	    flags: collectFlags(selected) 
+	  };
+
+	  setButtonsDisabled(true);
+	  ajaxPOST(cfg.process, payload, function (res) {
+	    setButtonsDisabled(false);
+	    handleSimpleResult(res, '급상여 처리가 완료되었습니다.');
+	  });
+	}
 
   function doReTax() {
     var f = getForm();
@@ -312,6 +324,38 @@
     });
   }
 
+  function doUnconfirm() {
+	  var f = getForm();
+	  var empNos = getSelectedEmpNos();
+	  if (!cfg.unconfirm) { toast('확정해제 API가 설정되어 있지 않습니다. (RunPayrollConfig.unconfirm)'); return; }
+	  if (!f.yyyymm) { toast('지급연월을 선택하세요.'); return; }
+	  if (!f.payType) { toast('급여유형을 선택하세요.'); return; }
+	  if (empNos.length === 0) { toast('대상 사원을 선택하세요.'); return; }
+	  if (!window.confirm('선택 사원의 확정을 해제하시겠습니까?')) { return; }
+
+	  // 컨트롤러: @RequestParam yyyymm, payType + @RequestBody List<String>
+		// empNos
+	  var url = cfg.unconfirm + '?' + qs({ yyyymm: f.yyyymm, payType: f.payType });
+
+	  setButtonsDisabled(true);
+	  fetch(url, {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+	    credentials: 'same-origin',
+	    body: JSON.stringify(empNos) // ← Body에는 배열만
+	  })
+	  .then(function (r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
+	  .then(function (res) {
+	    setButtonsDisabled(false);
+	    handleSimpleResult(res, '확정해제되었습니다.');
+	  })
+	  .catch(function (e) {
+	    setButtonsDisabled(false);
+	    toast('요청 실패: ' + e);
+	  });
+	}
+
+
   // ===================== 이벤트 바인딩 =====================
   function bindEvents() {
     var btn;
@@ -326,6 +370,13 @@
     btn = $('#btnReTax');    if (btn) btn.addEventListener('click', doReTax);
     btn = $('#btnApplyYrt'); if (btn) btn.addEventListener('click', doApplyYrt);
     btn = $('#btnConfirm');  if (btn) btn.addEventListener('click', doConfirm);
+    btn = $('#btnUnconfirm');if (btn) btn.addEventListener('click', doUnconfirm);
+
+    // cfg.unconfirm이 없으면 버튼 비활성화
+    if (!cfg.unconfirm) {
+      var unBtn = $('#btnUnconfirm');
+      if (unBtn) { unBtn.disabled = true; unBtn.title = 'unconfirm API 미설정'; }
+    }
 
     var chkAll = $('#chkAll');
     var chkAllHeader = $('#chkAllHeader');
@@ -347,6 +398,21 @@
       });
     }
   }
+  
+  function bindRowCheckSync() {
+	  var header = $('#chkAllHeader');
+	  var all = $$('#tblSummary tbody input[name="empCheck"]');
+	  if (!header || all.length === 0) return;
+
+	  all.forEach(function (chk) {
+	    chk.addEventListener('change', function () {
+	      var allChecked = all.every(function (c) { return c.checked; });
+	      var anyChecked = all.some(function (c) { return c.checked; });
+	      header.indeterminate = !allChecked && anyChecked;
+	      header.checked = allChecked;
+	    });
+	  });
+	}
 
   // ===================== 초기화 =====================
   document.addEventListener('DOMContentLoaded', function () {
