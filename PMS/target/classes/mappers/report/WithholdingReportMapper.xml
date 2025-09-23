@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.pms.feature.report.mapper.WithholdingReportMapper">
+
+  <!-- 요약 -->
+  <resultMap id="WithholdingRowMap" type="org.pms.feature.report.domain.WithholdingRow">
+    <result property="applyYyyymm" column="apply_yyyymm"/>
+    <result property="incomeType"  column="income_type"/>
+    <result property="code"        column="code"/>
+    <result property="headCount"   column="headcount"/>
+    <result property="taxTotal"    column="tax_total"/>
+    <result property="ntWithheld"  column="nt_withheld"/>
+    <result property="taxIncome"   column="tax_income"/>
+    <result property="penaltyTax"  column="penalty_tax"/>
+    <result property="taxWithheld" column="tax_withheld"/>
+    <result property="adjRefund"   column="adj_refund"/>
+    <result property="taxNt"       column="tax_nt"/>
+    <result property="no"          column="no"/>
+  </resultMap>
+
+  <select id="selectSummary"
+          parameterType="org.pms.feature.report.domain.WithholdingSearch"
+          resultMap="WithholdingRowMap">
+    SELECT
+      apply_yyyymm, income_type, code, headcount,
+      tax_total, nt_withheld, tax_income, penalty_tax, tax_withheld, adj_refund, tax_nt,
+      ROW_NUMBER() OVER (ORDER BY code) AS no
+    FROM wh_withholding_summary
+    <where>
+      <if test="applyYyyymm != null and applyYyyymm != ''">
+        AND apply_yyyymm = #{applyYyyymm}
+      </if>
+    </where>
+    ORDER BY code
+  </select>
+
+  <!-- 부표 -->
+  <resultMap id="AnnexRowMap" type="org.pms.feature.report.domain.AnnexRow">
+    <result property="applyYyyymm" column="apply_yyyymm"/>
+    <result property="incomeType"  column="income_type"/>
+    <result property="code"        column="code"/>
+    <result property="headCount"   column="headcount"/>
+    <result property="taxTotal"    column="tax_total"/>
+    <result property="ntWithheld"  column="nt_withheld"/>
+    <result property="taxIncome"   column="tax_income"/>
+    <result property="penaltyTax"  column="penalty_tax"/>
+    <result property="taxWithheld" column="tax_withheld"/>
+    <result property="adjRefund"   column="adj_refund"/>
+    <result property="taxNt"       column="tax_nt"/>
+    <result property="no"          column="no"/>
+  </resultMap>
+
+  <select id="selectAnnex"
+          parameterType="org.pms.feature.report.domain.WithholdingSearch"
+          resultMap="AnnexRowMap">
+    SELECT
+      apply_yyyymm, income_type, code, headcount,
+      tax_total, nt_withheld, tax_income, penalty_tax, tax_withheld, adj_refund, tax_nt,
+      ROW_NUMBER() OVER (ORDER BY code) AS no
+    FROM wh_annex
+    <where>
+      <if test="applyYyyymm != null and applyYyyymm != ''">
+        AND apply_yyyymm = #{applyYyyymm}
+      </if>
+    </where>
+    ORDER BY code
+  </select>
+
+</mapper>

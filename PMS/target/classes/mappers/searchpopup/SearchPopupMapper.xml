@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pms.feature.searchpopup.mapper.SearchPopupMapper">
+
+  <!-- ========== Employee ResultMap ========== -->
+  <resultMap id="EmployeeRowMap" type="org.pms.feature.searchpopup.domain.EmployeeRow">
+    <result property="empId"            column="EMP_ID"/>
+    <result property="empNo"            column="EMP_NO"/>
+    <result property="empName"          column="EMP_NAME"/>
+    <result property="deptName"         column="DEPT_NAME"/>
+    <result property="deptCode"         column="DEPT_CODE"/>
+    <result property="workDeptName"     column="WORK_DEPT_NAME"/>
+    <result property="positionName"     column="POSITION_NAME"/>
+    <result property="titleName"        column="TITLE_NAME"/>
+    <result property="dutyName"         column="DUTY_NAME"/>
+    <result property="appointDate"      column="APPOINT_DATE"    jdbcType="DATE"/>
+    <result property="workStatusName"   column="WORK_STATUS_NAME"/>
+    <result property="workStatusDetail" column="WORK_STATUS_DETAIL"/>
+    <result property="payTypeName"      column="PAY_TYPE_NAME"/>
+    <result property="payApplyCode"     column="PAY_APPLY_CODE"/>
+     <result property="birthDate" column="BIRTH_DATE" jdbcType="DATE"/>
+  </resultMap>
+
+  <!-- ========== Employee list (Oracle11g: ROWNUM 페이징) ========== -->
+  <select id="searchEmployees" resultMap="EmployeeRowMap">
+    SELECT * FROM (
+      SELECT a.*, ROWNUM rnum FROM (
+        SELECT
+          EMP_ID, EMP_NO, EMP_NAME,
+          DEPT_NAME, DEPT_CODE, WORK_DEPT_NAME,
+          POSITION_NAME, TITLE_NAME, DUTY_NAME,
+          APPOINT_DATE, WORK_STATUS_NAME, WORK_STATUS_DETAIL,
+          PAY_TYPE_NAME, PAY_APPLY_CODE, 
+          TRUNC(BIRTH_DATE) AS BIRTH_DATE
+        FROM EMPLOYEE_SEARCH_V
+        WHERE 1=1
+        <if test="status != null and status != '' and status != '전체'">
+          AND WORK_STATUS_NAME = #{status}
+        </if>
+
+        <choose>
+          <when test="by == 'empName' and keyword != null and keyword != ''">
+            AND EMP_NAME LIKE '%' || #{keyword} || '%'
+          </when>
+          <when test="by == 'empNo' and keyword != null and keyword != ''">
+            AND EMP_NO   LIKE '%' || #{keyword} || '%'
+          </when>
+        </choose>
+
+        ORDER BY EMP_NAME
+      ) a
+      WHERE ROWNUM &lt;= (#{page} * #{size})
+    )
+    WHERE rnum &gt; ((#{page} - 1) * #{size})
+  </select>
+
+  <select id="countEmployees" resultType="long">
+    SELECT COUNT(*)
+    FROM EMPLOYEE_SEARCH_V
+    WHERE 1=1
+    <if test="status != null and status != '' and status != '전체'">
+      AND WORK_STATUS_NAME = #{status}
+    </if>
+
+    <choose>
+      <when test="by == 'empName' and keyword != null and keyword != ''">
+        AND EMP_NAME LIKE '%' || #{keyword} || '%'
+      </when>
+      <when test="by == 'empNo' and keyword != null and keyword != ''">
+        AND EMP_NO   LIKE '%' || #{keyword} || '%'
+      </when>
+    </choose>
+  </select>
+
+  <!-- ========== Department ========== -->
+<!-- Department 매핑 -->
+<resultMap id="DepartmentRowMap" type="org.pms.feature.searchpopup.domain.DepartmentRow">
+  <result property="deptId"    column="DEPT_ID"/>
+  <result property="deptCode"  column="DEPT_CODE"/>
+  <result property="deptName"  column="DEPT_NAME"/>
+  <result property="startDate" column="START_DATE" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+  <result property="endDate"   column="END_DATE"   javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+  <result property="memo"      column="MEMO"/>
+  <result property="useYn"     column="USE_YN"/>
+  <result property="useName"   column="USE_NAME"/>
+</resultMap>
+
+<!-- 목록 -->
+<select id="searchDepartments" parameterType="map" resultMap="DepartmentRowMap">
+  SELECT * FROM (
+    SELECT a.*, ROWNUM rnum FROM (
+      SELECT
+        d.dept_id    AS DEPT_ID,
+        d.dept_code  AS DEPT_CODE,
+        d.dept_name  AS DEPT_NAME,
+        d.start_date AS START_DATE,
+        d.end_date   AS END_DATE,
+        d.memo       AS MEMO,
+        d.use_yn     AS USE_YN,
+        CASE WHEN d.use_yn = 'Y' THEN '사용' ELSE '미사용' END AS USE_NAME
+      FROM dept d
+      WHERE 1=1
+      <choose>
+        <when test="by == 'deptCode' and keyword != null and keyword != ''">
+          AND d.dept_code LIKE '%' || #{keyword} || '%'
+        </when>
+        <when test="by == 'deptName' and keyword != null and keyword != ''">
+          AND d.dept_name LIKE '%' || #{keyword} || '%'
+        </when>
+      </choose>
+      <if test="use != null and use != '' and use != 'ALL'">
+        AND d.use_yn = #{use}   <!-- 'Y' 또는 'N' -->
+      </if>
+      ORDER BY d.dept_code
+    ) a
+    WHERE ROWNUM &lt;= (#{page} * #{size})
+  )
+  WHERE rnum &gt; ((#{page} - 1) * #{size})
+</select>
+
+<!-- 카운트 -->
+<select id="countDepartments" parameterType="map" resultType="long">
+  SELECT COUNT(*)
+  FROM dept d
+  WHERE 1=1
+  <choose>
+    <when test="by == 'deptCode' and keyword != null and keyword != ''">
+      AND d.dept_code LIKE '%' || #{keyword} || '%'
+    </when>
+    <when test="by == 'deptName' and keyword != null and keyword != ''">
+      AND d.dept_name LIKE '%' || #{keyword} || '%'
+    </when>
+  </choose>
+  <if test="use != null and use != '' and use != 'ALL'">
+    AND d.use_yn = #{use}
+  </if>
+</select>
+
+
+
+</mapper>
