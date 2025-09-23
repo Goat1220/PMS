@@ -21,7 +21,6 @@
 		<property name="password" value="1234"></property>
 	</bean>
 
-
 	<!-- HikeriCP configuration -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
 		destroy-method="close">
@@ -29,27 +28,17 @@
 	</bean>
 
 	<!-- MyBatis -->
-	<bean id="sqlSessionFectory"
-		class="org.mybatis.spring.SqlSessionFactoryBean">
-		<property name="dataSource" ref="dataSource"></property>
-		<property name="typeAliasesPackage"
-			value="org.pms.feature.runpayroll.domain" />
-		<property name="mapperLocations"
-			value="classpath*:mappers/*.xml" />
-	</bean>
+  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <property name="mapperLocations" value="classpath*:mappers/**/*.xml"/>
+    <property name="typeAliasesPackage" value="org.pms.feature"/>
+  </bean>
+  
+    <mybatis-spring:scan base-package="
+        org.zerock.mapper,
+        org.pms.feature.**.mapper"/>
 
-	<!-- mapper -->
-	<mybatis-spring:scan
-		base-package="org.zerock.mapper" />
-
-	<context:component-scan
-		base-package="org.zerock.sample">
-	</context:component-scan>
-
-	<!-- run payroll -->
-	<mybatis-spring:scan
-		base-package="org.pms.feature.runpayroll.mapper" />
-	<context:component-scan
-		base-package="org.pms.feature.runpayroll.service" />
-
+  <!-- === 컴포넌트 스캔 === -->
+  <!-- 기존 zerock.sample 외에 pms 전체를 스캔해야 Controller/Service가 뜸 -->
+  <context:component-scan base-package="org.zerock.sample, org.pms"/>
 </beans>
