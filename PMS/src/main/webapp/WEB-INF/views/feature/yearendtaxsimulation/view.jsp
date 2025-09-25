@@ -1,18 +1,15 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %> <%-- JSP 페이지 설정 / JSP ページ設定 --%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %> <%-- JSP 설정 / JSP 設定 --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>       <%-- JSTL Core 태그 / JSTL Core タグ --%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>     <%-- 숫자/날짜 포맷 / 数値・日付フォーマット --%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt" %>     <%-- 숫자·날짜 포맷 / 数値・日付フォーマット --%>
 
-<!-- ==========================================
-     [공통1] 공용 버튼 폼 적용: 스타일 + 팩토리
-     共通ボタン：スタイル＋ファクトリ
-========================================== -->
+
 <style>
   .common-btn {
     padding: 8px 16px;
     margin: 4px;
     border: none;
     border-radius: 4px;
-    background-color: #4CAF50; /* 서비스 공통 버튼 색 */
+    background-color: #4CAF50; 
     color: white;
     cursor: pointer;
   }
@@ -20,11 +17,10 @@
 </style>
 <script>
   /**
-   * 공용 버튼 생성 함수
-   * 共通ボタン生成
-   * @param {string} label - 버튼 텍스트
-   * @param {string} onClickFn - 클릭 시 실행할 전역 함수명
-   * @returns {HTMLButtonElement} 버튼 DOM
+   * 공용 버튼 생성 / 共通ボタン生成
+   * @param {string} label  버튼 텍스트 / ボタン表示
+   * @param {string} onClickFn 전역 함수명 / クリック時の関数名
+   * @returns {HTMLButtonElement}
    */
   function createCommonButton(label, onClickFn) {
     const btn = document.createElement("button");
@@ -36,18 +32,13 @@
   }
 </script>
 
-<!-- ==========================================
-     [공통2] AG Grid 초기화 적용: CSS/JS + initCommonGrid
-     AG Grid 初期化：リソース＋initCommonGrid
-     ※ 현재 화면은 커스텀 테이블이므로 리소스만 로드(필요 시 즉시 전환 가능)
-========================================== -->
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"/>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 <script>
   /**
-   * 공용 그리드 초기화(기본)
-   * 共通グリッド初期化（基本）
+   * 공용 그리드 초기화(기본) / 共通グリッド初期化（基本）
    * @param {Array} columnDefs
    * @param {Array} rowData
    */
@@ -61,7 +52,7 @@
     return gridOptions;
   }
 </script>
-<!-- (숨김) AG Grid 컨테이너: 레이아웃 영향 제거 / 非表示コンテナ -->
+<!-- (숨김) AG Grid 컨테이너(레이아웃 영향 제거) / 非表示コンテナ（レイアウト非影響） -->
 <div id="commonGrid" class="ag-theme-alpine" style="height:0;width:100%;overflow:hidden;"></div>
 
 <style>
@@ -77,10 +68,10 @@
   /* ===== 제목 오른쪽 엑셀 버튼 정렬 / タイトル右側のボタン配置 ===== */
   .page-header{
     display:flex; align-items:center; gap:12px;
-    margin:6px 0 14px 0; /* 기존 제목 마진 대체 */
+    margin:6px 0 14px 0; /* 기존 제목 마진 대체 / 既存マージンの置換 */
   }
   #titleBtnAreaExcel{
-    margin-left:auto;           /* 오른쪽 끝으로 / 右端へ */
+    margin-left:auto;           /* 오른쪽 정렬 / 右端寄せ */
     display:flex; gap:8px;
     white-space:nowrap;         /* 줄바꿈 방지 / 折り返し防止 */
   }
@@ -93,12 +84,12 @@
   .searchbar{
     padding:10px 0; border-bottom:1px solid #e5e7eb; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
   }
-  .field{ display:flex; gap:6px; align-items:center; } /* 라벨+입력 묶음 / ラベル+入力の塊 */
+  .field{ display:flex; gap:6px; align-items:center; } /* 라벨+입력 묶음 / ラベル＋入力 */
   .field input[type=text], .field select{
     height:30px; padding:0 8px; border:1px solid #d9dce3; border-radius:4px; background:#fff;
   }
   .w-yr{width:90px} .w-emp{width:120px} .w-mid{width:180px} .w-biz{width:140px} /* 폭 프리셋 / 幅プリセット */
-  .spacer{ flex:1 1 auto; } /* 오른쪽 버튼 밀어내기 / 右側ボタンを押し出す */
+  .spacer{ flex:1 1 auto; } /* 오른쪽 버튼 밀어내기 / 右側ボタン押し出し */
   .btn{
     height:32px; padding:0 12px; border:1px solid #d0d5dd; background:#fff; border-radius:4px; cursor:pointer;
   }
@@ -109,10 +100,10 @@
   /* ===== 탭 / タブ ===== */
   .tabs{ display:flex; gap:6px; margin:12px 0 0 0; }
   .tab{ padding:6px 10px; border:1px solid #e5e7eb; background:#f6f7fb; border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; }
-  /* 활성 탭 컬러 = 공통 버튼 컬러(#4CAF50) */
+  /* 활성 탭 컬러 = 공통 버튼 컬러(#4CAF50) / アクティブ色＝共通ボタン色 */
   .tab.active{ background:#4CAF50; border-color:#4CAF50; color:#fff; font-weight:600; }
 
-  .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; } /* 탭 내용 영역 / タブ内容領域 */
+  .panel{ border-top:1px solid #e5e7eb; padding:10px 0 18px 0; } /* 탭 내용 / タブ内容 */
   .meta{ color:#777; font-size:12.5px; margin:6px 0 4px 0; }    /* 메타 정보 / メタ情報 */
 
   /* ===== 표 / テーブル ===== */
@@ -127,7 +118,7 @@
     background:#f3f4f6 !important;
     color:#777 !important;
     border-color:#e5e7eb !important;
-  } /* 읽기전용 스타일 / 読み取り専用スタイル */
+  } /* 읽기전용 스타일 / 読取専用スタイル */
 
   /* ===== 사원 입력(하늘색) / 社員入力（空色） ===== */
   .input-wrap.sky{
@@ -152,7 +143,7 @@
 
 <div class="container">
 
-  <!-- 제목 + 우측 엑셀 버튼 / タイトル＋右側のエクセルボタン -->
+  <!-- 제목 + 우측 엑셀 버튼 / タイトル＋右側エクセルボタン -->
   <div class="page-header">
     <div class="page-title">연말정산시뮬레이션(개인원본)</div>
     <div id="titleBtnAreaExcel"></div>
@@ -160,7 +151,7 @@
 
   <input type="hidden" id="yrtId" value="${simHeader.yrtId}" />
 
-  <!-- ===== 검색 영역 ===== -->
+  <!-- ===== 검색 영역 / 検索エリア ===== -->
   <div class="searchbar">
     <div class="field field-year">
       <span>정산연도</span>
@@ -208,11 +199,11 @@
 
     <div class="spacer"></div>
 
-    <!-- 공용 버튼 주입: 검색바 쪽(기존 기능 유지) / 共通ボタン注入：検索バー側（既存機能維持） -->
+    <!-- 공용 버튼 주입(검색바) / 共通ボタン注入（検索バー） -->
     <div class="field" id="opsBtnArea" style="gap:8px;"></div>
   </div>
 
-  <!-- 공용 버튼 및 엑셀 버튼 주입 / 共通ボタン＋エクセルボタン注入 -->
+  <!-- 공용 버튼 + 엑셀 버튼 주입 / 共通ボタン＋エクセルボタン注入 -->
   <script>
     (function mountOps(){
       var area = document.getElementById('opsBtnArea');
@@ -224,7 +215,7 @@
         area.appendChild(createCommonButton('납부특례세액시뮬레이션처리', 'onInstallment'));
       }
 
-      // 제목 오른쪽 전용 엑셀 버튼 / タイトル右側の専用エクセルボタン
+      // 제목 오른쪽 엑셀 버튼 / タイトル右側のエクセルボタン
       var titleArea = document.getElementById('titleBtnAreaExcel');
       if (titleArea && !titleArea.querySelector('button[data-role="export-csv"]')) {
         var btn = createCommonButton('엑셀 추출', 'onExportCsv');
@@ -234,13 +225,13 @@
     })();
   </script>
 
-  <!-- ===== 탭 ===== -->
+  <!-- ===== 탭 / タブ ===== -->
   <div class="tabs">
     <div id="tab-final" class="tab active" onclick="showTab('final')">최종</div>
     <div id="tab-sim"   class="tab" onclick="showTab('sim')">시뮬레이션</div>
   </div>
 
-  <!-- 최종 탭 -->
+  <!-- 최종 탭 / 最終タブ -->
   <div id="panel-final" class="panel">
     <div class="meta">
       실행라벨: <strong><c:out value="${simHeader != null ? simHeader.runLabel : '-'}"/></strong>
@@ -274,7 +265,7 @@
     </table>
   </div>
 
-  <!-- 시뮬레이션 탭 -->
+  <!-- 시뮬레이션 탭 / シミュレーションタブ -->
   <div id="panel-sim" class="panel" style="display:none;">
     <table class="grid">
       <thead>
@@ -295,7 +286,7 @@
 </div> <!-- /.container -->
 
 <script>
-  /* ===== JS 유틸 ===== */
+  /* ===== JS 유틸 / JSユーティリティ ===== */
   var CTX = '<c:url value="/" />'.replace(/\/$/, '');
   function ctx(){ return CTX; }
   function emp(){ return document.getElementById('empId').value.trim(); }
@@ -303,13 +294,13 @@
   function validYear(y){ return /^\d{4}$/.test(y) && (+y>=2000 && +y<=2100); }
   function fmt(n){ if(n==null) return ''; return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
-  /* 초기 연도 보정 */
+  /* 초기 연도 보정 / 初期年度補正 */
   (function(){
     var v=document.getElementById('baseYear').value;
     if(!/^\d{4}$/.test(v)){ var d=new Date(); document.getElementById('baseYear').value=d.getFullYear()-1; }
   })();
 
-  /* 탭 전환 */
+  /* 탭 전환 / タブ切替 */
   function showTab(t){
     document.getElementById('tab-final').classList.remove('active');
     document.getElementById('tab-sim').classList.remove('active');
@@ -318,7 +309,7 @@
     document.getElementById('tab-'+t).classList.add('active');
   }
 
-  /* 사원 검색(외부 기능 연동) */
+  /* 사원 검색(외부 기능 연동) / 社員検索（外部機能連携） */
   function onClickEmpSearch(){
     if (typeof window.openEmpSearch === 'function') {
       window.openEmpSearch(function(res){
@@ -330,7 +321,7 @@
     }
   }
 
-  /* 사원 세팅 */
+  /* 사원 세팅 / 社員セット */
   function setEmp(name, id){
     var nameEl = document.getElementById('empName');
     var idEl   = document.getElementById('empId');
@@ -338,10 +329,10 @@
     if(idEl)   idEl.value   = id   || '';
   }
 
-  /* 사원 선택 여부 확인 */
+  /* 사원 선택 여부 검사 / 社員選択チェック */
   function needEmp(){ if(!emp()){ alert('선택된 사원이 없습니다.'); return true; } return false; }
 
-  /* 산출근거 조회 → 시뮬 탭 표시 */
+  /* 산출근거 조회 → 시뮬 탭 / 参照取得 → シミュタブ表示 */
   function onReason(){
     if(needEmp()) return;
     var y=document.getElementById('baseYear').value.trim();
@@ -353,7 +344,7 @@
       ["catch"](function(){alert('산출근거 조회 실패 또는 API 미구현');});
   }
 
-  /* 시뮬레이션 실행(덮어쓰기) */
+  /* 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
   function onSim(){
     if(needEmp()) return;
     var y=document.getElementById('baseYear').value.trim();
@@ -366,7 +357,7 @@
       ["catch"](function(){alert('시뮬레이션 처리 실패 또는 API 미구현');});
   }
 
-  /* 시뮬레이션 결과 삭제 */
+  /* 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
   function onDelete(){
     var id=yrt();
     if(!id){alert('삭제할 실행이 없습니다.');return;}
@@ -381,7 +372,7 @@
       ["catch"](function(){alert('삭제 실패 또는 API 미구현');});
   }
 
-  /* 분납 시뮬레이션 실행 */
+  /* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
   function onInstallment(){
     var id=yrt(); if(!id){alert('시뮬레이션 실행이 없습니다.');return;}
     var months=prompt('분납 개월수(2~3):','2');
@@ -394,7 +385,7 @@
     showTab('sim');
   }
 
-  /* 시뮬 표 렌더링 */
+  /* 시뮬 표 렌더링 / シミュ表レンダリング */
   function renderSim(rows){
     var tb=document.getElementById('simBody');tb.innerHTML='';
     if(!rows||rows.length===0){
@@ -411,7 +402,7 @@
     });
   }
 
-  /* 분납 결과 렌더링 */
+  /* 분납 결과 렌더링 / 分納結果レンダリング */
   function renderInstallment(res){
     var box=document.getElementById('installmentBox');
     if(!res||!res.schedule){box.innerHTML='';return;}
@@ -422,7 +413,7 @@
     html+='</table>'; box.innerHTML=html;
   }
 
-  /* 세금적용결과 갱신 */
+  /* 세금적용결과 갱신 / 税適用結果更新 */
   function refreshTaxApplyResult(yrtId){
     var y=document.getElementById('baseYear').value.trim();
     if(!validYear(y)||!emp()){document.getElementById('taxApplyResult').value='미판정';return;}
@@ -436,10 +427,9 @@
 
 <script>
   /**
-   * 표를 CSV로 추출 (UTF-8 BOM 포함)
-   * テーブルをCSVに出力（UTF-8 BOM付与：Excel文字化け対策）
-   * @param {HTMLTableElement} tbl - 대상 테이블 / 対象テーブル
-   * @param {string} filename    - 저장 파일명 / 保存ファイル名
+   * 표를 CSV로 추출(UTF-8 BOM) / テーブルCSV出力（UTF-8 BOM）
+   * @param {HTMLTableElement} tbl 대상 테이블 / 対象テーブル
+   * @param {string} filename 파일명 / ファイル名
    */
   function exportTableToCsv(tbl, filename){
     if(!tbl){ alert('내보낼 표를 찾지 못했습니다.'); return; }
@@ -451,14 +441,13 @@
       return cells.map(function(td){
         // 셀 텍스트 정제 / セル文字列整形（改行→空白、前後トリム）
         var text = (td.innerText || '').replace(/\r?\n|\r/g, ' ').trim();
-        // CSV 안전 처리: " 로 감싸고 내부의 " 는 "" 로 이스케이프
-        // CSV 安全化：ダブルクォートで囲み、内部の " は "" に
+        // CSV 안전 처리: "로 감싸고 내부 "는 ""로 / CSV安全化："で囲み内部"は""
         text = '"' + text.replace(/"/g, '""') + '"';
         return text;
       }).join(',');
     }).join('\r\n');
 
-    // UTF-8 BOM 추가 (엑셀 한글/일본어 깨짐 방지) / BOM付与でExcel文字化け回避
+    // UTF-8 BOM 추가(엑셀 인코딩 대응) / BOM付与（Excel対策）
     var blob = new Blob(["\uFEFF" + csvLines], {type: 'text/csv;charset=utf-8;'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -469,11 +458,10 @@
   }
 
   /**
-   * 현재 활성 탭의 table.grid를 CSV로 저장
-   * アクティブタブの table.grid をCSV保存
+   * 활성 탭의 grid를 CSV 저장 / アクティブタブのgridをCSV保存
    */
   function onExportCsv(){
-    // 어떤 탭이 활성인지 판별 / どのタブがアクティブか判定
+    // 활성 탭 판별 / アクティブタブ判定
     var isFinalActive = document.getElementById('tab-final').classList.contains('active');
 
     // 보이는 표 선택 / 可視テーブル選択
@@ -481,7 +469,7 @@
       ? '#panel-final table.grid'
       : '#panel-sim table.grid');
 
-    // 파일명 생성: yearend_YYYY_[final|simulation]_yyyyMMdd_HHmmss.csv
+    // 파일명: yearend_YYYY_[final|simulation]_yyyyMMdd_HHmmss.csv
     var baseYearEl = document.getElementById('baseYear');
     var y = (baseYearEl && baseYearEl.value ? baseYearEl.value : '').trim() || 'YEAR';
     var tabLabel = isFinalActive ? 'final' : 'simulation';
@@ -497,4 +485,56 @@
     exportTableToCsv(tbl, fname);
   }
 </script>
+<script>
+  /* ===============================
+     사원검색 팝업 연동 어댑터
+     社員検索ポップアップ連携アダプタ
+  ================================ */
+
+  /*  팝업 선택값 수신 /  ポップアップ選択値の受信 */
+  window.onEmployeePicked = function(row) {
+    // 입력칸 동기화 / 入力欄同期
+    var empNoEl   = document.getElementById('empNo');
+    var empNameEl = document.getElementById('empName');
+    var deptEl    = document.getElementById('deptName');
+    if (empNoEl)   empNoEl.value   = (row.empNo    || '');
+    if (empNameEl) empNameEl.value = (row.empName  || '');
+    if (deptEl)    deptEl.value    = (row.deptName || '');
+
+    // setEmp 연결 / setEmp 連携
+    if (typeof window.setEmp === 'function') {
+      var id = row.empId || row.empNo || '';
+      window.setEmp(row.empName || '', id);
+    }
+
+    // openEmpSearch(cb)로도 반환 / openEmpSearch(cb)へ返却
+    if (typeof window.__empPickCb === 'function') {
+      window.__empPickCb({
+        name: row.empName || '',
+        id:   row.empId   || row.empNo || '',
+        deptName: row.deptName || ''
+      });
+      window.__empPickCb = null; // 1회성 / 1回限り
+    }
+  };
+
+  /*  팝업 열기 / ポップアップを開く */
+  function openEmployeePopup() {
+    const w = 1100, h = 700;
+    const x = (screen.availWidth  - w) / 2;
+    const y = (screen.availHeight - h) / 2;
+    const features = `width=${w},height=${h},left=${x},top=${y},resizable=yes,scrollbars=yes`;
+
+    // 컨텍스트 루트 + 경로 / コンテキストルート＋パス
+    const url = ctx() + '/popups/employees';  // 다르면 이곳만 수정 / 違う場合はここを修正
+    window.open(url, 'empPopup', features);
+  }
+
+  /* 기존 훅 구현(onClickEmpSearch→openEmpSearch) / 既存フック実装 */
+  window.openEmpSearch = function(cb){
+    window.__empPickCb = cb;
+    openEmployeePopup();
+  };
+</script>
+
 
