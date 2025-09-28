@@ -363,6 +363,8 @@
     btn = $('#btnReset');    if (btn) btn.addEventListener('click', function () {
       var d = $('#deptCode'); if (d) d.value = '';
       var e = $('#empNo');    if (e) e.value = '';
+      var e = $('#empName');    if (e) e.value = '';
+      var e = $('#deptName');    if (e) e.value = '';
       doSearch();
     });
 
@@ -373,6 +375,7 @@
     btn = $('#btnUnconfirm');if (btn) btn.addEventListener('click', doUnconfirm);
     btn = $('#btnUnconfirm');if (btn) btn.addEventListener('click', doUnconfirm);
     btn = $('#btnSearchEmp');if (btn) btn.addEventListener('click', openEmployeePopup);
+    btn = $('#btnSearchDep');if (btn) btn.addEventListener('click', openDepartmentPopup);
     
     // cfg.unconfirm이 없으면 버튼 비활성화
     if (!cfg.unconfirm) {
@@ -427,10 +430,10 @@
 // }
 //  
   window.onEmployeePicked = function(row) {
-    console.log("화면 업데이트");
+    document.getElementById('deptCode').value= row.deptCode || '';
+    document.getElementById('deptName').value= row.deptName || '';
     document.getElementById('empNo').value   = row.empNo || '';
     document.getElementById('empName').value = row.empName || '';
-    document.getElementById('deptName').value= row.deptName || '';
     };
 
   // 사원 검색 팝업 열기
@@ -444,6 +447,23 @@
       `width=${w},height=${h},left=${x},top=${y},resizable=yes,scrollbars=yes`
     );
   }
+  
+  window.onDepartmentPicked = function(row) {
+	    document.getElementById('deptCode').value= row.deptCode || '';
+	    document.getElementById('deptName').value= row.deptName || '';
+	    };
+
+	  // 부서 검색 팝업 열기
+	  function openDepartmentPopup() {
+	    const w = 1100, h = 700;
+	    const x = (screen.availWidth  - w) / 2;
+	    const y = (screen.availHeight - h) / 2;
+	    window.open(
+	      'popups/departments',  // JSP 경로
+	      'depPopup',
+	      `width=${w},height=${h},left=${x},top=${y},resizable=yes,scrollbars=yes`
+	    );
+	  }
   
   
   // ===================== 초기화 =====================

@@ -237,14 +237,19 @@ tbody tr.active {
 					<option value="SALARY" selected>SALARY</option>
 					<option value="BONUS">BONUS</option>
 			</select>
+
 			</label> <label>부서코드 <input id="deptCode" type="text"
-				placeholder="예: D004" style="width: 110px">
+				readonly style="width: 110px"> <label>부서이름
+					<input id="deptName" type="text" readonly style="width: 130px">
+			</label>
+				<button id="btnSearchDep">부서검색</button>
+
 			</label> <label>사번 <input id="empNo" type="text"
-				placeholder="예: 20131201" style="width: 130px">
-			</label> <label>이름 <input id="empName" type="text"
-				style="width: 130px"></label> <label>부서이름 <input
-				id="deptName" type="text" style="width: 130px"></label>
+				readonly style="width: 130px">
+			</label> <label>이름 <input id="empName" type="text" readonly
+				style="width: 130px"></label>
 			<button id="btnSearchEmp">사원검색</button>
+
 			<button id="btnSearch">조회</button>
 			<button id="btnReset" class="secondary">초기화</button>
 			<span id="summaryCount" class="muted" style="margin-left: 8px;"></span>
