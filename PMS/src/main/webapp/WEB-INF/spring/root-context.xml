@@ -28,15 +28,19 @@
 	<!-- MyBatis -->
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"></property>
-		<property name="mapperLocations" value="classpath:org/pms/mapper/yearend/result/*.xml"/>
+		<property name="mapperLocations">
+			<list>
+		 <value>classpath:org/pms/mapper/yearend/result/*.xml</value>
+		<value>classpath:org/pms/mapper/yearend/*.xml</value>
+		</list>
+		</property>
 	</bean>
 	
-	
 	<!-- mapper -->
-	<mybatis-spring:scan base-package="org.pms.feature.yearend.result.mapper"/>
+	<mybatis-spring:scan base-package="org.pms.feature.yearend.admin.mapper, org.pms.feature.yearend.result.mapper"/>
 	
 	<!-- service -->
-		<context:component-scan base-package = "org.pms.feature.yearend.result.service"></context:component-scan>
+		<context:component-scan base-package = "org.pms.feature.yearend.result.service, org.pms.feature.yearend.admin.service"></context:component-scan>
 	
 <!-- 	<context:component-scan base-package="org.zerock.sample">
 	</context:component-scan> -->

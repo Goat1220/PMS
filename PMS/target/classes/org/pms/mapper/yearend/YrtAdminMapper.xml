@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pms.feature.yearend.admin.mapper.YrtAdminMapper">
+
+  <select id="findRows"
+          parameterType="org.pms.feature.yearend.admin.domain.AdminSearchCond"
+          resultType="org.pms.feature.yearend.admin.domain.AdminRowDTO">
+    SELECT
+      h.yrt_id    AS yrtId,
+      e.emp_name  AS empName,
+      e.emp_no    AS empNo,
+      d.dept_name AS deptName,
+      h.biz_place AS bizPlace
+    FROM yrt_header h
+      JOIN emp  e ON e.emp_id = h.emp_id
+      LEFT JOIN dept d ON d.dept_id = e.dept_id
+    <where>
+      <if test="baseYear != null and baseYear != ''">
+        AND h.base_year = #{baseYear}
+      </if>
+      <if test="bizPlace != null and bizPlace != ''">
+        AND h.biz_place = #{bizPlace}
+      </if>
+      <if test="deptName != null and deptName != ''">
+        AND d.dept_name LIKE '%' || #{deptName} || '%'
+      </if>
+      <if test="empName != null and empName != ''">
+        AND e.emp_name  LIKE '%' || #{empName}  || '%'
+      </if>
+    </where>
+    ORDER BY h.yrt_id
+  </select>
+
+</mapper>
