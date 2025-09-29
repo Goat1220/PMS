@@ -202,33 +202,40 @@ select {
 
 		<!-- 검색바 -->
 		<div class="filters" style="margin: 10px 0 12px">
-			<label><b>정산연도</b></label> <input id="searchYear" type="text"
-				value="${empty cond.baseYear ? '2018' : cond.baseYear}"> <label><b>정산사업장</b></label>
-			<select id="searchBizPlace">
-				<option value="">전체</option>
-				<option value="본사" ${cond.bizPlace=='본사' ? 'selected' : ''}>본사</option>
-			</select> <label>부서</label><input id="searchDept" type="text"
-				value="${cond.deptName}"> <label>사원</label><input
-				id="searchEmp" type="text" value="${cond.empName}">
-			<button id="btnQuery">조회</button>
-		</div>
+  <!-- 1행 -->
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%">
+    <label><b>정산연도</b></label>
+    <input id="searchYear" type="text" value="${empty cond.baseYear ? '2018' : cond.baseYear}">
+
+    <label><b>정산사업장</b></label>
+    <select id="searchBizPlace">
+      <option value="">전체</option>
+      <option value="본사" ${cond.bizPlace=='본사' ? 'selected' : ''}>본사</option>
+    </select>
+
+    <button id="btnAllSettle">대상자전체정산처리</button>
+    <button id="btnQuery">조회</button>
+  </div>
+
+  <!-- 2행 -->
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:6px">
+    <label>부서</label>
+    <input id="searchDept" type="text" value="${cond.deptName}">
+
+    <label>사원</label>
+    <input id="searchEmp" type="text" value="${cond.empName}">
+
+    <button id="btnSettle">정산처리</button>
+    <button class="secondary" id="btnUnsettle">정산결과삭제</button>
+    <button class="secondary" id="btnPenalty">납부특례세액반영</button>
+    <button class="secondary" onclick="exportTableToExcel('#adminTable','연말정산_처리목록.csv')">엑셀</button>
+  </div>
+</div>
 
 		<div class="layout">
 			<!-- ============ LEFT: 목록 테이블 ============ -->
 			<div class="card">
 				<div class="card-body left-body">
-					<div class="right-top" style="gap: 7px">
-						<div>
-							<button id="btnSettle">정산처리</button>
-							<button class="secondary" id="btnUnsettle">정산결과삭제</button>
-							<button class="secondary" id="btnPenalty">납부특례세액반영</button>
-						</div>
-						<div>
-							<button class="secondary"
-								onclick="exportTableToExcel('#adminTable','연말정산_처리목록.csv')">엑셀</button>
-						</div>
-					</div>
-
 					<div class="left-wrap">
 						<table id="adminTable">
 							<thead>
@@ -516,6 +523,17 @@ outputType.addEventListener("change", () => {
   }
 
   /* 상단 버튼 동작 */
+document.getElementById('btnAllSettle').addEventListener('click', ()=>{
+  const rows = document.querySelectorAll('#adminTable tbody tr');
+  if(!rows.length){ alert('처리할 데이터가 없습니다.'); return; }
+
+  rows.forEach(tr=>{
+    const cb = tr.querySelector('input[type=checkbox][data-col="settle"]');
+    if(cb) cb.checked = true;
+    tr.classList.add('active');
+    setTimeout(()=>tr.classList.remove('active'),300);
+  });
+});
   document.getElementById('btnSettle').addEventListener('click', ()=>{
     const rows=getSelectedRows(); if(!rows.length){alert('선택된 사원이 없습니다.'); return;}
     rows.forEach(tr=>{
