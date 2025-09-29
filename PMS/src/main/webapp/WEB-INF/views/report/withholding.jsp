@@ -14,52 +14,40 @@
 	/* =========================
 	   상단 제목 + 조회
 	   ========================= */
-	/* 페이지 헤더 */
 	.wh .page-header{
-	  display:flex;
-	  align-items:center;
-	  /* 좌우 여백을 컨테이너와 동일하게 */
-	  padding:6px var(--gutter);   /* 기존 6px 10px → 6px 16px */
+	  display:flex; align-items:center;
+	  padding:6px var(--gutter);     /* 컨테이너와 좌우 여백 통일 */
 	  margin-bottom:8px;
 	  border-bottom:1px solid #eee;
-	  background:#fff;
-	  border-radius:8px;           /* 모서리도 카드들과 톤 맞추면 보기 좋아요(선택) */
+	  background:#fff; border-radius:8px;
 	}
-	
-	/* 제목은 왼쪽, 버튼은 오른쪽 */
 	.wh .page-title{
-	  font-size:12px;
-	  font-weight:700;
-	  color:#111;
-	  margin-right:auto;           /* 버튼을 오른쪽 끝으로 밀기 */
+	  font-size:12px; font-weight:700; color:#111;
+	  margin-right:auto;              /* 버튼을 오른쪽으로 밀기 */
+	}
+	.wh #btnSearch{
+	  height:28px; padding:0 12px;
 	}
 	
-	.wh #btnSearch{
-	  height:28px;
-	  padding:0 12px;
-	}
-	/* 돋보기 작은 아이콘(텍스트 앞) */
-	.wh .icon-search{ font-size:12px; margin-right:6px; position:relative; top:-1px; }
-
 	/* =========================
 	   페이지 공통 (컴팩트 기본)
 	   ========================= */
 	html { overflow-y: scroll; }
 	body { font-family: Arial, Helvetica, 'Malgun Gothic', sans-serif; font-size:12px; color:#333; }
 	
-	/* 네임스페이스: .wh 내부만 스타일 적용 */
-	.wh .container { --gutter: 16px; padding-inline: var(--gutter); box-sizing: border-box; }
+	/* 네임스페이스 컨테이너 */
+	.wh .container { --gutter:16px; padding-inline: var(--gutter); box-sizing: border-box; }
 	
-	/* 카드 & 패널 (컴팩트) */
+	/* 카드 & 패널 */
 	.wh .card, .wh .panel{
 	  box-sizing:border-box; width:100%; background:#fff;
 	  border:1px solid #e5e7eb; border-radius:8px;
 	}
-	.wh .card{ padding:8px 10px; margin-bottom:8px; }     /* 컴팩트 기본값 */
+	.wh .card{ padding:8px 10px; margin-bottom:8px; }
 	.wh .panel{ padding:10px; border-color:#bbb; border-radius:6px; margin-bottom:22px; }
 	.wh .card-title{ font-weight:700; margin-bottom:6px; font-size:12px; }
 	
-	/* 상단 2컬럼 레이아웃 */
+	/* 2컬럼 레이아웃 */
 	.wh .two-cols{
 	  display:grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 	  gap:9px; align-items:stretch;
@@ -72,96 +60,87 @@
 	.wh .mt-12{ margin-top:8px; }
 	.wh .ml-auto{ margin-left:auto; }
 	.wh .no-shrink{ flex:0 0 auto; }
+	
 	.wh .label-80{ width:auto; margin-right:6px; color:#555; display:inline-block; white-space:nowrap; }
 	.wh .req{ color:#e11d48; }
 	
-	/* === 2번째 줄(체크/연말정산연도) 안정 정렬 === */
-	.wh .row-split{
-	  display:grid;
-	  grid-template-columns: 1fr auto;   /* 좌: 체크들 / 우: 연말정산연도 */
-	  align-items:center;
-	  column-gap:8px;
-	  row-gap:4px;
-	}
-	.wh .row-split .mid{        /* 절대배치 제거 */
-	  position: static;
-	  transform: none;
-	  margin-left: 12px;        /* 필요 시 0~16px 조절 */
-	}
-	/* ❷ 연말정산연도 들여쓰기(오른쪽 여백) */
-	.wh .row-split .right{
-	  justify-self: end;
-	  margin-right: 135px;      
-	}
-	
-	/* ❶ 신고집계기준 카드의 '첫 번째 줄' 간격만 확대 */
-	.wh .two-cols > .card:first-child .form-row{
-	  gap: 14px;                /* 12~20px 사이로 취향 조절 */
-	  column-gap: 14px;
-	}
-	
-	/* 입력/셀렉트 (컴팩트 높이) */
 	.wh input[type="text"],
 	.wh input[type="password"],
 	.wh select{
 	  height:28px; padding:0 6px; border:1px solid #dcdfe6; border-radius:4px; background:#fff;
 	}
 	
-	/* 유틸 폭 */
+	
+	/* 유틸 너비 (오타세이프 포함) */
 	.wh .w-80{width:80px} .wh .w-100{width:100%} .wh .w-110{width:110px}
 	.wh .w-120{width:120px} .wh .w-140{width:140px} .wh .w-160{width:160px}
-	.wh .min-200{ min-width:200px; } .wh .flex-1{flex:1 1 auto}
+	.wh .w-180{width:180px}
+	/* 실수로 사용된 .w-18도 안전하게 160px로 처리(레이아웃 파손 방지) */
+	.wh .w-18{width:160px}
 	
-	/* 체크박스 라벨 (컴팩트 간격) */
+	/* ── 첫 번째 카드의 '첫 번째 줄'만 간격 넓게 */
+	.wh .two-cols > .card:first-child .card-title + .form-row{
+	  gap: 20px;           /* 필요값으로 조절 */
+	  column-gap: 20px;    /* 호환용 */
+	}
+	
+	/* 체크박스 라벨 */
 	.wh .chk{ display:flex; align-items:center; gap:6px; color:#374151; font-size:12px; white-space:nowrap; }
 	.wh .checks{ display:flex; align-items:center; gap:40px; }
 	
-	/* 포커스 */
-	.wh input:focus, .wh select:focus, .wh .btn:focus, .wh .btn-primary:focus{
-	  outline:none; box-shadow:0 0 0 2px rgba(37,99,235,.15); border-color:#2563eb;
+	/* 2번째 줄(체크/연말정산연도) 정렬 */
+	.wh .row-split{
+	  display:grid;
+	  grid-template-columns: 1fr auto;   /* 좌: 체크 묶음 / 우: 연말정산연도 */
+	  align-items:center;
+	  column-gap:8px; row-gap:4px;
 	}
+	.wh .row-split .mid{ position:static; transform:none; margin-left:12px; }
+	.wh .row-split .right{ justify-self:end; margin-right:135px; } /* 요청값 유지 */
 	
-	/* 버튼 (컴팩트 높이 유지) */
+	/* 버튼 */
 	.wh .btn, .wh .btn-primary{
 	  height:32px; padding:0 12px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer;
 	  font-size:12px;
 	}
+	/* 파란 버튼(.btn primary, .btn-primary 둘 다 수용) */
 	.wh .btn.primary, .wh .btn-primary{ background:#2563eb; color:#fff; border-color:#2563eb; }
 	.wh .btn:hover, .wh .btn-primary:hover{ filter:brightness(0.97); }
-	.wh #btnLoad{ margin-right:20px; }
 	.wh .btn:disabled, .wh .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
 	
-	/* 표/탭 (컴팩트 패딩/폰트) */
+	/* 데이터생성 버튼만 카드 오른쪽에서 살짝 안쪽으로 */
+	.wh #btnLoad{ margin-right:20px; }
+	
+	/* 표/탭 */
 	.wh table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
 	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 	.wh th{ background:#f0f3f7; }
 	.wh td.num{text-align:right} .wh td.center{text-align:center} .wh td.code{font-family:Consolas,monospace}
+	
 	.wh .tabs{ display:flex; gap:8px; margin:16px 0; }
 	.wh .tab{ padding:8px 12px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
 	.wh .tab.active{ background:#fff; font-weight:bold; }
 	
-	/* 요약/부표 외부 래퍼 & 스크롤 */
-	.wh .data-area { margin-top:4px; }               /* 파일카드와 간격 컴팩트 */
-	.wh .data-area .tabs {
-	  position: sticky; top: 0; z-index: 2;
-	  background: #fff; padding-top: 6px; margin-bottom: 6px;
+	/* 요약/부표 스크롤 영역 */
+	.wh .data-area { margin-top:4px; }
+	.wh .data-area .tabs{
+	  position:sticky; top:0; z-index:2; background:#fff;
+	  padding-top:6px; margin-bottom:6px;
 	}
 	.wh .data-scroll{
-	  /* 높이는 페이지 JS에서 계산/세팅(없으면 컨텐츠 높이만큼) */
 	  overflow:auto; border:1px solid #e5e7eb; border-radius:8px; background:#fff; padding:8px;
 	}
 	
-	/* =========================
-	   신고파일생성 카드 (컴팩트)
-	   ========================= */
-	.wh .file-card { position:relative; margin-bottom:4px; } /* 아래 여백 축소 */
+	/* 신고파일생성 (접기/펼치기) */
+	.wh .file-card{ position:relative; margin-bottom:4px; }
 	.wh .file-card__header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
-	.wh .file-card .card-title { margin-bottom:4px; }
+	.wh .file-card .card-title{ margin-bottom:4px; }
 	.wh .file-card__body{ display:block; }
 	.wh .file-card.is-collapsed .file-card__body{ display:none; }
 	
-	:root{ --file-name-w: 480px; }  /* 파일명 입력폭 */
+	/* 신고파일생성 내부 그리드 */
 	.wh .file-grid{
+	  --file-name-w: 480px;
 	  display:grid;
 	  grid-template-columns: max-content var(--file-name-w) 180px;
 	  grid-template-areas:
@@ -169,49 +148,51 @@
 	    "lblPwd  pwd  btns";
 	  gap:10px 12px; align-items:center;
 	}
-	.wh .file-grid { row-gap: 6px; }       /* 행 간격 축소 */
+	.wh .file-grid{ row-gap:6px; }
 	.wh .btns-col{ grid-area: btns; display:flex; flex-direction:column; gap:6px; align-items:stretch; width:100%; }
-	.wh .lbl-name { grid-area: lblName; }
-	.wh .in-name  { grid-area: name; }
-	.wh .lbl-pwd  { grid-area: lblPwd; }
-	.wh .in-pwd   { grid-area: pwd; }
+	.wh .lbl-name{ grid-area: lblName; }
+	.wh .in-name{ grid-area: name; }
+	.wh .lbl-pwd{ grid-area: lblPwd; }
+	.wh .in-pwd{ grid-area: pwd; }
 	
-	/* =========================
-	   전월 미환급세액 (컴팩트)
-	   ========================= */
-	.wh #refundBlock { padding: 6px 8px; }
-	.wh #refundBlock .card-title { margin-bottom: 6px; font-size: 12px; }
-	
-	/* 그리드 폭/간격 */
+	/* 전월 미환급세액 (컴팩트) */
+	.wh #refundBlock{ padding:6px 8px; }
+	.wh #refundBlock .card-title{ margin-bottom:6px; font-size:12px; }
 	.wh .refund-compact{
-	  --label-w: 150px;   /* 라벨 고정폭(컴팩트) */
-	  --input-w: 120px;   /* 인풋 고정폭(컴팩트) */
-	  display: grid;
+	  --label-w:150px; --input-w:120px;
+	  display:grid;
 	  grid-template-columns: max-content 16px repeat(4, var(--label-w) var(--input-w));
-	  column-gap: 18px; row-gap: 6px; align-items: center;
+	  column-gap:18px; row-gap:6px; align-items:center;
 	}
-	/* 라벨/제목/인풋 크기 */
 	.wh .refund-compact .row-title{ font-weight:400; font-size:12px; color:#374151; white-space:nowrap; }
-	.wh .refund-compact label:not(.row-title){ display:inline-block; width:var(--label-w); line-height:1.15; white-space:normal; font-weight:400; font-size:12px; color:#444; }
+	.wh .refund-compact label:not(.row-title){
+	  display:inline-block; width:var(--label-w); line-height:1.15; white-space:normal;
+	  font-weight:400; font-size:12px; color:#444;
+	}
 	.wh .refund-compact small{ font-size:10px; line-height:1; position:relative; top:-1px; }
 	.wh .refund-compact input[type="text"]{ width:var(--input-w); height:26px; padding:0 6px; box-sizing:border-box; }
-	/* 1행이 3쌍이라 남는 1쌍 채우는 투명 스페이서 */
 	.wh .refund-compact .placeholder{ width:var(--label-w); height:1px; display:block; }
 	
-	/* =========================
-	   반응형
-	   ========================= */
+	
+	/* 반응형 */
 	@media (max-width:1200px){
 	  .wh .two-cols{ grid-template-columns:1fr; }
 	}
 	@media (max-width:960px){
 	  .wh .file-grid{
-	    grid-template-columns: 1fr;
-	    grid-template-areas: "lblName" "name" "lblPwd" "pwd" "btns";
+	    grid-template-columns:1fr;
+	    grid-template-areas:
+	      "lblName"
+	      "name"
+	      "lblPwd"
+	      "pwd"
+	      "btns";
 	  }
 	  .wh .btns-col{ grid-column:1; grid-row:auto; flex-direction:row; }
 	  .wh .btns-col .btn-primary{ width:auto; }
 	}
+	
+
 </style>
 </head>
 

@@ -92,6 +92,14 @@
       { key:'endDate',  name:'종료일',  width:100, format:'date' },
       { key:'memo',     name:'비고' }
     ],
+ // 행 더블클릭 시 부모창 콜백 호출
+	onRowClick : function(row) {
+		if (window.opener
+				&& typeof window.opener.onDepartmentPicked === 'function') {
+			window.opener.onDepartmentPicked(row);
+		}
+		window.close();
+	}
 
   };
 
