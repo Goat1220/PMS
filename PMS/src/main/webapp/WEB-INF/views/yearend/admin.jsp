@@ -547,7 +547,7 @@ document.getElementById('btnAllSettle').addEventListener('click', ()=>{
       tr.querySelector('input[data-col="settle"]').checked=false;
       tr.classList.add('active'); setTimeout(()=>tr.classList.remove('active'),300);
     });
-  });
+  }); 
   document.getElementById('btnPenalty').addEventListener('click', ()=>{
     const rows=getSelectedRows(); if(!rows.length){alert('선택된 사원이 없습니다.'); return;}
     rows.forEach(tr=>{
