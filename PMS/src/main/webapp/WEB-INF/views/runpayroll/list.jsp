@@ -231,28 +231,30 @@ tbody tr.active {
 	<header>
 		<div class="filters">
 			<div class="muted">급여조회</div>
-			<label>지급연월 <input id="yyyymm" type="month" value="2018-08"></label>
-			<label>급여유형 <select id="payType">
-					<option value="">전체</option>
-					<option value="SALARY" selected>SALARY</option>
-					<option value="BONUS">BONUS</option>
-			</select>
+			<div class="filters">
+				<label>지급연월 <input id="yyyymm" type="month" value="2018-08"></label>
+				<label>급여유형 <select id="payType">
+						<option value="">전체</option>
+						<option value="SALARY" selected>SALARY</option>
+						<option value="BONUS">BONUS</option>
+				</select>
+			</div>
+			<div class="filters">
+				</label> <label>부서코드 <input id="deptCode" type="text" readonly
+					style="width: 110px"> <label>부서이름 <input
+						id="deptName" type="text" readonly style="width: 130px">
+				</label>
+					<button id="btnSearchDep">부서검색</button>
+				</label> <label>사번 <input id="empNo" type="text" readonly
+					style="width: 130px">
+				</label> <label>이름 <input id="empName" type="text" readonly
+					style="width: 130px"></label>
+				<button id="btnSearchEmp">사원검색</button>
 
-			</label> <label>부서코드 <input id="deptCode" type="text"
-				readonly style="width: 110px"> <label>부서이름
-					<input id="deptName" type="text" readonly style="width: 130px">
-			</label>
-				<button id="btnSearchDep">부서검색</button>
-
-			</label> <label>사번 <input id="empNo" type="text"
-				readonly style="width: 130px">
-			</label> <label>이름 <input id="empName" type="text" readonly
-				style="width: 130px"></label>
-			<button id="btnSearchEmp">사원검색</button>
-
-			<button id="btnSearch">조회</button>
-			<button id="btnReset" class="secondary">초기화</button>
-			<span id="summaryCount" class="muted" style="margin-left: 8px;"></span>
+				<button id="btnSearch">조회</button>
+				<button id="btnReset" class="secondary">초기화</button>
+				<span id="summaryCount" class="muted" style="margin-left: 8px;"></span>
+			</div>
 		</div>
 	</header>
 
