@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
 @Controller
-@RequestMapping("/yearend/*")
+@RequestMapping("/yearend/result/*")
 @AllArgsConstructor
 public class YrtHeaderController {
 
@@ -26,7 +26,7 @@ public class YrtHeaderController {
 	private YrtDetailService detailService;
 
 	// 리스트 화면
-	@GetMapping("/yearend/list")
+	@GetMapping("/list")
 	public String list(@RequestParam(value = "deptName", required = false, defaultValue="") String deptName,
 			@RequestParam(value = "empName", required = false, defaultValue="") String empName, Model model) {
 		List<YrtHeaderViewDTO> list = service.getList(deptName, empName);

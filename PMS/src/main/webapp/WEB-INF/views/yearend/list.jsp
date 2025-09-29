@@ -199,7 +199,7 @@ document.querySelector('#headerTable tbody').addEventListener('dblclick', functi
 
   async function loadDetail(yrtId){
     try{
-      const res = await fetch('/yearend/detail?yrtId=' + encodeURIComponent(yrtId), {
+      const res = await fetch('/yearend/result/detail?yrtId=' + encodeURIComponent(yrtId), {
         headers:{'Accept':'application/json'}
       });
       if(!res.ok) throw new Error(res.status);
