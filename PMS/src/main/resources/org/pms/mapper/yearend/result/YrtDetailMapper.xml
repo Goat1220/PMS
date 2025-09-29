@@ -3,11 +3,11 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.pms.feature.yearend.mapper.YrtDetailMapper">
+<mapper namespace="org.pms.feature.yearend.result.mapper.YrtDetailMapper">
 	
 <select id="getDetailViewComputed"
         parameterType="int"
-        resultType="org.pms.feature.yearend.domain.YrtDetailViewDTO">
+        resultType="org.pms.feature.yearend.result.domain.YrtDetailViewDTO">
    <![CDATA[
   WITH PARAM AS (
     SELECT h.yrt_id, h.emp_id, h.base_year
