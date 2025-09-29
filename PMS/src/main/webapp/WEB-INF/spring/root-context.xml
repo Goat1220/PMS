@@ -33,10 +33,10 @@
 	
 	
 	<!-- mapper -->
-	<mybatis-spring:scan base-package="org.pms.feature.yearend.mapper"/>
+	<mybatis-spring:scan base-package="org.pms.feature.yearend.result.mapper"/>
 	
 	<!-- service -->
-		<context:component-scan base-package = "org.pms.feature.yearend.service"></context:component-scan>
+		<context:component-scan base-package = "org.pms.feature.yearend.result.service"></context:component-scan>
 	
 <!-- 	<context:component-scan base-package="org.zerock.sample">
 	</context:component-scan> -->

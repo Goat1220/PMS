@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.pms.feature.yearend.domain.YrtHeaderVO;
-import org.pms.feature.yearend.domain.YrtHeaderViewDTO;
+import org.pms.feature.yearend.result.domain.YrtHeaderVO;
+import org.pms.feature.yearend.result.domain.YrtHeaderViewDTO;
+import org.pms.feature.yearend.result.mapper.YrtHeaderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;

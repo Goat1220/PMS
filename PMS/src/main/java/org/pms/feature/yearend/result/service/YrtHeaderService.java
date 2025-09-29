@@ -1,8 +1,8 @@
-package org.pms.feature.yearend.service;
+package org.pms.feature.yearend.result.service;
 
 import java.util.List;
 
-import org.pms.feature.yearend.domain.YrtHeaderViewDTO;
+import org.pms.feature.yearend.result.domain.YrtHeaderViewDTO;
 
 public interface YrtHeaderService {
 

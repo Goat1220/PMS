@@ -1,4 +1,4 @@
-package org.pms.feature.yearend.domain;
+package org.pms.feature.yearend.result.domain;
 
 public class YrtDetailVO {
 	

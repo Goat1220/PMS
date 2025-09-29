@@ -1,11 +1,11 @@
-package org.pms.feature.yearend.controller;
+package org.pms.feature.yearend.result.controller;
 
 import java.util.List;
 
-import org.pms.feature.yearend.domain.YrtDetailViewDTO;
-import org.pms.feature.yearend.domain.YrtHeaderViewDTO;
-import org.pms.feature.yearend.service.YrtDetailService;
-import org.pms.feature.yearend.service.YrtHeaderService;
+import org.pms.feature.yearend.result.domain.YrtDetailViewDTO;
+import org.pms.feature.yearend.result.domain.YrtHeaderViewDTO;
+import org.pms.feature.yearend.result.service.YrtDetailService;
+import org.pms.feature.yearend.result.service.YrtHeaderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

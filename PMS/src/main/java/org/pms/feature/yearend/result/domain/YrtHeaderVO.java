@@ -1,16 +1,17 @@
-package org.pms.feature.yearend.domain;
+package org.pms.feature.yearend.result.domain;
+
+import java.util.Date;
 
 import lombok.Data;
 
 @Data
-public class YrtHeaderViewDTO {
-
+public class YrtHeaderVO {
 	private int yrtId;
-	private String empName; //사원 이름
-	private String empNo; //사번
-	private String deptName; //부서
+	private int empId;
 	private String bizPlace; //사업장
+	private int baseYear; //기준년도 (4자리 사용. 예:2018)
 	private String taxApplyType; //세금 적용 구분
 	private String taxApplyResult; //세금 적용 결과
 	private String confirmYn; //확정 여부(Y/N)
+	private Date createAt; //생성 일시
 }

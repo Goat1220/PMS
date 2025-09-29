@@ -1,9 +1,9 @@
-package org.pms.feature.yearend.service;
+package org.pms.feature.yearend.result.service;
 
 import java.util.List;
 
-import org.pms.feature.yearend.domain.YrtHeaderViewDTO;
-import org.pms.feature.yearend.mapper.YrtHeaderMapper;
+import org.pms.feature.yearend.result.domain.YrtHeaderViewDTO;
+import org.pms.feature.yearend.result.mapper.YrtHeaderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
