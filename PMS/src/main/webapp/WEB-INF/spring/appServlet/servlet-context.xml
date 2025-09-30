@@ -8,19 +8,36 @@
                http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
                http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
-  <!-- @Controller/@RestController 활성화 + JSON 컨버터 -->
+  <!-- =========================================
+       @Controller/@RestController 활성화
+       ［コントローラ］有効化 (JSONコンバータ含む)
+  ========================================== -->
   <annotation-driven />
 
-  <!-- 정적 리소스 -->
+  <!-- =========================================
+       정적 리소스 매핑
+       静的リソースのマッピング
+       예: /resources/css, /resources/js 등
+  ========================================== -->
   <resources mapping="/resources/**" location="/resources/" />
 
-  <!-- JSP 뷰 리졸버 (RestController엔 영향 없음) -->
+  <!-- =========================================
+       JSP 뷰 리졸버
+       JSP ビューリゾルバ
+       ※ prefix + suffix 조합으로 JSP 파일을 찾음
+       ex) return "feature/yearendtaxsimulation/view"
+           → /WEB-INF/views/feature/yearendtaxsimulation/view.jsp
+  ========================================== -->
   <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
     <beans:property name="prefix" value="/WEB-INF/views/" />
     <beans:property name="suffix" value=".jsp" />
   </beans:bean>
 
-  <!-- ✅ 컨트롤러 스캔 범위 확장: 기존 zerock + 새 pms 모두 -->
+  <!-- =========================================
+       컴포넌트 스캔
+       コンポーネントスキャン
+       zerock + pms 컨트롤러/서비스 동시 탐색
+  ========================================== -->
   <context:component-scan base-package="org.zerock.controller, org.pms" />
 
 </beans:beans>
