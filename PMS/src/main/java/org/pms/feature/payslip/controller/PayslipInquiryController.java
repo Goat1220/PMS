@@ -29,21 +29,26 @@ public class PayslipInquiryController {
     public String inquiry(
             // ====== 조회 조건(상단 필터) / 照会条件（上部フィルタ） ======
             @RequestParam(required = false) String empNo,
-            @RequestParam(required = false) String fromYm,  // yyyy-MM 또는 202509 → normalizeYm() / yyyy-MMや202509 → 正規化
-            @RequestParam(required = false) String toYm,    // 동일 / 同様
+            @RequestParam(required = false) String fromYm,  
+            @RequestParam(required = false) String toYm,    
             @RequestParam(required = false) String payType,
-            @RequestParam(required = false, defaultValue = "N") String excludeZero, // "Y"=0원 제외 / "N"=포함
+            @RequestParam(required = false, defaultValue = "N") String excludeZero,
 
             // ====== 목록에서 선택된 행의 상세 / 一覧の選択行の詳細 ======
             @RequestParam(required = false) Long selectedId,
             Model model
     ) {
-        // empNo 기본값 보정(E0001) / empNo既定値補完
-        if (empNo == null || empNo.trim().isEmpty()) empNo = "E0001";
+        // [KO] empNo 기본값: seed 사번(E1001) / [JA] empNo既定値：seed社員(E1001)
+        if (empNo == null || empNo.trim().isEmpty()) empNo = "E1001";
 
-        // from/to 기본값: 현재 연월("yyyy-MM") / 既定値：現在の年月
-        if (fromYm == null || fromYm.trim().isEmpty()) fromYm = java.time.YearMonth.now().toString();
-        if (toYm   == null || toYm.trim().isEmpty())   toYm   = fromYm;
+        // [KO] from/to 기본값: seed 기준 "2025-09" / [JA] from/to既定値：seed基準"2025-09"
+        if (fromYm == null || fromYm.trim().isEmpty()) fromYm = "2025-09";
+        if (toYm   == null || toYm.trim().isEmpty())   toYm   = "2025-09";
+
+        // [KO] payType: 첫 진입은 SALARY, 조회 버튼 눌렀을 땐 빈값("")도 허용 / 
+        // [JA] payType：初回はSALARY、検索ボタン押下時は空文字も許容
+        if (payType == null) payType = "SALARY"; // null → SALARY
+        // 단, ""(빈 문자열)은 그대로 두어 전체 조회 가능하게 한다.
 
         // 다양한 연월 입력 허용 → "yyyy-MM"로 정규화 / 多様な入力を許容→"yyyy-MM"に正規化
         fromYm = normalizeYm(fromYm);
@@ -79,17 +84,13 @@ public class PayslipInquiryController {
         return "feature/payslip/inquiry";
     }
 
-    /**
-     * 연월 문자열 정규화 유틸 / 年月文字列の正規化ユーティリティ
-     * - 허용: "202509" → "2025-09"
-     * - 허용: "2025-09" → "2025-09"
-     * - 그 외: 현재 연월 반환 / それ以外：現在の年月
-     */
+    /** 연월 문자열 정규화 / 年月文字列の正規化 */
     private String normalizeYm(String s) {
         if (s == null) return null;
         s = s.trim();
-        if (s.matches("^\\d{6}$")) return s.substring(0,4) + "-" + s.substring(4,6); // 202509 -> 2025-09
+        if (s.matches("^\\d{6}$")) return s.substring(0,4) + "-" + s.substring(4,6);
         if (s.matches("^\\d{4}-\\d{2}$")) return s;
         return java.time.YearMonth.now().toString();
     }
 }
+
