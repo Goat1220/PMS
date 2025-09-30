@@ -75,13 +75,13 @@
 	.wh .w-80{width:80px} .wh .w-100{width:100%} .wh .w-110{width:110px}
 	.wh .w-120{width:120px} .wh .w-140{width:140px} .wh .w-160{width:160px}
 	.wh .w-180{width:180px}
-	/* 실수로 사용된 .w-18도 안전하게 160px로 처리(레이아웃 파손 방지) */
-	.wh .w-18{width:160px}
+	
+	.wh .min-160 { min-width: 160px; }
 	
 	/* ── 첫 번째 카드의 '첫 번째 줄'만 간격 넓게 */
 	.wh .two-cols > .card:first-child .card-title + .form-row{
-	  gap: 20px;           /* 필요값으로 조절 */
-	  column-gap: 20px;    /* 호환용 */
+	  gap: 18px;           /* 필요값으로 조절 */
+	  column-gap: 18px;    /* 호환용 */
 	}
 	
 	/* 체크박스 라벨 */
@@ -219,10 +219,10 @@
       <!-- 1줄: 라벨+입력 촘촘, 오른쪽에 '데이터생성' -->
       <div class="form-row">
         <span class="label-80 req">원천세사업장</span>
-        <select class="w-140 min-200"><option>원천세사업장</option></select>
+        <select class="w-110 min-160"><option>원천세사업장</option></select>
 
         <span class="label-80 req">귀속월</span>
-        <input id="ym" type="text" class="w-110" value="2025-05"/>
+        <input id="ym" type="text" class="w-110" value="2025-09"/>
 
         <span class="label-80 req">지급월</span>
         <input id="payYm" type="text" class="w-110" placeholder="yyyy-MM"/>
@@ -309,9 +309,9 @@
 	    <!-- 2행: 라벨 | 비번 2개 | (버튼묶음은 위에서 아래까지 고정) -->
 	    <span class="label-80 lbl-pwd" style="margin-right:15px;">비밀번호</span>
 	    <div class="pwd-row in-pwd">
-	      <input id="pwd1" type="password" class="w-18" placeholder="*****"/>
-	      <span class="label-80" style="margin-left:22px;">비밀번호 확인</span>
-	      <input id="pwd2" type="password" class="w-180" placeholder="*****"/>
+	      <input id="pwd1" type="password" class="w-160" placeholder="*****"/>
+	      <span class="label-80" style="margin-left:40px;">비밀번호 확인</span>
+	      <input id="pwd2" type="password" class="w-160" placeholder="*****"/>
 	    </div>
 	
 	  </div>

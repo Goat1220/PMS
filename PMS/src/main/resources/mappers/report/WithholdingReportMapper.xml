@@ -1,70 +1,116 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  [왕초보 TIP]
+  - 이 XML의 namespace는 인터페이스 FQCN과 일치해야 합니다.
+  - 팀이 준 스키마(컬럼 이름) 그대로 사용하고,
+    화면에서 필요한 값들은 SELECT 안에서 alias/계산식으로 만들어 냅니다.
+-->
 <mapper namespace="org.pms.feature.report.mapper.WithholdingReportMapper">
 
-  <!-- 요약 -->
+  <!-- 공통 resultMap: 화면 컬럼 구조(요약/부표 맞춤) -->
   <resultMap id="WithholdingRowMap" type="org.pms.feature.report.domain.WithholdingRow">
     <result property="applyYyyymm" column="apply_yyyymm"/>
     <result property="incomeType"  column="income_type"/>
     <result property="code"        column="code"/>
     <result property="headCount"   column="headcount"/>
     <result property="taxTotal"    column="tax_total"/>
+
     <result property="ntWithheld"  column="nt_withheld"/>
     <result property="taxIncome"   column="tax_income"/>
     <result property="penaltyTax"  column="penalty_tax"/>
     <result property="taxWithheld" column="tax_withheld"/>
     <result property="adjRefund"   column="adj_refund"/>
     <result property="taxNt"       column="tax_nt"/>
+
     <result property="no"          column="no"/>
   </resultMap>
 
+  <resultMap id="AnnexRowMap" type="org.pms.feature.report.domain.AnnexRow" extends="WithholdingRowMap"/>
+
+  <!-- =========================
+       요약
+       - 징수소득세 = s.tax_income
+       - 납부소득세 = s.tax_income - s.adj_refund (alias: tax_income)
+       - 징수가산세 = 0
+       - 징수농특세 = s.tax_nt (현시점 동치 처리)
+       ========================= -->
   <select id="selectSummary"
           parameterType="org.pms.feature.report.domain.WithholdingSearch"
           resultMap="WithholdingRowMap">
     SELECT
-      apply_yyyymm, income_type, code, headcount,
-      tax_total, nt_withheld, tax_income, penalty_tax, tax_withheld, adj_refund, tax_nt,
-      ROW_NUMBER() OVER (ORDER BY code) AS no
-    FROM wh_withholding_summary
-    <where>
-      <if test="applyYyyymm != null and applyYyyymm != ''">
-        AND apply_yyyymm = #{applyYyyymm}
-      </if>
-    </where>
-    ORDER BY code
+      s.apply_yyyymm,
+      s.income_type,
+      s.code,
+      s.headcount,
+      s.tax_total,
+
+      /* 징수농특세: 스키마 분리항목 없음 → 일단 tax_nt를 동치로 노출 */
+      s.tax_nt AS nt_withheld,
+
+      /* 납부소득세 = 징수소득세 - 조정환급세액 */
+      (NVL(s.tax_income,0) - NVL(s.adj_refund,0)) AS tax_income,
+
+      /* 징수가산세: 스키마에 없으므로 0 */
+      0 AS penalty_tax,
+
+      /* 징수소득세 = 스키마의 tax_income */
+      s.tax_income AS tax_withheld,
+
+      /* 조정환급세액/납부농특세 원본 */
+      s.adj_refund,
+      s.tax_nt,
+
+      ROW_NUMBER() OVER (ORDER BY s.code) AS no
+    FROM wh_withholding_summary s
+    WHERE s.apply_yyyymm = #{applyYyyymm}
+    ORDER BY s.code
   </select>
 
-  <!-- 부표 -->
-  <resultMap id="AnnexRowMap" type="org.pms.feature.report.domain.AnnexRow">
-    <result property="applyYyyymm" column="apply_yyyymm"/>
-    <result property="incomeType"  column="income_type"/>
-    <result property="code"        column="code"/>
-    <result property="headCount"   column="headcount"/>
-    <result property="taxTotal"    column="tax_total"/>
-    <result property="ntWithheld"  column="nt_withheld"/>
-    <result property="taxIncome"   column="tax_income"/>
-    <result property="penaltyTax"  column="penalty_tax"/>
-    <result property="taxWithheld" column="tax_withheld"/>
-    <result property="adjRefund"   column="adj_refund"/>
-    <result property="taxNt"       column="tax_nt"/>
-    <result property="no"          column="no"/>
-  </resultMap>
-
+  <!-- =========================
+       부표
+       - wh_annex는 (apply_yyyymm, income_type, code, amount)만 있으니
+         화면 컬럼에 맞게 계산/0으로 맞춰 매핑합니다.
+       - T_IN-*  : 소득세 항목(징수/납부 동일 금액), 환급 고려 X → 납부=징수
+       - T_NT-*  : 농특세 항목(납부농특세), 징수농특세는 일단 0
+       ========================= -->
   <select id="selectAnnex"
           parameterType="org.pms.feature.report.domain.WithholdingSearch"
           resultMap="AnnexRowMap">
     SELECT
-      apply_yyyymm, income_type, code, headcount,
-      tax_total, nt_withheld, tax_income, penalty_tax, tax_withheld, adj_refund, tax_nt,
-      ROW_NUMBER() OVER (ORDER BY code) AS no
-    FROM wh_annex
-    <where>
-      <if test="applyYyyymm != null and applyYyyymm != ''">
-        AND apply_yyyymm = #{applyYyyymm}
-      </if>
-    </where>
-    ORDER BY code
+      a.apply_yyyymm,
+      a.income_type,
+      a.code,
+
+      /* 부표는 인원/총지급액 없음 → 0 */
+      0 AS headcount,
+      0 AS tax_total,
+
+      /* 징수농특세: 일단 0 고정 (룰 결정되면 CASE WHEN으로 매핑) */
+      0 AS nt_withheld,
+
+      /* 납부소득세: 부표 단독으론 환급정보가 없으므로 = 징수소득세 */
+      CASE WHEN a.code LIKE 'T_IN-%' THEN NVL(a.amount,0) ELSE 0 END AS tax_income,
+
+      /* 징수가산세 없음 → 0 */
+      0 AS penalty_tax,
+
+      /* 징수소득세: T_IN-* 코드 금액 */
+      CASE WHEN a.code LIKE 'T_IN-%' THEN NVL(a.amount,0) ELSE 0 END AS tax_withheld,
+
+      /* 조정환급세액: 부표에는 없음 → 0 */
+      0 AS adj_refund,
+
+      /* 납부농특세: T_NT-* 코드 금액 */
+      CASE WHEN a.code LIKE 'T_NT-%' THEN NVL(a.amount,0) ELSE 0 END AS tax_nt,
+
+      ROW_NUMBER() OVER (ORDER BY a.code) AS no
+    FROM wh_annex a
+    WHERE a.apply_yyyymm = #{applyYyyymm}
+    ORDER BY a.code
   </select>
 
 </mapper>
