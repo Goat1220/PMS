@@ -232,7 +232,7 @@ tbody tr.active {
 		<div class="filters">
 			<div class="muted">급여조회</div>
 			<div class="filters">
-				<label>지급연월 <input id="yyyymm" type="month" value="2018-08"></label>
+				<label>지급연월 <input id="yyyymm" type="month" value="2025-09"></label>
 				<label>급여유형 <select id="payType">
 						<option value="">전체</option>
 						<option value="SALARY" selected>SALARY</option>
