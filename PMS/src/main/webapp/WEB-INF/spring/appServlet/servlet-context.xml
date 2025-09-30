@@ -1,30 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans xmlns="http://www.springframework.org/schema/mvc"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:beans="http://www.springframework.org/schema/beans"
-  xsi:schemaLocation="
-    http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
-    http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="
+               http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+               http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+               http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
-  <!-- Spring MVC 기본 설정 -->
+  <!-- @Controller/@RestController 활성화 + JSON 컨버터 -->
   <annotation-driven />
+
+  <!-- 정적 리소스 -->
   <resources mapping="/resources/**" location="/resources/" />
 
-  <!-- JSP 리졸버 -->
+  <!-- JSP 뷰 리졸버 (RestController엔 영향 없음) -->
   <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
     <beans:property name="prefix" value="/WEB-INF/views/" />
     <beans:property name="suffix" value=".jsp" />
   </beans:bean>
 
-  <!-- ✅ 컨트롤러 없이 URL → JSP 바로 매핑 (핵심) -->
-  <view-controller path="/feature/yearend-tax-simulation/view"
-                   view-name="feature/yearendtaxsimulation/view"/>
+  <!-- ✅ 컨트롤러 스캔 범위 확장: 기존 zerock + 새 pms 모두 -->
+  <context:component-scan base-package="org.zerock.controller, org.pms" />
 
-  <!-- (선택) 루트로 들어오면 위 화면으로 -->
-  <view-controller path="/" view-name="redirect:/feature/yearend-tax-simulation/view"/>
-
-  <!-- (선택) 정적파일 디폴트 핸들러 -->
-  <default-servlet-handler/>
-
-  <!-- ❌ 여기엔 component-scan 넣지 마세요 (컨트롤러/서비스 없이도 뜨게) -->
 </beans:beans>
