@@ -1,88 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xsi:schemaLocation="
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
          http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
          http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
          http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
          http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
 
-  <!-- =========================================
-       DataSource (log4jdbc 사용)
-       データソース（log4jdbc 利用）
-       ※ 운영환경에서는 system 계정 사용 지양 / 本番では system アカウント使用NG
-  ========================================== -->
-  <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
-    <property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
-    <property name="jdbcUrl"        value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE"/>
-    <property name="username"       value="system"/>
-    <property name="password"       value="1234"/>
-    <!-- (선택) 풀 기본값은 Hikari가 안전하게 처리 / 省略可 -->
-    <!-- <property name="maximumPoolSize" value="10"/> -->
-  </bean>
+	<!-- ========================================= DataSource (log4jdbc 사용) 
+		データソース（log4jdbc 利用） ※ 운영환경에서는 system 계정 사용 지양 / 本番では system アカウント使用NG ========================================== -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName"
+			value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+		<property name="jdbcUrl"
+			value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" />
+		<property name="username" value="system" />
+		<property name="password" value="1234" />
+		<!-- (선택) 풀 기본값은 Hikari가 안전하게 처리 / 省略可 -->
+		<!-- <property name="maximumPoolSize" value="10"/> -->
+	</bean>
 
-  <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-    <constructor-arg ref="hikariConfig"/>
-  </bean>
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
+	</bean>
 
-  <!-- =========================================
-       MyBatis 핵심 설정 / MyBatis コア設定
-  ========================================== -->
-  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-    <property name="dataSource" ref="dataSource"/>
+	<!-- ========================================= MyBatis 핵심 설정 / MyBatis コア設定 
+		========================================== -->
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
 
-    <!-- ① 매퍼 XML 경로 / マッパーXMLの場所 -->
-    <property name="mapperLocations">
-      <list>
-        <!-- 공통 루트 / 共通ルート -->
-        <value>classpath*:mapper/**/*.xml</value>
-        <!-- (선택) 연말정산 경로 보완 / 任意の追加パス -->
-        <value>classpath:org/pms/mapper/yearend/result/*.xml</value>
-        <value>classpath:org/pms/mapper/yearend/*.xml</value>
-      </list>
-    </property>
+		<!-- ① 매퍼 XML 경로 / マッパーXMLの場所 -->
+		<property name="mapperLocations">
+			<list>
+				<!-- 공통 루트 / 共通ルート -->
+				<value>classpath*:mapper/**/*.xml</value>
+				<value>classpath*:mappers/**/*.xml</value>
+				<!-- (선택) 연말정산 경로 보완 / 任意の追加パス -->
+				<value>classpath:org/pms/mapper/yearend/result/*.xml</value>
+				<value>classpath:org/pms/mapper/yearend/*.xml</value>
+			</list>
+		</property>
 
-    <!-- ② VO 별칭 패키지 (연말정산 도메인 포함 필수)
-         VO エイリアスのパッケージ（年末調整ドメイン必須） -->
-    <property name="typeAliasesPackage"
-              value="org.pms.feature.payslip.domain,org.pms.feature.yearendtaxsimulation.domain"/>
+		<!-- ② VO 별칭 패키지 (연말정산 도메인 포함 필수) VO エイリアスのパッケージ（年末調整ドメイン必須） -->
+		<property name="typeAliasesPackage"
+			value="org.pms.feature.payslip.domain,org.pms.feature.yearendtaxsimulation.domain" />
 
-    <!-- (선택) 카멜-스네이크 자동매핑 / 自動マッピング
-    <property name="configuration">
-      <bean class="org.apache.ibatis.session.Configuration">
-        <property name="mapUnderscoreToCamelCase" value="true"/>
-      </bean>
-    </property>
-    -->
-  </bean>
+		<!-- (선택) 카멜-스네이크 자동매핑 / 自動マッピング <property name="configuration"> <bean 
+			class="org.apache.ibatis.session.Configuration"> <property name="mapUnderscoreToCamelCase" 
+			value="true"/> </bean> </property> -->
+	</bean>
 
-  <!-- =========================================
-       Mapper 스캔 (단일 태그로 통합·명시)
-       マッパースキャン（1つに統合・明示）
-       ※ 연말정산 매퍼 패키지 포함이 핵심
-  ========================================== -->
-  <mybatis-spring:scan base-package="
+	<!-- ========================================= Mapper 스캔 (단일 태그로 통합·명시) 
+		マッパースキャン（1つに統合・明示） ※ 연말정산 매퍼 패키지 포함이 핵심 ========================================== -->
+	<mybatis-spring:scan
+		base-package="
       org.pms.feature.payslip.mapper,
       org.pms.feature.yearendtaxsimulation.mapper,
       org.pms.feature.yearend.admin.mapper,
-      org.pms.feature.yearend.result.mapper"/>
+      org.pms.feature.yearend.result.mapper" />
 
-  <!-- =========================================
-       컴포넌트 스캔 / コンポーネントスキャン
-       ※ 루트 한 줄이면 충분 / ルート1行でOK
-  ========================================== -->
-  <context:component-scan base-package="org.pms"/>
+	<!-- ========================================= 컴포넌트 스캔 / コンポーネントスキャン ※ 루트 
+		한 줄이면 충분 / ルート1行でOK ========================================== -->
+	<context:component-scan base-package="org.pms" />
 
-  <!-- =========================================
-       트랜잭션 / トランザクション
-  ========================================== -->
-  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-    <property name="dataSource" ref="dataSource"/>
-  </bean>
-  <tx:annotation-driven transaction-manager="transactionManager"/>
+	<mybatis-spring:scan
+		base-package="
+        org.zerock.mapper,
+        org.pms.feature.**.mapper" />
+
+	<!-- ========================================= 트랜잭션 / トランザクション ========================================== -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<tx:annotation-driven
+		transaction-manager="transactionManager" />
+
+	<context:component-scan
+		base-package="org.zerock.sample, org.pms" />
 
 </beans>
 
