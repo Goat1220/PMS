@@ -91,13 +91,28 @@
 	/* 2번째 줄(체크/연말정산연도) 정렬 */
 	.wh .row-split{
 	  display:grid;
-	  grid-template-columns: 1fr auto;   /* 좌: 체크 묶음 / 우: 연말정산연도 */
+	  grid-template-columns: 1fr auto;  /* 좌: 체크들 / 우: 연도 */
 	  align-items:center;
-	  column-gap:8px; row-gap:4px;
+	  column-gap:12px;
 	}
-	.wh .row-split .mid{ position:static; transform:none; margin-left:12px; }
-	.wh .row-split .right{ justify-self:end; margin-right:135px; } /* 요청값 유지 */
 	
+	/* 체크 영역을 가로 배치하고, 두 번째(.mid)만 오른쪽 끝으로 밀기 */
+	.wh .row-split .checks{display:flex; width:100%; gap:12px;}
+	.wh .row-split .checks .mid{margin-left: auto; margin-right:300px;}  /* ← 이게 포인트 */
+	
+	/* 우측 블록은 너무 벌어지지 않게 */
+	.wh .row-split .right{justify-self:end; margin-right:135px;}
+
+	/* 	연말정산 readonly */
+	.wh input#annYear.is-readonly{
+	  background:#f3f4f6 !important;
+	  color:#6b7280 !important;
+	  cursor:not-allowed;
+	}
+	.wh input#annYear.is-readonly::placeholder{
+	  color:#9ca3af;
+	}
+
 	/* 버튼 */
 	.wh .btn, .wh .btn-primary{
 	  height:32px; padding:0 12px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer;
@@ -155,6 +170,16 @@
 	.wh .lbl-pwd{ grid-area: lblPwd; }
 	.wh .in-pwd{ grid-area: pwd; }
 	
+	/* 파일명 입력: readonly일 때 회색 배경/텍스트 */
+	.wh input#fileName[readonly]{
+	  background:#f3f4f6;   /* 연한 회색 */
+	  color:#6b7280;        /* 회색 글자 */
+	  cursor:not-allowed;   /* 손모양 금지 */
+	  border-color:#e5e7eb; /* (선택) 테두리도 연하게 */
+	}
+	/* 플레이스홀더도 연하게 */
+	.wh input#fileName[readonly]::placeholder{ color:#9ca3af; }
+	
 	/* 전월 미환급세액 (컴팩트) */
 	.wh #refundBlock{ padding:6px 8px; }
 	.wh #refundBlock .card-title{ margin-bottom:6px; font-size:12px; }
@@ -173,6 +198,17 @@
 	.wh .refund-compact input[type="text"]{ width:var(--input-w); height:26px; padding:0 6px; box-sizing:border-box; }
 	.wh .refund-compact .placeholder{ width:var(--label-w); height:1px; display:block; }
 	
+	/* 셀 단위 배경색 */
+	.wh td.cell-grey { background:#f3f4f6 !important; }   /* 회색 */
+	.wh td.cell-pink { background:#ffe2e2 !important; }   /* 연분홍(가감계에서 '소득 구분/코드'만) */
+
+	/* 요약: 2번째 열(소득 구분) 폭 */
+	#panelSummary table th:nth-child(2),
+	#panelSummary table td:nth-child(2) { width: 450px; }
+	
+	/* 부표: 2번째 열(소득 구분) 폭 */
+	#panelAnnex table th:nth-child(2),
+	#panelAnnex table td:nth-child(2) { width: 450px; }
 	
 	/* 반응형 */
 	@media (max-width:1200px){
@@ -191,7 +227,6 @@
 	  .wh .btns-col{ grid-column:1; grid-row:auto; flex-direction:row; }
 	  .wh .btns-col .btn-primary{ width:auto; }
 	}
-	
 
 </style>
 </head>
@@ -200,8 +235,9 @@
 	<div class="wh"><!-- 네임스페이스 시작 -->
 	<div class="container"
      data-summary-url="${apiSummary}"
-     data-annex-url="${apiAnnex}">
-	
+     data-annex-url="${apiAnnex}"
+	 data-generate-url="${apiGenerate}">
+	  
 	<!-- 페이지 헤더 -->
 	<div class="page-header">
   <div class="page-title">원천징수이행상황신고서</div>
@@ -332,16 +368,16 @@
       <thead>
         <tr>
           <th style="width:50px;">No</th>
-          <th>소득 구분</th>
+          <th style="width:450px;">소득 구분</th>
           <th style="width:60px;">코드</th>
           <th style="width:70px;">인원</th>
           <th style="width:110px;">총지급액</th>
           <th style="width:110px;">징수농특세</th>
           <th style="width:110px;">납부소득세</th>
-          <th style="width:110px;">징수가산세</th>
           <th style="width:110px;">징수소득세</th>
           <th style="width:110px;">조정환급세액</th>
           <th style="width:110px;">납부농특세</th>
+          <th style="width:110px;">징수가산세</th>
         </tr>
       </thead>
       <tbody id="gridBody"></tbody>
@@ -353,17 +389,19 @@
     <table>
       <thead>
         <tr>
-          <th style="width:50px;">No</th>
-          <th>소득 구분</th>
-          <th style="width:60px;">코드</th>
-          <th style="width:70px;">인원</th>
-          <th style="width:110px;">총지급액</th>
-          <th style="width:110px;">징수농특세</th>
-          <th style="width:110px;">납부소득세</th>
-          <th style="width:110px;">징수가산세</th>
-          <th style="width:110px;">징수소득세</th>
-          <th style="width:110px;">조정환급세액</th>
-          <th style="width:110px;">납부농특세</th>
+
+    <th style="width:50px;">No</th>
+    <th style="width:450px;">소득 구분</th>
+    <th style="width:60px;">코드</th>
+    <th style="width:70px;">인원</th>
+    <th style="width:110px;">총지급액</th>
+    <th style="width:110px;">징수소득세</th>
+    <th style="width:110px;">징수농특세</th>
+    <th style="width:110px;">징수가산세</th>
+    <th style="width:110px;">조정환급세액</th>
+    <th style="width:110px;">납부소득세</th>
+    <th style="width:110px;">납부농특세</th>
+
         </tr>
       </thead>
       <tbody id="annexBody"></tbody>
