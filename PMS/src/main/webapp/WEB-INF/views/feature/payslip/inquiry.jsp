@@ -1,6 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt"  prefix="fmt"%>
+<%@ include file="../../includes/commonform.jsp" %>
+<%@ include file="../../includes/table.jsp" %>
+
 
 <!-- ==========================================
      	 Design Tokens (서비스 가이드 설정)
@@ -305,7 +308,9 @@
     <!-- 우측 상단: 지급항목내역(0번행=합계) / 右上：支給項目(0行目=合計) -->
     <div class="card right-top">
       <div class="title">지급항목내역</div>
-
+      
+		
+		
       <!-- 합계 계산 / 合計計算 -->
       <c:set var="payTotal" value="0"/>
       <c:if test="${not empty selected and not empty selected.payItems}">
