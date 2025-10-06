@@ -41,7 +41,7 @@
   <li class="menu-section">
     <div class="section-title">개인 급여처리내역 확인</div>
     <ul class="submenu">
-      <li><a href="<c:url value='/pages/payslip.do'/>">급여명세서 확인하기</a></li>
+      <li><a href="<c:url value='/feature/payslip/view'/>">급여명세서 확인하기</a></li>
     </ul>
   </li>
 
@@ -50,8 +50,8 @@
     <div class="section-title">연말정산 프로세스</div>
     <ul class="submenu">
       <li><a href="<c:url value='/pages/taxSim.do'/>">개인별 연말정산 시뮬레이션</a></li>
-      <li><a href="<c:url value='/pages/taxResult.do'/>">개인별 연말정산 결과조회</a></li>
-      <li><a href="<c:url value='/pages/taxProcess.do'/>">급여담당자의 연말정산 처리/신고</a></li>
+      <li><a href="<c:url value='/yearend/result/list'/>">개인별 연말정산 결과조회</a></li>
+      <li><a href="<c:url value='/yearend/admin/list'/>">급여담당자의 연말정산 처리/신고</a></li>
     </ul>
   </li>
 </ul>
