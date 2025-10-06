@@ -418,50 +418,55 @@
 
 	<insert id="upsertVoucherLinesForPayslip">
   <![CDATA[
-  /* (voucher_id, line_seq) 기준으로 업서트: D=1, C=2 */
+  /* payslip_id 단일 건 기준: 부서별 지급/공제 사전집계 → 라인 생성 → (voucher_id, line_seq) 기준 업서트 */
   MERGE INTO pay_voucher_line t
   USING (
-    SELECT
-      #{voucherId}            AS voucher_id,
-      1                       AS line_seq,
-      #{wageAccountId}        AS account_id,
-      'D'                     AS drcr_code,
-      s.dept_id               AS dept_id,
-      s.pay_sum               AS debit_amt,
-      0                       AS credit_amt
-    FROM (
-      SELECT e.dept_id AS dept_id,
-             NVL(SUM(i.amount),0) AS pay_sum,
-             NVL(SUM(d.amount),0) AS ded_sum
+    WITH base AS (
+      SELECT p.payslip_id, e.dept_id
         FROM payslip p
         JOIN emp e ON e.emp_id = p.emp_id
-        LEFT JOIN payslip_item i ON i.payslip_id = p.payslip_id
-        LEFT JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
        WHERE p.payslip_id = #{payslipId}
-       GROUP BY e.dept_id
-    ) s
+    ),
+    i_sum AS (  /* 지급 항목 사전집계: 곱집합 방지 */
+      SELECT i.payslip_id, SUM(i.amount) AS pay_sum
+        FROM payslip_item i
+       WHERE i.payslip_id = #{payslipId}
+       GROUP BY i.payslip_id
+    ),
+    d_sum AS (  /* 공제 항목 사전집계: 곱집합 방지 */
+      SELECT d.payslip_id, SUM(d.amount) AS ded_sum
+        FROM payslip_deduction d
+       WHERE d.payslip_id = #{payslipId}
+       GROUP BY d.payslip_id
+    ),
+    lines AS (
+      /* 부서별 차변(비용) 라인 */
+      SELECT
+        #{voucherId}              AS voucher_id,
+        ROW_NUMBER() OVER (ORDER BY b.dept_id)                          AS line_seq,
+        #{wageAccountId}          AS account_id,
+        'D'                       AS drcr_code,
+        b.dept_id                 AS dept_id,
+        NVL(i.pay_sum,0)          AS debit_amt,
+        0                         AS credit_amt
+      FROM base b
+      LEFT JOIN i_sum i ON i.payslip_id = b.payslip_id
 
-    UNION ALL
+      UNION ALL
 
-    SELECT
-      #{voucherId}            AS voucher_id,
-      2                       AS line_seq,
-      #{withholdAccountId}    AS account_id,
-      'C'                     AS drcr_code,
-      s.dept_id               AS dept_id,
-      0                       AS debit_amt,
-      s.ded_sum               AS credit_amt
-    FROM (
-      SELECT e.dept_id AS dept_id,
-             NVL(SUM(i.amount),0) AS pay_sum,
-             NVL(SUM(d.amount),0) AS ded_sum
-        FROM payslip p
-        JOIN emp e ON e.emp_id = p.emp_id
-        LEFT JOIN payslip_item i ON i.payslip_id = p.payslip_id
-        LEFT JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
-       WHERE p.payslip_id = #{payslipId}
-       GROUP BY e.dept_id
-    ) s
+      /* 부서별 대변(예수금) 라인: 비용 라인과 line_seq 충돌 방지를 위해 +1000 */
+      SELECT
+        #{voucherId}              AS voucher_id,
+        ROW_NUMBER() OVER (ORDER BY b.dept_id) + 1000                   AS line_seq,
+        #{withholdAccountId}      AS account_id,
+        'C'                       AS drcr_code,
+        b.dept_id                 AS dept_id,
+        0                         AS debit_amt,
+        NVL(d.ded_sum,0)          AS credit_amt
+      FROM base b
+      LEFT JOIN d_sum d ON d.payslip_id = b.payslip_id
+    )
+    SELECT * FROM lines
   ) src
   ON ( t.voucher_id = src.voucher_id AND t.line_seq = src.line_seq )
   WHEN MATCHED THEN
@@ -472,12 +477,9 @@
       t.debit_amt  = src.debit_amt,
       t.credit_amt = src.credit_amt
   WHEN NOT MATCHED THEN
-    INSERT (
-      line_id, voucher_id, line_seq, account_id, drcr_code, dept_id, debit_amt, credit_amt
-    ) VALUES (
-      SEQ_PAY_VOUCHER_LINE.NEXTVAL, src.voucher_id, src.line_seq, src.account_id,
-      src.drcr_code, src.dept_id, src.debit_amt, src.credit_amt
-    )
+    INSERT (line_id, voucher_id, line_seq, account_id, drcr_code, dept_id, debit_amt, credit_amt)
+    VALUES (SEQ_PAY_VOUCHER_LINE.NEXTVAL, src.voucher_id, src.line_seq,
+            src.account_id, src.drcr_code, src.dept_id, src.debit_amt, src.credit_amt)
   ]]>
 	</insert>
 

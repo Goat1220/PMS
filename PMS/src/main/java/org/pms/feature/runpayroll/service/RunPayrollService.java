@@ -46,105 +46,103 @@ public class RunPayrollService {
 	}
 
 	// ===================== 배치 처리 =====================
-    /**
-     * 급상여 처리
-     * - (선행) 요약행 플래그 저장(emp_tax_profile upsert, 퇴직여부 반영)
-     * - 지급합계 - 공제합계 = 실지급액(payslip.net_pay_amt) 반영
-     * - 전표 생성(요약토큰 중복 시 경고)
-     * - 루프 종료 후 월집계(pay_month_summary) 재산출/업서트
-     */
-    @Transactional
-    public SimpleResult processPayroll(BatchEmpRequest req){
-        final String yyyymm  = blankToNull(req.getYyyymm());
-        final String payType = blankToNull(req.getPayType());
-        final List<String> empNos = (req.getEmpNos() != null) ? req.getEmpNos() : Collections.<String>emptyList();
+	/**
+	 * 급상여 처리 - (선행) 요약행 플래그 저장(emp_tax_profile upsert, 퇴직여부 반영) - 지급합계 - 공제합계 =
+	 * 실지급액(payslip.net_pay_amt) 반영 - 전표 생성(요약토큰 중복 시 경고) - 루프 종료 후
+	 * 월집계(pay_month_summary) 재산출/업서트
+	 */
+	@Transactional
+	public SimpleResult processPayroll(BatchEmpRequest req) {
+		final String yyyymm = blankToNull(req.getYyyymm());
+		final String payType = blankToNull(req.getPayType());
+		final List<String> empNos = (req.getEmpNos() != null) ? req.getEmpNos() : Collections.<String>emptyList();
 
-        if (yyyymm == null)  return SimpleResult.fail("연월(yyyymm)이 없습니다.");
-        if (payType == null) return SimpleResult.fail("급여유형이 없습니다.");
-        if (empNos.isEmpty()) return SimpleResult.fail("처리할 사원이 없습니다.");
+		if (yyyymm == null)
+			return SimpleResult.fail("연월(yyyymm)이 없습니다.");
+		if (payType == null)
+			return SimpleResult.fail("급여유형이 없습니다.");
+		if (empNos.isEmpty())
+			return SimpleResult.fail("처리할 사원이 없습니다.");
 
-        // 1) 확정 잠금 체크
-		/*
-		 * int locked = mapper.countConfirmedPayslips(yyyymm, payType, empNos); if
-		 * (locked > 0) { return SimpleResult.fail("확정된 전표가 있어 처리할 수 없습니다."); }
-		 */
+		// 1) 확정 잠금 체크
 
-        // 2) flags를 empNo로 매핑 (선택 사번에만 정확 적용)
-        final Map<String, EmpFlag> flagMap = new HashMap<>();
-        if (req.getFlags() != null) {
-            for (EmpFlag f : req.getFlags()) {
-                if (f == null) continue;
-                String no = blankToNull(f.getEmpNo());
-                if (no != null) flagMap.put(no, f);
-            }
-        }
+		int locked = mapper.countConfirmedPayslips(yyyymm, payType, empNos);
+		if (locked > 0) {
+			return SimpleResult.fail("확정된 전표가 있어 처리할 수 없습니다.");
+		}
 
-        // 3) 사번별 처리
-        final List<String> warnings = new ArrayList<>();
-        int affected = 0;
+		// 2) flags를 empNo로 매핑 (선택 사번에만 정확 적용)
+		final Map<String, EmpFlag> flagMap = new HashMap<>();
+		if (req.getFlags() != null) {
+			for (EmpFlag f : req.getFlags()) {
+				if (f == null)
+					continue;
+				String no = blankToNull(f.getEmpNo());
+				if (no != null)
+					flagMap.put(no, f);
+			}
+		}
 
-        for (String empNo : empNos) {
-            if (blankToNull(empNo) == null) continue;
+		// 3) 사번별 처리
+		final List<String> warnings = new ArrayList<>();
+		int affected = 0;
 
-            Long empId = mapper.findEmpIdByEmpNo(empNo);
-            if (empId == null) {
-                warnings.add("사번 " + empNo + " : 대상 사원을 찾을 수 없습니다.");
-                continue;
-            }
+		for (String empNo : empNos) {
+			if (blankToNull(empNo) == null)
+				continue;
 
-            // payslip 확보(없으면 생성) 및 id 조회
-            mapper.ensurePayslipExists(empId, yyyymm, payType);
-            Long payslipId = mapper.ensurePayslip(empId, yyyymm, payType);
+			Long empId = mapper.findEmpIdByEmpNo(empNo);
+			if (empId == null) {
+				warnings.add("사번 " + empNo + " : 대상 사원을 찾을 수 없습니다.");
+				continue;
+			}
 
-            // (선행) 플래그 저장 + 퇴직여부 반영
-            EmpFlag f = flagMap.get(empNo);
-            
-            if (f != null) {
-                // emp_tax_profile 업서트 (XML은 NVL 패턴 권장)
-            	System.out.println(f);
-                mapper.upsertPayslipFlags(empId, yyyymm, payType, f);
+			// payslip 확보(없으면 생성) 및 id 조회
+			mapper.ensurePayslipExists(empId, yyyymm, payType);
+			Long payslipId = mapper.ensurePayslip(empId, yyyymm, payType);
 
-                // 퇴직여부가 전달된 경우, 해당 월말/NULL로 갱신
-                if (f.getRetiredYn() != null && !f.getRetiredYn().isEmpty()) {
-                    mapper.updateEmpRetiredYn(empId, yyyymm, f.getRetiredYn()); // 'Y'|'N'
-                }
-            }
+			// (선행) 플래그 저장 + 퇴직여부 반영
+			EmpFlag f = flagMap.get(empNo);
 
-            // 지급/공제 합계 → 실지급액 반영
-            Long payTot = mapper.sumEarningItems(payslipId);
-            Long dedTot = mapper.sumDeductionItems(payslipId);
-            long net = nvl(payTot) - nvl(dedTot);
-            mapper.updatePayslipNet(payslipId, net);
+			if (f != null) {
+				// emp_tax_profile 업서트 (XML은 NVL 패턴 권장)
+				System.out.println(f);
+				mapper.upsertPayslipFlags(empId, yyyymm, payType, f);
 
-            // 전표 생성: 토큰 중복 방지 (idempotent)
-            String token = voucherToken(empId, yyyymm, payType);
-            Integer has = mapper.hasVoucherByToken(token);
-            if (has != null && has > 0) {
-                warnings.add("사번 " + empNo + " : 이미 전표처리 데이터가 있습니다.");
-            } else {
-                mapper.insertVoucherHeaderByToken(yyyymm, token);
-                Long voucherId = mapper.findVoucherIdByToken(token);
-                mapper.upsertVoucherLinesForPayslip(
-                        payslipId,
-                        voucherId,
-                        WAGE_ACCOUNT_ID,
-                        WITHHOLD_ACCOUNT_ID
-                );
-            }
+				// 퇴직여부가 전달된 경우, 해당 월말/NULL로 갱신
+				if (f.getRetiredYn() != null && !f.getRetiredYn().isEmpty()) {
+					mapper.updateEmpRetiredYn(empId, yyyymm, f.getRetiredYn()); // 'Y'|'N'
+				}
+			}
 
-            affected++;
-        }
+			// 지급/공제 합계 → 실지급액 반영
+			Long payTot = mapper.sumEarningItems(payslipId);
+			Long dedTot = mapper.sumDeductionItems(payslipId);
+			long net = nvl(payTot) - nvl(dedTot);
+			mapper.updatePayslipNet(payslipId, net);
 
-        // 4) 루프 이후 월 집계 재산출/업서트 (해당 yyyymm, payType 전체)
-        mapper.upsertMonthSummary(yyyymm, payType);
+			/*
+			 * // 전표 생성: 토큰 중복 방지 (idempotent) String token = voucherToken(empId, yyyymm,
+			 * payType); Integer has = mapper.hasVoucherByToken(token); if (has != null &&
+			 * has > 0) { warnings.add("사번 " + empNo + " : 이미 전표처리 데이터가 있습니다."); } else {
+			 * mapper.insertVoucherHeaderByToken(yyyymm, token); Long voucherId =
+			 * mapper.findVoucherIdByToken(token); mapper.upsertVoucherLinesForPayslip(
+			 * payslipId, voucherId, WAGE_ACCOUNT_ID, WITHHOLD_ACCOUNT_ID ); }
+			 */
 
-        // 5) 결과 메시지
-        String msg = "급상여 처리가 완료되었습니다.";
-        if (!warnings.isEmpty()) {
-            msg += " 경고: " + String.join(" / ", warnings);
-        }
-        return new SimpleResult(true, affected, msg);
-    }
+			affected++;
+		}
+
+		// 4) 루프 이후 월 집계 재산출/업서트 (해당 yyyymm, payType 전체)
+		mapper.upsertMonthSummary(yyyymm, payType);
+
+		// 5) 결과 메시지
+		String msg = "급상여 처리가 완료되었습니다.";
+		if (!warnings.isEmpty()) {
+			msg += " 경고: " + String.join(" / ", warnings);
+		}
+		return new SimpleResult(true, affected, msg);
+	}
 
 	/**
 	 * 세금 재처리 - 지급총액 기준으로 소득세/지방세 예시 재계산 후 공제항목 갱신 - 처리 후 월집계 재산출
@@ -296,10 +294,10 @@ public class RunPayrollService {
 	private String voucherToken(Long empId, String yyyymm, String payType) {
 		return "PSLIP-EMP-" + empId + "-" + yyyymm + "-" + payType;
 	}
-	
-    private static long nvl(Long v){
-        return (v == null) ? 0L : v;
-    }
+
+	private static long nvl(Long v) {
+		return (v == null) ? 0L : v;
+	}
 
 	private String blankToNull(String s) {
 		return (s == null || s.trim().isEmpty()) ? null : s.trim();
