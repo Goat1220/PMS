@@ -95,12 +95,14 @@ public class YearendTaxSimController {
     }
 
     /** 시뮬레이션 결과 삭제 / シミュレーション結果の削除 */
-    @DeleteMapping("/api/simulate")
-    public ResponseEntity<?> delete(@RequestParam Long yrtId){
+    @DeleteMapping(value = "/api/simulate", produces = "text/plain;charset=UTF-8")
+    public ResponseEntity<?> delete(@RequestParam Long yrtId) {
         boolean ok = command.delete(yrtId);
-        return ok ? ResponseEntity.ok().build()
-                  : ResponseEntity.badRequest().body("확정건은 삭제 불가");
+        return ok 
+            ? ResponseEntity.ok("삭제 완료")  
+            : ResponseEntity.badRequest().body("확정건은 삭제 불가");
     }
+
 
     /** 납부 특례(분납) 시뮬레이션 / 納付特例（分納）シミュレーション */
     @PostMapping("/api/installment-simulate") @ResponseBody

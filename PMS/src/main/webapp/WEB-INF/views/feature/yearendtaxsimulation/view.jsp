@@ -320,6 +320,7 @@ td.right {
 		<div class="field">
 			<span>사번</span> <input id="empNo" class="w-emp readonly-gray"
 				type="text" value="${empId}" placeholder="사번" readonly>
+				  <input type="hidden" id="empId" value="${empId}">
 		</div>
 
 		<div class="field">
@@ -449,251 +450,242 @@ td.right {
 <!-- /.container -->
 
 <script>
-	/* ===== JS 유틸 / JSユーティリティ ===== */
-	var CTX = window.location.origin; 
-	function ctx() {
-		return CTX;
-	}
-	function emp() {
- 	     var el = document.getElementById('empNo');
-	     return el ? el.value.trim() : '';
-		 }
-	function yrt() {
-		return document.getElementById('yrtId').value;
-	}
-	function validYear(y) {
-		return /^\d{4}$/.test(y) && (+y >= 2000 && +y <= 2100);
-	}
-	function fmt(n) {
-		if (n == null)
-			return '';
-		return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	}
+/* ===== JS 유틸 / JSユーティリティ ===== */
+var CTX = window.location.origin;
+function ctx() { return CTX; }
+function emp() {
+  var el = document.getElementById('empNo');
+  return el ? el.value.trim() : '';
+}
+function yrt() {
+  return document.getElementById('yrtId').value;
+}
+function validYear(y) {
+  return /^\d{4}$/.test(y) && (+y >= 2000 && +y <= 2100);
+}
+function fmt(n) {
+  if (n == null) return '';
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 
-	/* 초기 연도 보정 / 初期年度補正 */
-	(function() {
-		var v = document.getElementById('baseYear').value;
-		if (!/^\d{4}$/.test(v)) {
-			var d = new Date();
-			document.getElementById('baseYear').value = d.getFullYear() - 1;
-		}
-	})();
+/* 초기 연도 보정 / 初期年度補正 */
+(function() {
+  var v = document.getElementById('baseYear').value;
+  if (!/^\d{4}$/.test(v)) {
+    var d = new Date();
+    document.getElementById('baseYear').value = d.getFullYear() - 1;
+  }
+})();
 
-	/* 탭 전환 / タブ切替 */
-	function showTab(t) {
-		document.getElementById('tab-final').classList.remove('active');
-		document.getElementById('tab-sim').classList.remove('active');
-		document.getElementById('panel-final').style.display = (t === 'final') ? 'block'
-				: 'none';
-		document.getElementById('panel-sim').style.display = (t === 'sim') ? 'block'
-				: 'none';
-		document.getElementById('tab-' + t).classList.add('active');
-	}
+/* 탭 전환 / タブ切替 */
+function showTab(t) {
+  document.getElementById('tab-final').classList.remove('active');
+  document.getElementById('tab-sim').classList.remove('active');
+  document.getElementById('panel-final').style.display = (t === 'final') ? 'block' : 'none';
+  document.getElementById('panel-sim').style.display = (t === 'sim') ? 'block' : 'none';
+  document.getElementById('tab-' + t).classList.add('active');
+}
 
-	/* 사원 검색(외부 기능 연동) / 社員検索（外部機能連携） */
-	function onClickEmpSearch() {
-		if (typeof window.openEmpSearch === 'function') {
-			window.openEmpSearch(function(res) {
-				if (!res)
-					return;
-				setEmp(res.name, res.id);
-			});
-		} else {
-			alert('사원 검색은 외부 기능입니다.');
-		}
-	}
+/* 사원 검색(외부 기능 연동) / 社員検索（外部機能連携） */
+function onClickEmpSearch() {
+  if (typeof window.openEmpSearch === 'function') {
+    window.openEmpSearch(function(res) {
+      if (!res) return;
+      setEmp(res.name, res.id);
+    });
+  } else {
+    alert('사원 검색은 외부 기능입니다.');
+  }
+}
 
-	/* 사원 세팅 / 社員セット */
-	function setEmp(name, id) {
-		var nameEl = document.getElementById('empName');
-		var idEl = document.getElementById('empId');
-		if (nameEl)
-			nameEl.value = name || '';
-		if (idEl)
-			idEl.value = id || '';
-	}
+/* 사원 세팅 / 社員セット */
+function setEmp(name, id) {
+  var nameEl = document.getElementById('empName');
+  var idEl = document.getElementById('empId');
+  if (nameEl) nameEl.value = name || '';
+  if (idEl) idEl.value = id || '';
+}
 
-	/* 사원 선택 여부 검사 / 社員選択チェック */
-	function needEmp() {
-		if (!emp()) {
-			alert('선택된 사원이 없습니다.');
-			return true;
-		}
-		return false;
-	}
+/* 사원 선택 여부 검사 / 社員選択チェック */
+function needEmp() {
+  if (!emp()) {
+    alert('선택된 사원이 없습니다.');
+    return true;
+  }
+  return false;
+}
 
-	/* 산출근거 조회 → 시뮬 탭 / 参照取得 → シミュタブ表示 */
-	function onReason() {
-		if (needEmp())
-			return;
-		var y = document.getElementById('baseYear').value.trim();
-		if (!validYear(y)) {
-			alert('정산연도는 2000~2100의 4자리 숫자');
-			return;
-		}
-		var url = ctx() + '/feature/yearend-tax-simulation/api/sim?empId='
-				+ encodeURIComponent(emp()) + '&baseYear='
-				+ encodeURIComponent(y);
-		fetch(url).then(function(r) {
-			return r.ok ? r.json() : Promise.reject(r);
-		}).then(function(rows) {
-			renderSim(rows);
-			showTab('sim');
-			return refreshTaxApplyResult();
-		})["catch"](function() {
-			alert('산출근거 조회 실패 또는 API 미구현');
-		});
-	}
+/* 산출근거 조회 → 시뮬 탭 / 参照取得 → シミュタブ表示 */
+function onReason() {
+  if (needEmp()) return;
+  var y = document.getElementById('baseYear').value.trim();
+  if (!validYear(y)) {
+    alert('정산연도는 2000~2100의 4자리 숫자');
+    return;
+  }
+  var url = ctx() + '/feature/yearend-tax-simulation/api/sim?empId='
+          + encodeURIComponent(emp()) + '&baseYear='
+          + encodeURIComponent(y);
+  fetch(url)
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
+    .then(function(rows) {
+      renderSim(rows);
+      showTab('sim');
+      return refreshTaxApplyResult();
+    })
+    .catch(function() {
+      alert('산출근거 조회 실패 또는 API 미구현');
+    });
+}
 
-	/* 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
-	function onSim() {
+/* ✅ 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
+function onSim() {
   if (needEmp()) return;
   var y = document.getElementById('baseYear').value.trim();
   if (!validYear(y)) {
     alert('정산연도 형식 오류');
     return;
   }
-  if (!confirm('기존 결과를 삭제하고 새로 생성하시겠습니까?'))
-    return;
+  if (!confirm('기존 결과를 삭제하고 새로 생성하시겠습니까?')) return;
 
+  var url = ctx() + '/feature/yearend-tax-simulation/api/simulate';
   var form = new URLSearchParams({
     empId: emp(),
     baseYear: y,
     overwrite: 'true'
   });
 
-  fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate', {
-    method: 'POST',
-    body: form
+  fetch(url, { method: 'POST', body: form })
+    .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
+    .then(function(yrtIdRaw) {
+      // 숫자만 추출
+      var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
+      document.getElementById('yrtId').value = cleanYrtId;
+      onReason();
+      refreshTaxApplyResult(cleanYrtId);
+    })
+    .catch(function() {
+      alert('시뮬레이션 처리 실패 또는 API 미구현');
+    });
+}
+
+/* ✅ 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
+function onDelete() {
+  var id = yrt();
+  if (!id) {
+    alert('삭제할 실행이 없습니다.');
+    return;
+  }
+  if (!confirm('기존 시뮬레이션 결과를 삭제하시겠습니까?')) return;
+
+  fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate?yrtId=' + encodeURIComponent(id), {
+      method: 'DELETE'
   })
-  .then(function(r) { return r.ok ? r.text() : Promise.reject(r); })
-  .then(function(yrtIdRaw) {
-    // ✅ 수정: 숫자만 추출
-    var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
-    document.getElementById('yrtId').value = cleanYrtId;
-    onReason();
-    refreshTaxApplyResult(cleanYrtId);
+  .then(function(r) {
+      if (r.ok) return r.text();
+      return r.text().then(function(t){ throw new Error(t || '삭제 실패'); });
   })
-  .catch(function() {
-    alert('시뮬레이션 처리 실패 또는 API 미구현');
+  .then(function() {
+      document.getElementById('simBody').innerHTML =
+          '<tr><td colspan="4" style="text-align:center;">삭제됨</td></tr>';
+      document.getElementById('yrtId').value = '';
+      refreshTaxApplyResult();
+      alert('삭제 완료되었습니다.');
+  })
+  .catch(function(err) {
+      alert(err.message || '삭제 실패 또는 API 미구현');
   });
 }
 
-	/* 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
-	function onDelete() {
-		var id = yrt();
-		if (!id) {
-			alert('삭제할 실행이 없습니다.');
-			return;
-		}
-		if (!confirm('기존 시뮬레이션 결과를 삭제하시겠습니까?'))
-			return;
-		fetch(
-				ctx() + '/feature/yearend-tax-simulation/api/simulate?yrtId='
-						+ encodeURIComponent(id), {
-					method : 'DELETE'
-				})
-				.then(function(r) {
-					return r.ok ? null : Promise.reject(r);
-				})
-				.then(
-						function() {
-							document.getElementById('simBody').innerHTML = '<tr><td colspan="4" style="text-align:center;">삭제됨</td></tr>';
-							document.getElementById('yrtId').value = '';
-							refreshTaxApplyResult();
-						})["catch"](function() {
-			alert('삭제 실패 또는 API 미구현');
-		});
-	}
+/* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
+function onInstallment() {
+  var id = yrt();
+  if (!id) {
+    alert('시뮬레이션 실행이 없습니다.');
+    return;
+  }
+  var months = prompt('분납 개월수(2~3):', '2');
+  var start = prompt('시작월(YYYY-MM):', new Date().toISOString().slice(0, 7));
+  var form = new URLSearchParams({
+    yrtId : id,
+    months : months,
+    startMonth : start
+  });
+  fetch(ctx() + '/feature/yearend-tax-simulation/api/installment-simulate', {
+      method : 'POST',
+      body : form
+  })
+  .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
+  .then(renderInstallment)
+  .catch(function() {
+      alert('분납 시뮬레이션 실패 또는 API 미구현');
+  });
+  showTab('sim');
+}
 
-	/* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
-	function onInstallment() {
-		var id = yrt();
-		if (!id) {
-			alert('시뮬레이션 실행이 없습니다.');
-			return;
-		}
-		var months = prompt('분납 개월수(2~3):', '2');
-		var start = prompt('시작월(YYYY-MM):', new Date().toISOString()
-				.slice(0, 7));
-		var form = new URLSearchParams({
-			yrtId : id,
-			months : months,
-			startMonth : start
-		});
-		fetch(
-				ctx()
-						+ '/feature/yearend-tax-simulation/api/installment-simulate',
-				{
-					method : 'POST',
-					body : form
-				}).then(function(r) {
-			return r.ok ? r.json() : Promise.reject(r);
-		}).then(renderInstallment)["catch"](function() {
-			alert('분납 시뮬레이션 실패 또는 API 미구현');
-		});
-		showTab('sim');
-	}
+/* 시뮬 표 렌더링 / シミュ表レンダリング */
+function renderSim(rows) {
+  var tb = document.getElementById('simBody');
+  tb.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#777;">데이터 없음</td></tr>';
+    return;
+  }
+  rows.forEach(function(r) {
+    tb.insertAdjacentHTML('beforeend',
+      '<tr>'
+      + '<td>' + (r.itemClass || '') + '</td>'
+      + '<td>' + (r.itemName || '') + '</td>'
+      + '<td class="right">' + fmt(r.amount) + '</td>'
+      + '<td class="right">' + fmt(r.expectedAmount) + '</td>'
+      + '</tr>'
+    );
+  });
+}
 
-	/* 시뮬 표 렌더링 / シミュ表レンダリング */
-	function renderSim(rows) {
-		var tb = document.getElementById('simBody');
-		tb.innerHTML = '';
-		if (!rows || rows.length === 0) {
-			tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#777;">데이터 없음</td></tr>';
-			return;
-		}
-		rows.forEach(function(r) {
-			tb.insertAdjacentHTML('beforeend', '<tr>' + '<td>'
-					+ (r.itemClass || '') + '</td>' + '<td>'
-					+ (r.itemName || '') + '</td>' + '<td class="right">'
-					+ fmt(r.amount) + '</td>' + '<td class="right">'
-					+ fmt(r.expectedAmount) + '</td>' + '</tr>');
-		});
-	}
+/* 분납 결과 렌더링 / 分納結果レンダリング */
+function renderInstallment(res) {
+  var box = document.getElementById('installmentBox');
+  if (!res || !res.schedule) {
+    box.innerHTML = '';
+    return;
+  }
+  var html = '<h4 style="margin:10px 0 6px 0;">분납 스케줄</h4>'
+           + '<table class="grid"><tr><th>월</th><th>국세</th><th>지방세</th><th>합계</th></tr>';
+  res.schedule.forEach(function(s) {
+    html += '<tr><td>' + s.yyyymm + '</td>'
+         + '<td class="right">' + fmt(s.national) + '</td>'
+         + '<td class="right">' + fmt(s.local) + '</td>'
+         + '<td class="right">' + fmt(s.total) + '</td></tr>';
+  });
+  html += '</table>';
+  box.innerHTML = html;
+}
 
-	/* 분납 결과 렌더링 / 分納結果レンダリング */
-	function renderInstallment(res) {
-		var box = document.getElementById('installmentBox');
-		if (!res || !res.schedule) {
-			box.innerHTML = '';
-			return;
-		}
-		var html = '<h4 style="margin:10px 0 6px 0;">분납 스케줄</h4><table class="grid"><tr><th>월</th><th>국세</th><th>지방세</th><th>합계</th></tr>';
-		res.schedule.forEach(function(s) {
-			html += '<tr><td>' + s.yyyymm + '</td><td class="right">'
-					+ fmt(s.national) + '</td><td class="right">'
-					+ fmt(s.local) + '</td><td class="right">' + fmt(s.total)
-					+ '</td></tr>';
-		});
-		html += '</table>';
-		box.innerHTML = html;
-	}
+/* 세금적용결과 갱신 / 税適用結果更新 */
+function refreshTaxApplyResult(yrtId) {
+  var y = document.getElementById('baseYear').value.trim();
+  if (!validYear(y) || !emp()) {
+    document.getElementById('taxApplyResult').value = '미판정';
+    return;
+  }
+  var q = new URLSearchParams({
+    empId : emp(),
+    baseYear : y
+  });
+  if (yrtId) q.append('yrtId', yrtId);
 
-	/* 세금적용결과 갱신 / 税適用結果更新 */
-	function refreshTaxApplyResult(yrtId) {
-		var y = document.getElementById('baseYear').value.trim();
-		if (!validYear(y) || !emp()) {
-			document.getElementById('taxApplyResult').value = '미판정';
-			return;
-		}
-		var q = new URLSearchParams({
-			empId : emp(),
-			baseYear : y
-		});
-		if (yrtId)
-			q.append('yrtId', yrtId);
-		return fetch(
-				ctx() + '/feature/yearend-tax-simulation/api/tax-apply-result?'
-						+ q.toString()).then(function(r) {
-			return r.ok ? r.text() : Promise.reject(r);
-		}).then(function(t) {
-			document.getElementById('taxApplyResult').value = t || '미판정';
-		})["catch"](function() {
-			document.getElementById('taxApplyResult').value = '미판정';
-		});
-	}
+  return fetch(ctx() + '/feature/yearend-tax-simulation/api/tax-apply-result?' + q.toString())
+    .then(function(r) { return r.ok ? r.text() : Promise.reject(r); })
+    .then(function(t) {
+      document.getElementById('taxApplyResult').value = t || '미판정';
+    })
+    .catch(function() {
+      document.getElementById('taxApplyResult').value = '미판정';
+    });
+}
 </script>
+
 
 <script>
 	/**

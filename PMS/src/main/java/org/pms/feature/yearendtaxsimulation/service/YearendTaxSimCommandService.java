@@ -78,45 +78,61 @@ public class YearendTaxSimCommandService {
         // 6) 실행 ID 반환 / 実行IDを返却
         return yrtId;
     }
-
-    /**
-     * 시뮬레이션 결과 삭제
-     * 実行結果の削除
-     * - 미확정(N)인 헤더만 삭제 허용 / 未確定(N)のみ削除可能
-     */
     @Transactional
-    public boolean delete(Long yrtId){
-        return mapper.deleteByYrtId(yrtId) > 0; // 삭제 건수>0이면 true / 削除件数>0ならtrue
+    public boolean delete(Long yrtId) {
+        if (yrtId == null) {
+            log.warn("삭제 요청 실패: yrtId 없음");
+            return false;
+        }
+
+        try {
+            int deleted = mapper.deleteByYrtId(yrtId);
+            log.info("yrtId={} 삭제 결과 {}건", yrtId, deleted);
+            return deleted > 0; // 정상 삭제 시 true
+        } catch (Exception e) {
+            log.error("삭제 중 예외 발생", e);
+            return false; // 예외 발생 시 false 반환 (Controller가 400 응답)
+        }
     }
 
-    /**
-     * 분납 시뮬레이션
-     * - 결과 합계(국세/지방세)를 월수로 균등 분할
-     * - 나누어떨어지지 않는 잔액은 마지막 달에 더함
-     *
-     * 分納シミュレーション
-     * - 合計（国税/地方税）を月数で均等割
-     * - 端数は最終月に加算
-     */
     @Transactional(readOnly = true)
-    public InstallmentResponse installment(Long yrtId, int months, String startMonth){
-        ResultTotal rt = query.findResultTotal(yrtId); // 합계 조회 / 合計取得
-        long nat = (rt == null || rt.getAddNational() == null) ? 0L : rt.getAddNational(); // 국세 / 国税
-        long loc = (rt == null || rt.getAddLocal()    == null) ? 0L : rt.getAddLocal();    // 지방세 / 地方税
+    public InstallmentResponse installment(Long yrtId, int months, String startMonth) {
+        if (yrtId == null) {
+            throw new IllegalArgumentException("yrtId가 필요합니다.");
+        }
+        if (months < 2 || months > 12) {
+            throw new IllegalArgumentException("분납 개월수는 2~12 범위여야 합니다.");
+        }
+
+        ResultTotal rt = query.findResultTotal(yrtId);
+        if (rt == null) {
+            throw new IllegalStateException("정산 결과가 존재하지 않습니다. 먼저 시뮬레이션을 실행하세요.");
+        }
+
+        long nat = rt.getAddNational() == null ? 0L : rt.getAddNational();
+        long loc = rt.getAddLocal() == null ? 0L : rt.getAddLocal();
 
         List<InstallmentEntry> list = new ArrayList<>();
-        YearMonth ym = YearMonth.parse(startMonth); // 시작 연월 파싱 / 開始年月のパース
+        YearMonth ym;
+        try {
+            ym = YearMonth.parse(startMonth);
+        } catch (Exception e) {
+            log.warn("시작월 형식 오류: {}", startMonth);
+            ym = YearMonth.now(); // 현재 달로 대체
+        }
 
-        long natBase = (months <= 1) ? nat : nat / months; // 기본 분할액(국세) / 基本割額（国税）
-        long locBase = (months <= 1) ? loc : loc / months; // 기본 분할액(지방세) / 基本割額（地方税）
+        long natBase = (months <= 1) ? nat : nat / months;
+        long locBase = (months <= 1) ? loc : loc / months;
 
         for (int i = 0; i < months; i++) {
-            // 마지막 달에 잔액 보정 / 最終月で端数調整
             long natPay = (i == months - 1) ? (nat - natBase * (months - 1)) : natBase;
             long locPay = (i == months - 1) ? (loc - locBase * (months - 1)) : locBase;
-            list.add(new InstallmentEntry(ym.plusMonths(i).toString(), natPay, locPay, natPay + locPay)); // 한 달분 / 1か月分
+            list.add(new InstallmentEntry(
+                    ym.plusMonths(i).toString(), natPay, locPay, natPay + locPay
+            ));
         }
-        return new InstallmentResponse(list, "균등 분할, 잔액은 마지막 달 가산"); // 설명문 / 説明
+
+        return new InstallmentResponse(list, "균등 분할, 잔액은 마지막 달 가산");
     }
 
     /* -----------------------------------------------------

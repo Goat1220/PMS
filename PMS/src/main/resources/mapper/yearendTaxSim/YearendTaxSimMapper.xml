@@ -13,7 +13,7 @@
     FROM yrt_header h
     JOIN yrt_detail d ON d.yrt_id = h.yrt_id
     JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
-   WHERE h.emp_id = #{empId, jdbcType=NUMERIC}
+   WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
      AND h.base_year = #{baseYear, jdbcType=NUMERIC}
      AND h.confirm_yn = 'Y'
    ORDER BY it.category, it.item_name
