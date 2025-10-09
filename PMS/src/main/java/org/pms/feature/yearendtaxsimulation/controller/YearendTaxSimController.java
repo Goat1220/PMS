@@ -73,19 +73,16 @@ public class YearendTaxSimController {
     // 화면 비동기 요청 처리 / 画面の非同期要求を処理
 
     /** 산출근거(시뮬 탭) 조회 / 算出根拠（シミュレーションタブ）取得 */
-    @GetMapping("/api/sim") @ResponseBody
+    @GetMapping(value = "/api/sim", produces = "application/json;charset=UTF-8")
+    @ResponseBody
     public List<SimItemRow> getSim(@RequestParam String empId,
                                    @RequestParam Integer baseYear,
                                    @RequestParam(required=false) Long yrtId){
-        // yrtId가 있으면 해당 실행결과 기준 / yrtIdがあれば当該実行結果を基準
         return query.loadSimGrid(empId, baseYear, yrtId);
     }
 
     /**
      * 시뮬레이션 실행 / シミュレーション実行
-     * policyId: 정책 버전(옵션) / 政策バージョン（任意）
-     * runLabel: 실행 라벨 / 実行ラベル
-     * overwrite: 덮어쓰기 여부 / 上書き可否
      */
     @PostMapping("/api/simulate")
     public ResponseEntity<?> simulate(@RequestParam String empId,
@@ -93,7 +90,7 @@ public class YearendTaxSimController {
                                       @RequestParam(required=false) Long policyId,
                                       @RequestParam(required=false) String runLabel,
                                       @RequestParam(defaultValue="false") boolean overwrite) {
-        Long yrtId = command.run(empId, baseYear, policyId, runLabel, overwrite); // 결과ID 반환 / 結果IDを返却
+        Long yrtId = command.run(empId, baseYear, policyId, runLabel, overwrite);
         return ResponseEntity.ok(yrtId);
     }
 
@@ -102,26 +99,33 @@ public class YearendTaxSimController {
     public ResponseEntity<?> delete(@RequestParam Long yrtId){
         boolean ok = command.delete(yrtId);
         return ok ? ResponseEntity.ok().build()
-                  : ResponseEntity.badRequest().body("확정건은 삭제 불가"); // 確定済みは削除不可
+                  : ResponseEntity.badRequest().body("확정건은 삭제 불가");
     }
 
-    /**
-     * 납부 특례(분납) 시뮬레이션 / 納付特例（分納）シミュレーション
-     * months: 분납 개월 수 / 分納月数
-     * startMonth: 시작연월(예: 2025-03) / 開始年月（例：2025-03）
-     */
+    /** 납부 특례(분납) 시뮬레이션 / 納付特例（分納）シミュレーション */
     @PostMapping("/api/installment-simulate") @ResponseBody
     public InstallmentResponse installment(@RequestParam Long yrtId,
                                            @RequestParam Integer months,
                                            @RequestParam String startMonth){
-        return command.installment(yrtId, months, startMonth); // 분납 스케줄 계산 / 分納スケジュール計算
+        return command.installment(yrtId, months, startMonth);
     }
 
     /** 세금적용결과 판정 조회 / 税適用結果の判定取得 */
-    @GetMapping("/api/tax-apply-result") @ResponseBody
+    @GetMapping(value = "/api/tax-apply-result", produces = "text/plain; charset=UTF-8")
+    @ResponseBody
     public String taxApplyResult(@RequestParam String empId,
                                  @RequestParam Integer baseYear,
-                                 @RequestParam(required=false) Long yrtId) {
-        return query.computeTaxApplyResult(empId, baseYear, yrtId); // 판정 문자열 반환 / 判定文字列を返却
+                                 @RequestParam(required=false) String yrtIdRaw) {
+        Long yrtId = null;
+        try {
+            if (yrtIdRaw != null && !yrtIdRaw.isEmpty()) {
+                // "<Long>68</Long>" → 68 로 정제 / XML形式の文字列から数値を抽出
+                yrtId = Long.valueOf(yrtIdRaw.replaceAll("\\D", ""));
+            }
+        } catch (Exception e) {
+            log.warn("yrtId 파싱 실패: {}", yrtIdRaw);
+        }
+
+        return query.computeTaxApplyResult(empId, baseYear, yrtId);
     }
 }

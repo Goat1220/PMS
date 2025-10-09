@@ -450,13 +450,14 @@ td.right {
 
 <script>
 	/* ===== JS 유틸 / JSユーティリティ ===== */
-	var CTX = '<c:url value="/" />'.replace(/\/$/, '');
+	var CTX = window.location.origin; 
 	function ctx() {
 		return CTX;
 	}
 	function emp() {
-		return document.getElementById('empId').value.trim();
-	}
+ 	     var el = document.getElementById('empNo');
+	     return el ? el.value.trim() : '';
+		 }
 	function yrt() {
 		return document.getElementById('yrtId').value;
 	}
@@ -546,33 +547,37 @@ td.right {
 
 	/* 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
 	function onSim() {
-		if (needEmp())
-			return;
-		var y = document.getElementById('baseYear').value.trim();
-		if (!validYear(y)) {
-			alert('정산연도 형식 오류');
-			return;
-		}
-		if (!confirm('기존 결과를 삭제하고 새로 생성하시겠습니까?'))
-			return;
-		var form = new URLSearchParams({
-			empId : emp(),
-			baseYear : y,
-			overwrite : 'true'
-		});
-		fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate', {
-			method : 'POST',
-			body : form
-		}).then(function(r) {
-			return r.ok ? r.text() : Promise.reject(r);
-		}).then(function(yrtId) {
-			document.getElementById('yrtId').value = yrtId;
-			onReason();
-			refreshTaxApplyResult(yrtId);
-		})["catch"](function() {
-			alert('시뮬레이션 처리 실패 또는 API 미구현');
-		});
-	}
+  if (needEmp()) return;
+  var y = document.getElementById('baseYear').value.trim();
+  if (!validYear(y)) {
+    alert('정산연도 형식 오류');
+    return;
+  }
+  if (!confirm('기존 결과를 삭제하고 새로 생성하시겠습니까?'))
+    return;
+
+  var form = new URLSearchParams({
+    empId: emp(),
+    baseYear: y,
+    overwrite: 'true'
+  });
+
+  fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate', {
+    method: 'POST',
+    body: form
+  })
+  .then(function(r) { return r.ok ? r.text() : Promise.reject(r); })
+  .then(function(yrtIdRaw) {
+    // ✅ 수정: 숫자만 추출
+    var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
+    document.getElementById('yrtId').value = cleanYrtId;
+    onReason();
+    refreshTaxApplyResult(cleanYrtId);
+  })
+  .catch(function() {
+    alert('시뮬레이션 처리 실패 또는 API 미구현');
+  });
+}
 
 	/* 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
 	function onDelete() {
@@ -765,10 +770,25 @@ td.right {
 	}
 </script>
 <script>
-	window.onEmployeePicked = function(row) {
-		document.getElementById('empNo').value = row.empNo || '';
-		document.getElementById('empName').value = row.empName || '';
-	};
+/* 사원 선택 콜백 / 社員選択コールバック */
+window.onEmployeePicked = function(row) {
+  // 1️ 선택한 사원 정보 세팅
+  document.getElementById('empNo').value = row.empNo || '';
+  document.getElementById('empName').value = row.empName || '';
+
+  // 2️ 연도 확인
+  var year = document.getElementById('baseYear').value;
+  if (!year || !/^\d{4}$/.test(year)) {
+    var d = new Date();
+    year = d.getFullYear();
+    document.getElementById('baseYear').value = year;
+  }
+
+  // 3️ 자동 조회 트리거 실행
+  console.log("사원 선택됨 → 자동 조회 시작:", row.empNo, year);
+  onReason();  // 산출근거 조회 (시뮬탭 자동 로드)
+};
+
 
 	// 사원 검색 팝업 열기
 	// 사원 검색 팝업 열기 (ES5 버전) / 社員検索ポップアップを開く（ES5版）
@@ -790,7 +810,3 @@ td.right {
 			      'empPopup', features);
 	}
 </script>
-
-
-
-

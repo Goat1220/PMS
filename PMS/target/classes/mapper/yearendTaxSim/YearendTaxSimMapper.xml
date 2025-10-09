@@ -5,22 +5,23 @@
   <!-- ===================================================== -->
   <!-- 1) 최종 탭: 확정건 (confirm_yn='Y')                    -->
   <!-- ===================================================== -->
-  <select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
-    SELECT it.category       AS itemClass,
-           it.item_name      AS itemName,
-           d.amount          AS amount,
-           d.expected_amount AS expectedAmount
-      FROM yrt_header h
-      JOIN yrt_detail d ON d.yrt_id = h.yrt_id
-      JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
-     WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-       AND h.base_year = #{baseYear}
-       AND h.confirm_yn = 'Y'
-     ORDER BY it.category, it.item_name
-  </select>
+<select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
+  SELECT it.category       AS itemClass,
+         it.item_name      AS itemName,
+         d.amount          AS amount,
+         d.expected_amount AS expectedAmount
+    FROM yrt_header h
+    JOIN yrt_detail d ON d.yrt_id = h.yrt_id
+    JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
+   WHERE h.emp_id = #{empId, jdbcType=NUMERIC}
+     AND h.base_year = #{baseYear, jdbcType=NUMERIC}
+     AND h.confirm_yn = 'Y'
+   ORDER BY it.category, it.item_name
+</select>
+
 
   <!-- ===================================================== -->
-  <!-- 2) 시뮬 탭: 특정 yrtId 또는 최신 미확정 1건            -->
+  <!-- 2) 시뮬 탭: 특정 yrtId 또는 최신 미확정 1건             -->
   <!-- ===================================================== -->
   <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
     SELECT it.category       AS itemClass,
@@ -29,15 +30,17 @@
            d.expected_amount AS expectedAmount
       FROM yrt_detail d
       JOIN yrt_item it ON it.yrt_item_id = d.yrt_item_id
-     WHERE d.yrt_id = COALESCE(#{yrtId},
+     WHERE d.yrt_id = COALESCE(
+                       #{yrtId, jdbcType=NUMERIC},
                        (SELECT yrt_id FROM (
                           SELECT h.yrt_id
                             FROM yrt_header h
-                           WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-                             AND h.base_year = #{baseYear}
+                           WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+                             AND h.base_year = #{baseYear, jdbcType=NUMERIC}
                              AND h.confirm_yn = 'N'
                            ORDER BY h.created_at DESC
-                        ) WHERE ROWNUM = 1))
+                        ) WHERE ROWNUM = 1)
+                     )
      ORDER BY it.category, it.item_name
   </select>
 
@@ -46,17 +49,17 @@
   <!-- ===================================================== -->
   <select id="selectLatestHeader" resultType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini">
     SELECT h.yrt_id               AS yrtId,
-           #{empId}               AS empId,     -- 화면 호환용(사번 echo)
+           #{empId, jdbcType=VARCHAR} AS empId,     -- 화면 호환용(사번 echo)
            h.base_year            AS baseYear,
-           h.tax_apply_type       AS runLabel,  -- 임시: 실행라벨로 사용
+           h.tax_apply_type       AS runLabel,      -- 실행라벨
            h.confirm_yn           AS confirmYn,
            h.created_at           AS createdAt,
            h.created_at           AS updatedAt
       FROM (
         SELECT *
           FROM yrt_header
-         WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-           AND base_year = #{baseYear}
+         WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+           AND base_year = #{baseYear, jdbcType=NUMERIC}
            <if test="confirmedOnly != null and confirmedOnly">  AND confirm_yn = 'Y' </if>
            <if test="confirmedOnly != null and !confirmedOnly"> AND confirm_yn = 'N' </if>
          ORDER BY created_at DESC
@@ -71,53 +74,54 @@
     SELECT NVL(r.settle_income,0) AS addNational,
            NVL(r.settle_local ,0) AS addLocal
       FROM yrt_result_total r
-     WHERE r.yrt_id = #{yrtId}
+     WHERE r.yrt_id = #{yrtId, jdbcType=NUMERIC}
   </select>
 
   <!-- ===================================================== -->
   <!-- 5) 미확정 실행 전체 삭제(사번+연도 기준) - PL/SQL 블록   -->
-  <!--    순서: detail -> result_total -> header               -->
   <!-- ===================================================== -->
   <delete id="deleteUnconfirmedForEmpYear">
     BEGIN
       DELETE FROM yrt_detail
        WHERE yrt_id IN (
          SELECT yrt_id FROM yrt_header
-          WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-            AND base_year = #{baseYear}
+          WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+            AND base_year = #{baseYear, jdbcType=NUMERIC}
             AND confirm_yn = 'N'
        );
 
       DELETE FROM yrt_result_total
        WHERE yrt_id IN (
          SELECT yrt_id FROM yrt_header
-          WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-            AND base_year = #{baseYear}
+          WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+            AND base_year = #{baseYear, jdbcType=NUMERIC}
             AND confirm_yn = 'N'
        );
 
       DELETE FROM yrt_header
-       WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-         AND base_year = #{baseYear}
+       WHERE emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+         AND base_year = #{baseYear, jdbcType=NUMERIC}
          AND confirm_yn = 'N';
     END;
   </delete>
 
   <!-- ===================================================== -->
-  <!-- 6) 헤더 생성(미확정)                                    -->
+  <!-- 6) 헤더 생성 (jdbcType 명시로 null 안전성 확보)          -->
   <!-- ===================================================== -->
-  <insert id="insertHeader" parameterType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini" useGeneratedKeys="false">
+  <insert id="insertHeader"
+          parameterType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini"
+          useGeneratedKeys="false">
     <selectKey keyProperty="yrtId" resultType="long" order="BEFORE">
       SELECT seq_yrt.NEXTVAL FROM dual
     </selectKey>
     INSERT INTO yrt_header (
       yrt_id, emp_id, biz_place, base_year, tax_apply_type, tax_apply_result, confirm_yn, created_at
     ) VALUES (
-      #{yrtId},
-      (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId}),
+      #{yrtId, jdbcType=NUMERIC},
+      (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR}),
       '본사',
-      #{baseYear},
-      #{runLabel},
+      #{baseYear, jdbcType=NUMERIC},
+      #{runLabel, jdbcType=VARCHAR},
       NULL,
       'N',
       SYSDATE
@@ -126,19 +130,18 @@
 
   <!-- ===================================================== -->
   <!-- 7) 항목 입력/갱신(yrt_detail UPSERT)                    -->
-  <!--     category+item_name로 yrt_item_id 매핑               -->
   <!-- ===================================================== -->
   <insert id="insertItem">
     MERGE INTO yrt_detail d
     USING (
       SELECT
-        #{yrtId} AS yrt_id,
+        #{yrtId, jdbcType=NUMERIC} AS yrt_id,
         (SELECT it.yrt_item_id FROM yrt_item it
-          WHERE it.category = #{cls}
-            AND it.item_name = #{name}
+          WHERE it.category = #{cls, jdbcType=VARCHAR}
+            AND it.item_name = #{name, jdbcType=VARCHAR}
         ) AS yrt_item_id,
-        #{amt} AS amount,
-        #{exp} AS expected_amount
+        #{amt, jdbcType=NUMERIC} AS amount,
+        #{exp, jdbcType=NUMERIC} AS expected_amount
       FROM dual
     ) s
     ON (d.yrt_id = s.yrt_id AND d.yrt_item_id = s.yrt_item_id)
@@ -154,7 +157,10 @@
   <!-- ===================================================== -->
   <insert id="upsertResultTotal">
     MERGE INTO yrt_result_total r
-    USING (SELECT #{yrtId} AS yrt_id, #{nat} AS nat, #{loc} AS loc FROM dual) s
+    USING (SELECT #{yrtId, jdbcType=NUMERIC} AS yrt_id,
+                  #{nat, jdbcType=NUMERIC} AS nat,
+                  #{loc, jdbcType=NUMERIC} AS loc
+           FROM dual) s
     ON (r.yrt_id = s.yrt_id)
     WHEN MATCHED THEN UPDATE
       SET r.settle_income = s.nat,
@@ -165,32 +171,31 @@
   </insert>
 
   <!-- ===================================================== -->
-  <!-- 9) 단일 실행 삭제(미확정건만 header 삭제 허용) - 블록    -->
+  <!-- 9) 단일 실행 삭제(미확정건만 header 삭제 허용)           -->
   <!-- ===================================================== -->
   <delete id="deleteByYrtId">
     BEGIN
-      DELETE FROM yrt_detail       WHERE yrt_id = #{yrtId};
-      DELETE FROM yrt_result_total WHERE yrt_id = #{yrtId};
-      DELETE FROM yrt_header       WHERE yrt_id = #{yrtId} AND confirm_yn = 'N';
+      DELETE FROM yrt_detail       WHERE yrt_id = #{yrtId, jdbcType=NUMERIC};
+      DELETE FROM yrt_result_total WHERE yrt_id = #{yrtId, jdbcType=NUMERIC};
+      DELETE FROM yrt_header       WHERE yrt_id = #{yrtId, jdbcType=NUMERIC} AND confirm_yn = 'N';
     END;
   </delete>
 
   <!-- ===================================================== -->
-  <!-- 10) 세액적용결과 판정 보조 쿼리(예: 세액공제 합산)        -->
-  <!--      ※ 필요 시 item_code 기준으로 더 정밀하게 조절       -->
+  <!-- 10) 세액적용결과 판정 보조 쿼리(세액공제 합산 등)         -->
   <!-- ===================================================== -->
   <select id="selectTaxCreditSum" resultType="long">
     SELECT NVL(SUM(d.expected_amount),0)
       FROM yrt_detail d
       JOIN yrt_item it ON it.yrt_item_id = d.yrt_item_id
       JOIN yrt_header h ON h.yrt_id = d.yrt_id
-     WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId})
-       AND h.base_year = #{baseYear}
-       <if test="yrtId != null"> AND h.yrt_id = #{yrtId} </if>
+     WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+       AND h.base_year = #{baseYear, jdbcType=NUMERIC}
+       <if test="yrtId != null"> AND h.yrt_id = #{yrtId, jdbcType=NUMERIC} </if>
        AND it.category LIKE '세액공제%'
   </select>
 
-  <!-- 임시: 표준세액공제 기준(정책 테이블 도입 전까지 상수로, 연도 파라미터 수신) -->
+  <!-- 임시: 표준세액공제 기준(정책 테이블 도입 전까지 상수로 유지) -->
   <select id="selectStandardCredit" parameterType="int" resultType="long">
     SELECT 130000 FROM dual
   </select>
