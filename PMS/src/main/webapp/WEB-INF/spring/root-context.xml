@@ -30,11 +30,15 @@
   <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
     <property name="dataSource" ref="dataSource" />
 
-    <!-- Mapper XML 경로 (전체 feature mapper 자동 포함) -->
-    <property name="mapperLocations" value="classpath*:mapper/**/*.xml" />
+    <!-- ✅ mapper와 mappers 두 경로 모두 인식 -->
+    <property name="mapperLocations">
+      <list>
+        <value>classpath*:mapper/**/*.xml</value>
+        <value>classpath*:mappers/**/*.xml</value>
+      </list>
+    </property>
 
     <!-- 도메인 클래스 패키지 (TypeAlias 자동 등록) -->
-    <!-- 여러 개는 세미콜론(;)으로 구분해야 함 -->
     <property name="typeAliasesPackage"
       value="org.pms.feature.payslip.domain;
              org.pms.feature.yearendtaxsimulation.domain;
