@@ -597,7 +597,7 @@ function onDelete() {
   });
 }
 
-/* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
+/* ✅ 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
 function onInstallment() {
   var id = yrt();
   if (!id) {
@@ -611,7 +611,9 @@ function onInstallment() {
     months : months,
     startMonth : start
   });
-  fetch(ctx() + '/feature/yearend-tax-simulation/api/installment-simulate', {
+
+  // ✅ 여기 경로를 수정해야 함
+  fetch(ctx() + '/feature/yearend-tax-simulation/api/installment', {
       method : 'POST',
       body : form
   })
@@ -622,6 +624,7 @@ function onInstallment() {
   });
   showTab('sim');
 }
+
 
 /* 시뮬 표 렌더링 / シミュ表レンダリング */
 function renderSim(rows) {

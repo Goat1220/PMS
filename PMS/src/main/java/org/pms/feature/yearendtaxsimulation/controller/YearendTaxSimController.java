@@ -105,12 +105,14 @@ public class YearendTaxSimController {
 
 
     /** 납부 특례(분납) 시뮬레이션 / 納付特例（分納）シミュレーション */
-    @PostMapping("/api/installment-simulate") @ResponseBody
+    @PostMapping(value = "/api/installment", produces = "application/json;charset=UTF-8")
+    @ResponseBody
     public InstallmentResponse installment(@RequestParam Long yrtId,
                                            @RequestParam Integer months,
-                                           @RequestParam String startMonth){
+                                           @RequestParam String startMonth) {
         return command.installment(yrtId, months, startMonth);
     }
+
 
     /** 세금적용결과 판정 조회 / 税適用結果の判定取得 */
     @GetMapping(value = "/api/tax-apply-result", produces = "text/plain; charset=UTF-8")
