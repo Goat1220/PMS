@@ -31,8 +31,8 @@
   <li class="menu-section">
     <div class="section-title">급여담당자의 급상여처리</div>
     <ul class="submenu">
-      <li><a href="<c:url value='/'/>">급상여처리하기</a></li>
-      <li><a href="<c:url value='/pages/bonusVoucher.do'/>">급상여전표처리</a></li>
+      <li><a href="<c:url value='/runpayroll'/>">급상여처리하기</a></li>
+      <li><a href="<c:url value='/voucher'/>">급상여전표처리</a></li>
       <li><a href="<c:url value='/pages/reportCheck.do'/>">신고서확인하기</a></li>
     </ul>
   </li>

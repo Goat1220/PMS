@@ -120,7 +120,8 @@ header {
 .table-wrap {
 	overflow: auto;
 	border: 1px solid var(- -border);
-	border-radius: 8px
+	border-radius: 8px;
+	max-height: calc(100vh - 220px);
 }
 
 table {
@@ -226,8 +227,7 @@ tbody tr:hover {
 					</table>
 				</div>
 				<div style="margin-top: 8px; color: var(- -muted); font-size: 12px;">
-					※ ‘분개전표처리’ 클릭 시 pay_voucher / pay_voucher_line / pay_month_summary에
-					반영됩니다.</div>
+					※ ‘분개전표처리’ 클릭 시 전표, 전표라인에 반영됩니다.</div>
 			</div>
 		</div>
 	</div>

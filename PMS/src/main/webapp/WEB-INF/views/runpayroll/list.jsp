@@ -136,7 +136,8 @@ header {
 .table-wrap {
 	overflow: auto;
 	border: 1px solid var(- -border);
-	border-radius: 8px
+	border-radius: 8px;
+	max-height: calc(100vh - 220px);
 }
 
 table {
