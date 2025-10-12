@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pms.feature.searchpopup.mapper.SearchPopupMapper">
+
+  <!-- ================= Employee ================= -->
+  <resultMap id="EmployeeRowMap" type="org.pms.feature.searchpopup.domain.EmployeeRow">
+    <result property="empId"            column="EMP_ID"/>
+    <result property="empNo"            column="EMP_NO"/>
+    <result property="empName"          column="EMP_NAME"/>
+    <result property="deptName"         column="DEPT_NAME"/>
+    <result property="deptCode"         column="DEPT_CODE"/>
+    <result property="workDeptName"     column="WORK_DEPT_NAME"/>
+    <result property="positionName"     column="POSITION_NAME"/>
+    <result property="titleName"        column="TITLE_NAME"/>
+    <result property="dutyName"         column="DUTY_NAME"/>
+    <result property="appointDate"      column="APPOINT_DATE"    jdbcType="DATE"/>
+    <result property="workStatusName"   column="WORK_STATUS_NAME"/>
+    <result property="workStatusDetail" column="WORK_STATUS_DETAIL"/>
+    <result property="payTypeName"      column="PAY_TYPE_NAME"/>
+    <result property="payApplyCode"     column="PAY_APPLY_CODE"/>
+    <result property="birthDate"        column="BIRTH_DATE"      jdbcType="DATE"/>
+  </resultMap>
+
+  <!-- Employee 목록 (뷰 없이 EMP/DEPT 조인) -->
+  <select id="searchEmployees" resultMap="EmployeeRowMap">
+    SELECT * FROM (
+      SELECT a.*, ROWNUM rnum
+      FROM (
+        SELECT
+          e.emp_id         AS EMP_ID,
+          e.emp_no         AS EMP_NO,
+          e.emp_name       AS EMP_NAME,
+          d.dept_name      AS DEPT_NAME,
+          d.dept_code      AS DEPT_CODE,
+          NVL(wd.dept_name, d.dept_name) AS WORK_DEPT_NAME,
+          e.position_name  AS POSITION_NAME,
+          e.title_name     AS TITLE_NAME,
+          e.duty_name      AS DUTY_NAME,
+          e.appoint_date   AS APPOINT_DATE,
+          CASE WHEN e.retire_date IS NOT NULL THEN '퇴직' ELSE '재직' END AS WORK_STATUS_NAME,
+          e.work_status_detail AS WORK_STATUS_DETAIL,
+          e.pay_type_name  AS PAY_TYPE_NAME,
+          e.pay_apply_code AS PAY_APPLY_CODE,
+          TRUNC(e.birth_date) AS BIRTH_DATE
+        FROM emp e
+        JOIN dept d       ON d.dept_id  = e.dept_id
+        LEFT JOIN dept wd ON wd.dept_id = e.work_dept_id
+        WHERE 1=1
+
+        <!-- 재직/퇴직 필터 -->
+        <if test="status != null and status != '' and status != '전체'">
+          <choose>
+            <when test="status == '재직'">
+              AND e.retire_date IS NULL
+            </when>
+            <otherwise>
+              AND e.retire_date IS NOT NULL
+            </otherwise>
+          </choose>
+        </if>
+
+        <!-- 검색 -->
+        <choose>
+          <when test="by == 'empName' and keyword != null and keyword != ''">
+            AND e.emp_name LIKE '%' || #{keyword} || '%'
+          </when>
+          <when test="by == 'empNo' and keyword != null and keyword != ''">
+            AND e.emp_no   LIKE '%' || #{keyword} || '%'
+          </when>
+        </choose>
+
+        ORDER BY e.emp_name
+      ) a
+      WHERE ROWNUM &lt;= (#{page} * #{size})
+    )
+    WHERE rnum &gt; ((#{page} - 1) * #{size})
+  </select>
+
+  <!-- Employee 카운트 (동일 조건) -->
+  <select id="countEmployees" resultType="long">
+    SELECT COUNT(*)
+    FROM emp e
+    JOIN dept d       ON d.dept_id  = e.dept_id
+    LEFT JOIN dept wd ON wd.dept_id = e.work_dept_id
+    WHERE 1=1
+
+    <if test="status != null and status != '' and status != '전체'">
+      <choose>
+        <when test="status == '재직'">
+          AND e.retire_date IS NULL
+        </when>
+        <otherwise>
+          AND e.retire_date IS NOT NULL
+        </otherwise>
+      </choose>
+    </if>
+
+    <choose>
+      <when test="by == 'empName' and keyword != null and keyword != ''">
+        AND e.emp_name LIKE '%' || #{keyword} || '%'
+      </when>
+      <when test="by == 'empNo' and keyword != null and keyword != ''">
+        AND e.emp_no   LIKE '%' || #{keyword} || '%'
+      </when>
+    </choose>
+  </select>
+
+  <!-- ================= Department ================= -->
+  <resultMap id="DepartmentRowMap" type="org.pms.feature.searchpopup.domain.DepartmentRow">
+    <result property="deptId"    column="DEPT_ID"/>
+    <result property="deptCode"  column="DEPT_CODE"/>
+    <result property="deptName"  column="DEPT_NAME"/>
+    <result property="startDate" column="START_DATE" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+    <result property="endDate"   column="END_DATE"   javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+    <result property="memo"      column="MEMO"/>
+    <result property="useYn"     column="USE_YN"/>
+    <result property="useName"   column="USE_NAME"/>
+  </resultMap>
+
+  <!-- Department 목록 -->
+  <select id="searchDepartments" parameterType="map" resultMap="DepartmentRowMap">
+    SELECT * FROM (
+      SELECT a.*, ROWNUM rnum
+      FROM (
+        SELECT
+          d.dept_id    AS DEPT_ID,
+          d.dept_code  AS DEPT_CODE,
+          d.dept_name  AS DEPT_NAME,
+          d.start_date AS START_DATE,
+          d.end_date   AS END_DATE,
+          d.memo       AS MEMO,
+          d.use_yn     AS USE_YN,
+          CASE WHEN d.use_yn = 'Y' THEN '사용' ELSE '미사용' END AS USE_NAME
+        FROM dept d
+        WHERE 1=1
+        <choose>
+          <when test="by == 'deptCode' and keyword != null and keyword != ''">
+            AND d.dept_code LIKE '%' || #{keyword} || '%'
+          </when>
+          <when test="by == 'deptName' and keyword != null and keyword != ''">
+            AND d.dept_name LIKE '%' || #{keyword} || '%'
+          </when>
+        </choose>
+        <if test="use != null and use != '' and use != 'ALL'">
+          AND d.use_yn = #{use}   <!-- 'Y' 또는 'N' -->
+        </if>
+        ORDER BY d.dept_code
+      ) a
+      WHERE ROWNUM &lt;= (#{page} * #{size})
+    )
+    WHERE rnum &gt; ((#{page} - 1) * #{size})
+  </select>
+
+  <!-- Department 카운트 -->
+  <select id="countDepartments" parameterType="map" resultType="long">
+    SELECT COUNT(*)
+    FROM dept d
+    WHERE 1=1
+    <choose>
+      <when test="by == 'deptCode' and keyword != null and keyword != ''">
+        AND d.dept_code LIKE '%' || #{keyword} || '%'
+      </when>
+      <when test="by == 'deptName' and keyword != null and keyword != ''">
+        AND d.dept_name LIKE '%' || #{keyword} || '%'
+      </when>
+    </choose>
+    <if test="use != null and use != '' and use != 'ALL'">
+      AND d.use_yn = #{use}
+    </if>
+  </select>
+
+</mapper>

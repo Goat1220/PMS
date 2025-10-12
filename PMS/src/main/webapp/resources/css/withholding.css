@@ -1,0 +1,205 @@
+@charset "UTF-8";
+
+/* =========================================
+   페이지 기본
+   ========================================= */
+html { overflow-y: scroll; } /* 스크롤 생길 때 좌우 흔들림 방지 */
+body{
+  font-family: Arial, Helvetica, 'Malgun Gothic', sans-serif;
+  font-size:14px; color:#333;
+}
+
+/* 공통 거터(좌우 여백)를 변수로 통일 */
+.container{
+  --gutter: 16px;            /* 좌우 여백 기준값(지금 16px 쓰는 중) */
+  padding-left:  var(--gutter);
+  padding-right: var(--gutter);
+  box-sizing: border-box;
+}
+
+/* === 라벨 폭/간격 공통 변수(이미 있다면 재사용) === */
+:root{
+  --label-w: 80px;     /* 라벨 ‘신고일’과 같은 폭 */
+  --row-gap: 16px;      /* form-row 기본 gap */
+}
+	
+
+/* 라벨 컬럼 다음부터 시작하도록 들여쓰기 (라벨폭 + row gap) */
+.ml-firstcol{
+  margin-left: calc(var(--label-w) + var(--row-gap));
+}
+
+/* =========================================
+   레이아웃/카드/패널
+   - box-sizing, width:100%로 상·하단 카드 테두리 라인 정렬
+   ========================================= */
+.card,
+.panel{
+  box-sizing:border-box;
+  width:100%;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+}
+.card{
+  padding:12px 14px;
+  margin-bottom:12px;
+}
+.panel{ /* 표 감싸는 패널 등 */
+  padding:10px;
+  border-color:#bbb;
+  border-radius:6px;
+}
+.card-title{ font-weight:700; margin-bottom:10px; }
+
+/* =========================================
+   상단 두 칼럼 배치
+   - minmax(0, fr)로 내부 콘텐츠가 길어도 바깥 폭 침범 방지
+   ========================================= */
+.two-cols{
+  display:grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); /* 신고집계 2.2 : 출력용 1 */
+  gap:9px;
+  align-items: stretch;
+}
+.two-cols > .card{ min-width:0; } /* 내부 넘침 방지 */
+
+/* =========================================
+   폼 라인/컨트롤/유틸
+   ========================================= */
+.form-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+
+/* 한 줄 강제(줄바꿈 금지) + 간격을 살짝 넓게 */
+.form-row.nowrap{
+  display:flex;
+  align-items:center;
+  gap:16px;            /* ← 기존 13px → 16px 로 넓힘 */
+  flex-wrap:nowrap;
+}
+
+/* 행 간 기본 세로 여백(카드 내부) */
+.card .form-row + .form-row,
+.card .form-row + .radio-row {
+  margin-top: 12px;
+}
+
+
+/* 출력용 - 신고구분 라디오 줄(간격 넉넉하게) */
+.radio-row{
+  display:flex;
+  align-items:center;
+  gap:20px;            /* 라디오 라벨 간격 넓힘 */
+}
+.radio-row .rad{ margin-right:0; } /* 남아있을지 모를 우측 마진 무력화 */
+
+.form-row label{ color:#555; }
+.label{ display:inline-block; color:#555; vertical-align:middle; }
+.radio-row .label{ width:80px; } 
+
+/* 공통 입력/셀렉트 */
+.form-row input[type="text"],
+.form-row input[type="password"],
+.form-row select{
+  height:32px;               /* 버튼과 높이 통일 */
+  padding:0 8px;
+  border:1px solid #dcdfe6;
+  border-radius:4px;
+  background:#fff;
+}
+
+/* nowrap 라인에서 입력/셀렉트가 줄 안에서 살짝 줄어들 수 있게 */
+.form-row.nowrap input,
+.form-row.nowrap select{
+  min-width:0;
+}
+
+/* 체크/라디오 */
+.chk, .rad{ display:flex; align-items:center; gap:6px; color:#374151; font-size:13px; }
+
+/* 입력 필드(수직 레이블 레이아웃 필요 시) */
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field label{ font-size:12px; color:#6b7280; }
+.field .invisible{ visibility:hidden; }
+
+/* 폭/마진 유틸 */
+.w-80{width:80px} .w-100{width:100%} .w-110{width:110px}
+.w-120{width:120px} .w-140{width:140px} .w-160{width:160px}
+.flex-1{flex:1 1 auto}
+.ml-12{margin-left:12px}
+.ml-16{margin-left:25px} /* 버튼 여백 보정 */
+.ml-24{margin-left:24px}
+.mt-8{margin-top:8px}
+.no-shrink{ flex:0 0 auto; } /* 버튼이 줄어들지 않게 */
+
+/* 포커스/비활성 */
+.form-row input:focus,
+.form-row select:focus,
+.btn:focus, .btn-primary:focus{
+  outline:none;
+  box-shadow:0 0 0 2px rgba(37,99,235,.15);
+  border-color:#2563eb;
+}
+.btn:disabled, .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* =========================================
+   버튼
+   - .btn / .btn-primary 둘 다 사용 가능(통일된 스타일)
+   ========================================= */
+.btn, .btn-primary{
+  height:32px;
+  padding:0 12px;
+  border:1px solid #d1d5db;
+  background:#fff;
+  border-radius:6px;
+  cursor:pointer;
+}
+.btn.primary,
+.btn-primary{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+}
+.btn:hover, .btn-primary:hover{ filter:brightness(0.97); }
+.btns{ display:flex; gap:8px; }
+
+/* =========================================
+   표/그리드/탭
+   ========================================= */
+table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+th,td{
+  border:1px solid #ddd; padding:6px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+th{ background:#f0f3f7; }
+td.num{ text-align:right; }
+td.center{ text-align:center; }
+td.code{ font-family: Consolas, monospace; }
+
+/* (필요 시) 데이터 탭 */
+.tabs{ display:flex; gap:8px; margin:16px 0; }
+.tab{
+  padding:8px 12px; border:1px solid #bbb; border-bottom:none;
+  background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0;
+}
+.tab.active{ background:#fff; font-weight:bold; }
+
+/* =========================================
+   전월 미환급세액(하단 계산 영역)
+   ========================================= */
+.refund-grid{
+  display:grid;
+  grid-template-columns: repeat(14, max-content 160px); /* 라벨/입력 쌍 × 5 */
+  gap:8px 12px;
+}
+.refund-grid input{ width:160px; }
+
+/* =========================================
+   반응형
+   ========================================= */
+@media (max-width:1200px){
+  .two-cols{ grid-template-columns: 1fr; }          /* 상단 카드 세로 스택 */
+  .refund-grid{ grid-template-columns: repeat(2, max-content 160px); }
+}
+@media (max-width:700px){
+  .refund-grid{ grid-template-columns: max-content 160px; }
+}
