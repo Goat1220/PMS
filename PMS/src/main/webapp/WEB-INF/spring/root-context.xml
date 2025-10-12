@@ -10,7 +10,7 @@
          http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
          http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
 
-	<!-- DataSource (log4jdbc 사용 중) -->
+	<!-- ===================== DataSource (HikariCP + log4jdbc) ===================== -->
 	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
 		<property name="driverClassName"
 			value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
@@ -25,42 +25,38 @@
 		<constructor-arg ref="hikariConfig" />
 	</bean>
 
-	<!-- MyBatis 핵심 설정 -->
+	<!-- ===================== MyBatis Core ===================== -->
 	<bean id="sqlSessionFactory"
 		class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource" />
-		<!-- our mapper XMLs -->
+		<!-- 모든 매퍼 XML 경로를 통합 -->
 		<property name="mapperLocations">
 			<list>
+				<value>classpath*:mappers/**/*.xml</value>
 				<value>classpath*:mapper/**/*.xml</value>
-				<value>classpath:org/pms/mapper/yearend/result/*.xml</value>
-				<value>classpath:org/pms/mapper/yearend/*.xml</value>
+				<value>classpath*:org/pms/mapper/yearend/result/*.xml</value>
+				<value>classpath*:org/pms/mapper/yearend/*.xml</value>
 			</list>
 		</property>
-
-		<!-- VO 패키지 별칭 (필요 시 여러 개를 콤마로 추가) -->
-		<!-- 예: org.pms.feature.payslip.domain,org.pms.feature.employee.domain -->
+		<!-- 별칭 패키지: 넓게 잡아 중복/누락 방지 -->
 		<property name="typeAliasesPackage"
-			value="org.pms.feature.payslip.domain" />
+			value="org.pms.feature,org.zerock" />
 	</bean>
 
-	<!-- Mapper 스캔: infra → mapper 로 변경 (※ 와일드카드 ** 사용 지양, 명시적으로 지정) -->
+	<!-- Mapper 인터페이스 스캔 (와일드카드 ** 대신 루트 패키지 지정) -->
 	<mybatis-spring:scan
-		base-package="org.pms.feature.payslip.mapper" />
+		base-package="
+      org.pms.feature,
+      org.zerock.mapper" />
 
-	<!-- @Service/@Component 스캔 -->
-	<context:component-scan base-package="org.pms" />
-
-	<!-- mapper -->
-	<mybatis-spring:scan
-		base-package="org.pms.feature.yearend.admin.mapper, org.pms.feature.yearend.result.mapper" />
-
-	<!-- service -->
+	<!-- ===================== Component Scan ===================== -->
+	<!-- Controller/Service/Component 전부 스캔 -->
 	<context:component-scan
-		base-package="org.pms.feature.yearend.result.service, org.pms.feature.yearend.admin.service"></context:component-scan>
+		base-package="
+      org.pms,
+      org.zerock.sample" />
 
-
-	<!-- @Transactional -->
+	<!-- ===================== Transaction ===================== -->
 	<bean id="transactionManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="dataSource" />

@@ -5,12 +5,13 @@ import java.util.List;
 import org.pms.feature.yearend.result.domain.YrtHeaderViewDTO;
 import org.pms.feature.yearend.result.mapper.YrtHeaderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.AllArgsConstructor;
 import lombok.Setter;
 
+@Primary
 @Service
 @AllArgsConstructor
 public class YrtHeaderServiceImpl implements YrtHeaderService {
