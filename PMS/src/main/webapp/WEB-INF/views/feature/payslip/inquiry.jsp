@@ -105,7 +105,8 @@
 ========================================== -->
 <style>
   /* 페이지 베이스 / ページベース */
-  html, body {
+  /* 폼 통일 위해 주석 처리 */
+  /* html, body {
     margin: 0;
     padding: 0;
     color: var(--neutral-700);
@@ -113,17 +114,18 @@
     font-family: var(--font-family);
     font-size: var(--font-size-body);
     line-height: var(--line-height);
-  }
+  } */
   body > *:first-child { margin-top:0; padding-top:0; } /* 페이지 첫 요소 상단여백 차단 / ページ先頭マージン対策 */
 
   /* 컨테이너 (가로 길이 통일) / コンテナ（横幅統一） */
-  .container {
+  /* 폼 통일 위해 주석 처리 */
+  /* .container {
     width: 100%;
     max-width: var(--container-max);
     margin: 0 auto;
     padding-left: var(--container-padding-x);
     padding-right: var(--container-padding-x);
-  }
+  } */
 
   /* 페이지 헤드 / ページヘッダー */
   .page-head {

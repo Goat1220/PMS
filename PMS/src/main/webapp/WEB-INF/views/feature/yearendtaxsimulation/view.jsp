@@ -73,7 +73,8 @@
 
 <style>
 /* ===== 기본 레이아웃 / 基本レイアウト ===== */
-html, body {
+/* 폼 통일 위해 주석 처리 */
+/* html, body {
 	margin: 0;
 	background: #ffffff;
 	color: #222;
@@ -86,7 +87,7 @@ html, body {
 	max-width: 1280px;
 	margin: 0 auto;
 	padding: 16px;
-} /* 중앙 고정 폭 / 中央固定幅 */
+} */ /* 중앙 고정 폭 / 中央固定幅 */
 .page-title {
 	font-size: 18px;
 	font-weight: 700;
