@@ -1,82 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xsi:schemaLocation="
-           http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
-           http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
-           http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+         http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+         http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+         http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
 
-  <!-- ===================================================== -->
-  <!-- 🗄️ DataSource 설정 (HikariCP + log4jdbc)               -->
-  <!-- ===================================================== -->
-  <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
-    <property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
-    <property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" />
-    <property name="username" value="system" />
-    <property name="password" value="1234" />
-  </bean>
+	<!-- ===================== DataSource (HikariCP + log4jdbc) ===================== -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName"
+			value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+		<property name="jdbcUrl"
+			value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" />
+		<property name="username" value="system" />
+		<property name="password" value="1234" />
+	</bean>
 
-  <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-    <constructor-arg ref="hikariConfig" />
-  </bean>
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
+	</bean>
 
-  <!-- ===================================================== -->
-  <!-- ⚙️ MyBatis 핵심 설정                                  -->
-  <!-- ===================================================== -->
-  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-    <property name="dataSource" ref="dataSource" />
+	<!-- ===================== MyBatis Core ===================== -->
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 모든 매퍼 XML 경로를 통합 -->
+		<property name="mapperLocations">
+			<list>
+				<value>classpath*:mappers/**/*.xml</value>
+				<value>classpath*:mapper/**/*.xml</value>
+				<value>classpath*:org/pms/mapper/yearend/result/*.xml</value>
+				<value>classpath*:org/pms/mapper/yearend/*.xml</value>
+			</list>
+		</property>
+		<!-- 별칭 패키지: 넓게 잡아 중복/누락 방지 -->
+		<property name="typeAliasesPackage"
+			value="org.pms.feature,org.zerock" />
+	</bean>
 
-    <!-- ✅ mapper와 mappers 두 경로 모두 인식 -->
-    <property name="mapperLocations">
-      <list>
-        <value>classpath*:mapper/**/*.xml</value>
-        <value>classpath*:mappers/**/*.xml</value>
-      </list>
-    </property>
+	<!-- Mapper 인터페이스 스캔 (와일드카드 ** 대신 루트 패키지 지정) -->
+	<mybatis-spring:scan
+		base-package="
+      org.pms.feature,
+      org.zerock.mapper" />
 
-    <!-- 도메인 클래스 패키지 (TypeAlias 자동 등록) -->
-    <property name="typeAliasesPackage"
-      value="org.pms.feature.payslip.domain;
-             org.pms.feature.yearendtaxsimulation.domain;
-             org.pms.feature.yearend.domain;
-             org.pms.feature.searchpopup.domain" />
+	<!-- ===================== Component Scan ===================== -->
+	<!-- Controller/Service/Component 전부 스캔 -->
+	<context:component-scan
+		base-package="
+      org.pms,
+      org.zerock.sample" />
 
-    <!-- underscore_case → camelCase 자동 변환 -->
-    <property name="configuration">
-      <bean class="org.apache.ibatis.session.Configuration">
-        <property name="mapUnderscoreToCamelCase" value="true" />
-      </bean>
-    </property>
-  </bean>
-
-  <!-- ===================================================== -->
-  <!-- 🧭 MyBatis Mapper 자동 스캔 (패키지별 명시)            -->
-  <!-- ===================================================== -->
-  <mybatis-spring:scan
-    base-package="org.pms.feature.payslip.mapper,
-                  org.pms.feature.yearendtaxsimulation.mapper,
-                  org.pms.feature.yearend.mapper,
-                  org.pms.feature.searchpopup.mapper" />
-
-  <!-- ===================================================== -->
-  <!-- 🧩 Spring Component Scan                              -->
-  <!-- ===================================================== -->
-  <context:component-scan base-package="org.pms, org.zerock.sample" />
-
-  <!-- ===================================================== -->
-  <!-- 💾 Transaction 설정                                   -->
-  <!-- ===================================================== -->
-  <bean id="transactionManager"
-        class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-    <property name="dataSource" ref="dataSource" />
-  </bean>
-
-  <tx:annotation-driven transaction-manager="transactionManager" />
+	<!-- ===================== Transaction ===================== -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<tx:annotation-driven
+		transaction-manager="transactionManager" />
 
 </beans>
-
-
