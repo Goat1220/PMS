@@ -28,10 +28,10 @@
 	flex-direction: column
 }
 
-.table-wrap {
+/* .table-wrap {
 	flex: 1;
 	overflow-y: auto
-}
+} */
 
 .right-toolbar {
 	display: flex;
@@ -45,7 +45,7 @@
 	border-radius: 8px
 }
 
-table {
+/* table {
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -54,7 +54,7 @@ th, td {
   padding: 3px 4px;
   white-space: nowrap;
 }
-
+ */
 #headerTable{
 with:800px !important;
 min-width:300 !important;
@@ -69,9 +69,10 @@ display: table;
 </style>
 </head>
 <body>
-	<header>
+<!-- 레이아웃에서 별도 타이틀 표시로 주석처리 -->
+	<!-- <header>
 		<h2>정산관리결과조회</h2>
-	</header>
+	</header> -->
 
 	<div class="container">
 		<!-- 검색바(샘플) -->

@@ -92,7 +92,9 @@ button.secondary {
 .table-wrap {
 	overflow: auto;
 	border: 1px solid var(--border);
-	border-radius: 8px
+	border-radius: 8px;
+	flex: 1;
+	overflow-y: auto
 }
 
 table {
