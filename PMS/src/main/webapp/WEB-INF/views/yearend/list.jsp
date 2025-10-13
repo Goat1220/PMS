@@ -246,7 +246,7 @@ function searchHeader(){
 	  if (dept) params.append('deptName', dept);
 	  if (emp)  params.append('empName', emp);
 
-	  window.location.href = '/yearend/list?' + params.toString();
+	  window.location.href = '/yearend/result/list?' + params.toString();
 	}
 </script>
 </body>
