@@ -1,14 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <style>
-:root { -
-	-gap: 12px; -
-	-radius: 10px; -
-	-border: #e5e7eb; -
-	-bg: #f8fafc; -
-	-text: #111827; -
-	-muted: #6b7280; -
-	-total: #eaf7ea
+:root { 
+	--gap: 12px; 
+	--radius: 10px; 
+	--border: #e5e7eb; 
+	--bg: #f8fafc; 
+	--text: #111827; 
+	--muted: #6b7280; 
+	--total: #eaf7ea
 }
 
 * {
@@ -19,14 +19,14 @@ body {
 	margin: 0;
 	font-family: system-ui, -apple-system, "Segoe UI", Roboto,
 		"Noto Sans KR", "Apple SD Gothic Neo", Arial, "맑은 고딕", sans-serif;
-	color: var(- -text);
-	background: var(- -bg)
+	color: var(--text);
+	background: var(--bg)
 }
 
 header {
 	padding: 16px 20px;
 	background: #fff;
-	border-bottom: 1px solid var(- -border);
+	border-bottom: 1px solid var(--border);
 	position: sticky;
 	top: 0;
 	z-index: 5
@@ -45,14 +45,14 @@ header {
 
 .card {
 	background: #fff;
-	border: 1px solid var(- -border);
-	border-radius: var(- -radius);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
 	overflow: hidden
 }
 
 .card>.card-header {
 	padding: 12px 14px;
-	border-bottom: 1px solid var(- -border);
+	border-bottom: 1px solid var(--border);
 	font-weight: 600
 }
 
@@ -70,7 +70,7 @@ header {
 .filters input[type="month"], .filters select, .filters input[type="text"]
 	{
 	padding: 8px 10px;
-	border: 1px solid var(- -border);
+	border: 1px solid var(--border);
 	border-radius: 8px
 }
 
@@ -91,31 +91,29 @@ button.secondary {
 
 .table-wrap {
 	overflow: auto;
-	border: 1px solid var(- -border);
+	border: 1px solid var(--border);
 	border-radius: 8px
 }
 
 table {
-	border-collapse: collapse;
-	width: 100%;
-	min-width: auto;
-	table-layout: auto;
-}
-
-thead th {
-	position: sticky;
-	top: 0;
-	background: #f1f5f9;
-	border-bottom: 1px solid var(- -border);
-	font-weight: 600;
-	white-space: nowrap
+  border-collapse: collapse; /* ← 이미 있음, 그대로 유지 */
+  width: auto;
+  table-layout: auto;
+  border: 1px solid var(--border); /* 테이블 외곽선 */
 }
 
 th, td {
-	border-bottom: 1px solid var(- -border);
-	padding: 8px 10px;
-	text-align: left;
-	font-size: 13px
+  border: 1px solid var(--border); /* ← 셀마다 테두리 */
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+thead th {
+  background: #f1f5f9;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 tbody tr {
@@ -131,17 +129,17 @@ tbody tr.active {
 }
 
 .muted {
-	color: var(- -muted)
+	color: var(--muted)
 }
 
 .grid-2 {
 	display: grid;
 	grid-template-columns: 1fr;
-	gap: var(- -gap)
+	gap: var(--gap)
 }
 
 .list {
-	border: 1px solid var(- -border);
+	border: 1px solid var(--border);
 	border-radius: 8px;
 	overflow: hidden
 }
@@ -151,7 +149,7 @@ tbody tr.active {
 	padding: 2px 8px;
 	font-size: 12px;
 	border-radius: 999px;
-	border: 1px solid var(- -border);
+	border: 1px solid var(--border);
 	background: #f8fafc
 }
 
@@ -167,7 +165,7 @@ tbody tr.active {
 }
 
 .row-total {
-	background: var(- -total) !important;
+	background: var(--total) !important;
 	font-weight: 600
 }
 
