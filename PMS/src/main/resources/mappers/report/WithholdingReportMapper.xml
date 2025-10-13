@@ -201,6 +201,17 @@ ORDER BY c.ord
   <!-- ==========================================
         상단 합계(총지급/징수소득세) 쿼리
        ========================================== -->
+       
+	<!-- 확정 급여 인원수(해당 월, 중복 제거) -->
+	<select id="countHeadsByMonth"
+	        parameterType="string"
+	        resultType="java.lang.Integer">
+	  SELECT COUNT(DISTINCT p.emp_id)
+	  FROM   payslip p
+	  WHERE  p.confirmed_yn = 'Y'
+	    AND  p.apply_yyyymm = #{applyYyyymm}
+	</select>
+
 
   <!-- 총 지급액: 전표라인 차변(D) 합계 -->
   <select id="sumTotalPaymentByMonth" parameterType="string" resultType="java.math.BigDecimal">
@@ -233,5 +244,40 @@ ORDER BY c.ord
         #{c}
       </foreach>
   </select>
+
+
+	<!-- 전월 미환급세액 조회 /저장 -->
+  <!-- 전월 J -->
+  <select id="selectPrevJ" parameterType="string" resultType="java.math.BigDecimal">
+    SELECT NVL(j_value, 0)
+      FROM report_refund
+     WHERE yyyymm = #{yyyymm}
+  </select>
+
+  <!-- 전월 K -->
+  <select id="selectPrevK" parameterType="string" resultType="java.math.BigDecimal">
+    SELECT NVL(k_value, 0)
+      FROM report_refund
+     WHERE yyyymm = #{yyyymm}
+  </select>
+
+  <!-- 이번달 저장: MERGE -->
+  <update id="upsertRefund" parameterType="map">
+    MERGE INTO report_refund t
+    USING (
+      SELECT #{yyyymm} AS yyyymm,
+             #{j}      AS j_value,
+             #{k}      AS k_value
+        FROM dual
+    ) s
+       ON (t.yyyymm = s.yyyymm)
+     WHEN MATCHED THEN
+       UPDATE SET t.j_value = s.j_value,
+                  t.k_value = s.k_value
+     WHEN NOT MATCHED THEN
+       INSERT (yyyymm, j_value, k_value)
+       VALUES (s.yyyymm, s.j_value, s.k_value)
+  </update>
+
 
 </mapper>

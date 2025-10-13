@@ -1,18 +1,20 @@
 package org.pms.feature.report.service;
 
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.pms.feature.report.domain.AnnexRow;
 import org.pms.feature.report.domain.WithholdingRow;
 import org.pms.feature.report.domain.WithholdingSearch;
 import org.pms.feature.report.mapper.WithholdingReportMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -33,13 +35,18 @@ public class WithholdingReportService {
         // 1) 상단 실제 원장 합계 주입: A01
         BigDecimal totalPayment = mapper.sumTotalPaymentByMonth(cond.getApplyYyyymm());
         BigDecimal withheldTax  = mapper.sumWithheldTaxByMonthByPrefix(cond.getApplyYyyymm());
-
+  
+        Integer headCount = mapper.countHeadsByMonth(cond.getApplyYyyymm());
+        if (headCount == null) headCount = 0;
+        
         WithholdingRow a01 = byCode.get("A01");
         if (a01 != null) {
-            a01.setTaxTotal(nL(totalPayment));      // 총지급액
-            a01.setTaxWithheld(nL(withheldTax));    // 징수소득세
-            a01.setTaxIncome(0L); // ★ A01은 납부소득세 표시 안 함
+        	a01.setHeadCount(headCount);
+            a01.setTaxTotal(nL(totalPayment));
+            a01.setTaxWithheld(nL(withheldTax));
+            a01.setTaxIncome(0L);
         }
+
 
         // 2) 섹션별 가감계 매핑 (LinkedHashMap: 선언 순서 유지)
         Map<String, List<String>> groups = new LinkedHashMap<String, List<String>>();
@@ -127,4 +134,27 @@ public class WithholdingReportService {
     public void generate(String applyYyyymm) {
     	  // TODO: 요약/부표 대상 데이터 집계·저장 로직
     	}
+    
+    // ===========================
+    // 전월 미환급세액 조회 / 저장
+    // ===========================
+    /** 전월 J(차월이월환급세액) 조회 */
+    public BigDecimal findPrevJ(String yyyymm) {
+        BigDecimal v = mapper.selectPrevJ(yyyymm);  // ★ mapper에서 BigDecimal로 받기
+        return (v == null) ? BigDecimal.ZERO : v;
+    }
+
+    /** 전월 K(환급신청금액) 조회 */
+    public BigDecimal findPrevK(String yyyymm) {
+        BigDecimal v = mapper.selectPrevK(yyyymm);  // ★ mapper에서 BigDecimal로 받기
+        return (v == null) ? BigDecimal.ZERO : v;
+    }
+
+    /** 이번달 J/K 저장 (보고서 생성 버튼에서 호출) */
+    @Transactional
+    public void saveRefund(String yyyymm, BigDecimal jValue, BigDecimal kValue) {
+        if (jValue == null) jValue = BigDecimal.ZERO;
+        if (kValue == null) kValue = BigDecimal.ZERO;
+        mapper.upsertRefund(yyyymm, jValue, kValue); // ★ upsert 호출
+    }
 }

@@ -3,6 +3,9 @@
 
 <c:url var="apiSummary" value="/api/report/withholding"/>
 <c:url var="apiAnnex"   value="/api/report/withholding/annex"/>
+<c:url var="apiGenerate"    value="/api/report/withholding/generate"/>
+<c:url var="apiRefundPrev"  value="/api/report/withholding/refund-prev"/>
+<c:url var="apiRefundSave"  value="/api/report/withholding/refund-save"/> 
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -70,7 +73,6 @@
 	  height:28px; padding:0 6px; border:1px solid #dcdfe6; border-radius:4px; background:#fff;
 	}
 	
-	
 	/* 유틸 너비 (오타세이프 포함) */
 	.wh .w-80{width:80px} .wh .w-100{width:100%} .wh .w-110{width:110px}
 	.wh .w-120{width:120px} .wh .w-140{width:140px} .wh .w-160{width:160px}
@@ -83,7 +85,7 @@
 	  gap: 18px;           /* 필요값으로 조절 */
 	  column-gap: 18px;    /* 호환용 */
 	}
-	
+
 	/* 체크박스 라벨 */
 	.wh .chk{ display:flex; align-items:center; gap:6px; color:#374151; font-size:12px; white-space:nowrap; }
 	.wh .checks{ display:flex; align-items:center; gap:40px; }
@@ -103,16 +105,6 @@
 	/* 우측 블록은 너무 벌어지지 않게 */
 	.wh .row-split .right{justify-self:end; margin-right:135px;}
 
-	/* 	연말정산 readonly */
-	.wh input#annYear.is-readonly{
-	  background:#f3f4f6 !important;
-	  color:#6b7280 !important;
-	  cursor:not-allowed;
-	}
-	.wh input#annYear.is-readonly::placeholder{
-	  color:#9ca3af;
-	}
-
 	/* 버튼 */
 	.wh .btn, .wh .btn-primary{
 	  height:32px; padding:0 12px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer;
@@ -126,6 +118,27 @@
 	/* 데이터생성 버튼만 카드 오른쪽에서 살짝 안쪽으로 */
 	.wh #btnLoad{ margin-right:20px; }
 	
+	/* 	연말정산 readonly */
+	.wh input#annYear.is-readonly{
+	  background:#f3f4f6 !important;
+	  color:#6b7280 !important;
+	  cursor:not-allowed;
+	}
+	.wh input#annYear.is-readonly::placeholder{
+	  color:#9ca3af;
+	}
+	
+	/* 	확정버튼 체크박스 readonly */
+	.wh label.chk.is-readonly{
+	  color:#111316;       
+	}
+	.wh label.chk.is-readonly input[type="checkbox"]{
+	  accent-color:#111316;
+	  opacity:1;            
+	  pointer-events:none;
+	}
+	
+	
 	/* 표/탭 */
 	.wh table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
 	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -135,17 +148,9 @@
 	.wh .tabs{ display:flex; gap:8px; margin:16px 0; }
 	.wh .tab{ padding:8px 12px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
 	.wh .tab.active{ background:#fff; font-weight:bold; }
-	
-	/* 요약/부표 스크롤 영역 */
-	.wh .data-area { margin-top:4px; }
-	.wh .data-area .tabs{
-	  position:sticky; top:0; z-index:2; background:#fff;
-	  padding-top:6px; margin-bottom:6px;
-	}
-	.wh .data-scroll{
-	  overflow:auto; border:1px solid #e5e7eb; border-radius:8px; background:#fff; padding:8px;
-	}
-	
+	/* =========================
+		신고파일생성
+	   ========================= */
 	/* 신고파일생성 (접기/펼치기) */
 	.wh .file-card{ position:relative; margin-bottom:4px; }
 	.wh .file-card__header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
@@ -180,7 +185,49 @@
 	/* 플레이스홀더도 연하게 */
 	.wh input#fileName[readonly]::placeholder{ color:#9ca3af; }
 	
-	/* 전월 미환급세액 (컴팩트) */
+	/* =========================
+		요약/부표
+	   ========================= */
+		/* 요약/부표 스크롤 영역 */
+	.wh .data-area { margin-top:4px; }
+	.wh .data-area .tabs{
+	  position:static; top:0; z-index:2; background:#fff;
+	  padding-top:6px; margin-bottom:6px;
+	}
+	.wh .data-scroll{
+	  overflow:auto; border:1px solid #e5e7eb; border-radius:8px; background:#fff; padding:0px;
+	}
+	.wh .data-scroll .scroll-inner{ padding:8px; }
+	
+	/* 셀 단위 배경색 */
+	.wh td.cell-grey { background:#f3f4f6 !important; }   /* 회색 */
+	.wh td.cell-pink { background:#ffe2e2 !important; }   /* 연분홍(가감계에서 '소득 구분/코드'만) */
+
+	/* 요약: 2번째 열(소득 구분) 폭 */
+	#panelSummary table th:nth-child(2),
+	#panelSummary table td:nth-child(2) { width: 450px; }
+	
+	/* 부표: 2번째 열(소득 구분) 폭 */
+	#panelAnnex table th:nth-child(2),
+	#panelAnnex table td:nth-child(2) { width: 450px; }
+	
+	/* 테이블은 기본값 유지 (보더가 끼어 들뜸 방지) */
+	#panelSummary table, #panelAnnex table{
+	  border-collapse: separate;
+	  border-spacing: 0;
+	}
+	   /* 스크롤 영역 안에서 헤더 고정 */
+	#panelSummary table thead th,
+	#panelAnnex   table thead th {
+	  position: sticky;
+	  top: 0;
+	  z-index: 3;                 /* 본문 셀 위로 */
+
+	}
+	
+	/* =========================
+		전월미환급세액
+	   ========================= */
 	.wh #refundBlock{ padding:6px 8px; }
 	.wh #refundBlock .card-title{ margin-bottom:6px; font-size:12px; }
 	.wh .refund-compact{
@@ -197,20 +244,17 @@
 	.wh .refund-compact small{ font-size:10px; line-height:1; position:relative; top:-1px; }
 	.wh .refund-compact input[type="text"]{ width:var(--input-w); height:26px; padding:0 6px; box-sizing:border-box; }
 	.wh .refund-compact .placeholder{ width:var(--label-w); height:1px; display:block; }
-	
-	/* 셀 단위 배경색 */
-	.wh td.cell-grey { background:#f3f4f6 !important; }   /* 회색 */
-	.wh td.cell-pink { background:#ffe2e2 !important; }   /* 연분홍(가감계에서 '소득 구분/코드'만) */
 
-	/* 요약: 2번째 열(소득 구분) 폭 */
-	#panelSummary table th:nth-child(2),
-	#panelSummary table td:nth-child(2) { width: 450px; }
+	/* 전월 미환급세액 박스 회색 */
+	#refundBlock input.input-grey {
+	  background: #f3f4f6 !important; /* 연회색 */
+	  cursor: default;
+	}
+
 	
-	/* 부표: 2번째 열(소득 구분) 폭 */
-	#panelAnnex table th:nth-child(2),
-	#panelAnnex table td:nth-child(2) { width: 450px; }
-	
-	/* 반응형 */
+	/* =========================
+		반응형
+	   ========================= */
 	@media (max-width:1200px){
 	  .wh .two-cols{ grid-template-columns:1fr; }
 	}
@@ -236,8 +280,10 @@
 	<div class="container"
      data-summary-url="${apiSummary}"
      data-annex-url="${apiAnnex}"
-	 data-generate-url="${apiGenerate}">
-	  
+	 data-generate-url="${apiGenerate}"
+	 data-prev-refund-url="${apiRefundPrev}"
+	 data-save-refund-url="${apiRefundSave}">
+
 	<!-- 페이지 헤더 -->
 	<div class="page-header">
   <div class="page-title">원천징수이행상황신고서</div>
@@ -363,6 +409,7 @@
 
   <!-- 요약 -->
    <div class="data-scroll"  id="dataScroll">
+   <div class="scroll-inner">
   <div id="panelSummary" class="panel">
     <table>
       <thead>
@@ -417,25 +464,25 @@
   <div class="refund-compact">
     <!-- ① 전월미환급세액: A B C + (빈 1쌍) -->
     <div class="row-title">전월미환급세액 :</div><div></div>
-    <label>(A) 전월미환급세액</label><input type="text" value="0">
-    <label>(B) 기환급신청한세액</label><input type="text" value="0">
-    <label>(C) 차감잔액<small>(A-B)</small></label><input type="text" value="0">
+<label>(A) 전월미환급세액</label><input id="A" type="text" value="0">
+<label>(B) 기환급신청한세액</label><input id="B" type="text" value="0">
+<label>(C) 차감잔액  (A - B)</label><input id="C" type="text" value="0" readonly class="input-grey">
     <!-- 남는 1쌍을 빈 칸으로 채워 정렬 유지 -->
     <span class="placeholder"></span><span></span>
 
     <!-- ② 당월발생 환급세액: D E F G -->
     <div class="row-title">당월발생 환급세액 :</div><div></div>
-    <label>(D) 일반환급</label><input type="text" value="0">
-    <label>(E) 신탁재산(금융회사등)</label><input type="text" value="0">
-    <label>(F) 금융회사등환급세액</label><input type="text" value="0">
-    <label>(G) 합병등환급세액</label><input type="text" value="0">
+<label>(D) 일반환급</label><input id="D" type="text" value="0" readonly class="input-grey">
+<label>(E) 신탁재산(금융회사 등)</label><input id="E" type="text" value="0">
+<label>(F) 금융회사 등 환급잔액</label><input id="F" type="text" value="0">
+<label>(G) 합병 등 환급세액</label><input id="G" type="text" value="0">
 
     <!-- ③ 환급세액: H I J K -->
     <div class="row-title">환급세액 :</div><div></div>
-    <label>(H) 조정대상환급세액<br><small>(C+D+E+F+G)</small></label><input type="text" value="0">
-    <label>(I) 당월조정환급세액</label><input type="text" value="0">
-    <label>(J) 차월이월환급세액<small>(H-I)</small></label><input type="text" value="0">
-    <label>환급신청금액</label><input type="text" value="0">
+<label>(H) 조정대상환급세액 <br><span style="font-size:12px;color:#666">( C + D + E + F + G )</span></label><input id="H" type="text" value="0" readonly class="input-grey">
+<label>(I) 당월조정환급세액</label><input id="I" type="text" value="0" readonly class="input-grey">
+<label>(J) 차월이월환급세액 (H - I)</label><input id="J" type="text" value="0" readonly class="input-grey">
+<label>환급신청금액</label><input id="K" type="text" value="0"> 
   </div>
 </div>
 
@@ -443,9 +490,25 @@
 </div><!-- /.container -->
 </div><!-- /.wh -->
 
-<!-- 페이지 스크립트 -->
-<script src="<c:url value='/resources/js/withholding.js'/>"></script>
+<!-- PDF 저장 -->
+<!-- 1) html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+<!-- 2) jsPDF (UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<!-- ⭐ UMD→전역 shim (반드시 플러그인보다 먼저) -->
+<script>
+  if (window.jspdf && window.jspdf.jsPDF && !window.jsPDF) {
+    window.jsPDF = window.jspdf.jsPDF;
+  }
+</script>
+
+<!-- 3) 암호 플러그인 -->
+<script src="https://unpkg.com/jspdf-encrypt/dist/jspdf.plugin.encrypt.min.js"></script>
+
+<!-- 4) 너의 페이지 스크립트 -->
+<script src="<c:url value='/resources/js/withholding.js'/>"></script>
 
 </body>
 </html>

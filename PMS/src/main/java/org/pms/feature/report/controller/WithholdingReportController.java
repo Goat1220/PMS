@@ -1,5 +1,6 @@
 package org.pms.feature.report.controller;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,4 +68,33 @@ public class WithholdingReportController {
 	    return res;
 	}
 	   
+	    // ===========================
+	    // 전월 미환급세액 조회  / 저장
+	    // ===========================
+	   @GetMapping("/api/report/withholding/refund-prev")
+	   @ResponseBody
+	   public Map<String, Number> prevRefund(@RequestParam String yyyymm) {
+		    Map<String, Number> res = new HashMap<>();
+		    res.put("prevCarryJ", service.findPrevJ(yyyymm)); // 전월 J
+		    res.put("prevApplyK", service.findPrevK(yyyymm)); // 전월 K
+		    return res;
+	   }
+
+	   @PostMapping(value="/api/report/withholding/refund-save",
+	             produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Map<String, Object> saveRefund(
+	        @RequestParam String yyyymm,
+	        @RequestParam BigDecimal jValue,
+	        @RequestParam BigDecimal kValue) {
+
+	    service.saveRefund(yyyymm, jValue, kValue);
+
+	    Map<String, Object> res = new HashMap<String, Object>();
+	    res.put("ok", true);
+	    res.put("message", "saved");
+	    return res;
+	}
+
+
 	}
