@@ -149,8 +149,9 @@ public class WithholdingReportService {
         BigDecimal v = mapper.selectPrevK(yyyymm);  // ★ mapper에서 BigDecimal로 받기
         return (v == null) ? BigDecimal.ZERO : v;
     }
+   
 
-    /** 이번달 J/K 저장 (보고서 생성 버튼에서 호출) */
+    /** 이번달 J/K 저장 (데이터 생성 버튼에서 호출) */
     @Transactional
     public void saveRefund(String yyyymm, BigDecimal jValue, BigDecimal kValue) {
         if (jValue == null) jValue = BigDecimal.ZERO;

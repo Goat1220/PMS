@@ -47,4 +47,5 @@ public interface WithholdingReportMapper {
     int upsertRefund(@Param("yyyymm") String yyyymm,
                      @Param("j") BigDecimal jValue,
                      @Param("k") BigDecimal kValue);
+
 }

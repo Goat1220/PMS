@@ -283,7 +283,7 @@
 	 data-generate-url="${apiGenerate}"
 	 data-prev-refund-url="${apiRefundPrev}"
 	 data-save-refund-url="${apiRefundSave}">
-
+</div>
 	<!-- 페이지 헤더 -->
 	<div class="page-header">
   <div class="page-title">원천징수이행상황신고서</div>

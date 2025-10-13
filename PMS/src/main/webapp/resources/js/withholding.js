@@ -4,6 +4,10 @@
     if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(fn,0);
     else document.addEventListener('DOMContentLoaded', fn, false);
   }
+  
+  //자동 재계산 일시정지 플래그 (확인창 동안 true)
+  window.__suspendRefundAuto = false;
+
 
   // jsPDF 생성자 감지(전역형/UMD 둘 다 지원)
   window.__getJsPDFCtor = function(){
@@ -150,40 +154,80 @@
 
   /* ========================= 탭 전환 ========================= */
   function activate(which){
-    var sTab=document.getElementById('tabSummary'), aTab=document.getElementById('tabAnnex'),
-        sPan=document.getElementById('panelSummary'), aPan=document.getElementById('panelAnnex');
-    if(!sTab||!aTab||!sPan||!aPan) return;
-    if(which==='summary'){ sTab.classList.add('active'); aTab.classList.remove('active'); sPan.style.display='block'; aPan.style.display='none'; }
-    else{ aTab.classList.add('active'); sTab.classList.remove('active'); aPan.style.display='block'; sPan.style.display='none'; }
-  }
+	  var sTab=document.getElementById('tabSummary'), aTab=document.getElementById('tabAnnex'),
+	      sPan=document.getElementById('panelSummary'), aPan=document.getElementById('panelAnnex');
+	  if(!sTab||!aTab||!sPan||!aPan) return;
+	  if(which==='summary'){
+	    sTab.classList.add('active'); aTab.classList.remove('active');
+	    sPan.style.display='block';   aPan.style.display='none';
+	  }else{
+	    aTab.classList.add('active'); sTab.classList.remove('active');
+	    aPan.style.display='block';   sPan.style.display='none';
+	  }
+	}
+// 데이터 생성 버튼 바인딩 (mousedown + 기존 click 유지)
+(function bindDataButtons(){
+  var btnLoad = document.getElementById('btnLoad');
+  if (!btnLoad) return;
 
-  (function bindDataButtons(){
-    var btnLoad=document.getElementById('btnLoad');
-    if(btnLoad){
-      btnLoad.onclick=function(){
-        var ym=val('ym'); if(!ym){ alert('귀속월(YYYY-MM)을 먼저 입력해 주세요.'); return; }
-        if(!confirm('기존에 등록된 자료는 삭제됩니다. 삭제하시겠습니까?')) return;
+  // 클릭 전에 자동계산 잠깐 정지
+  btnLoad.addEventListener('mousedown', function () {
+    window.__suspendRefundAuto = true;
+  }, false);
 
-        if(GENERATE_URL){
-          fetch(GENERATE_URL + '?applyYyyymm=' + encodeURIComponent(ym), {
-            method:'POST', headers:{'Accept':'application/json'}
-          })
-          .then(function(r){ return r.json(); })
-          .then(function(j){
-            alert((j && (j.message||'')) || '생성 완료');
-            if(document.getElementById('panelSummary').style.display!=='none') loadSummary(); else loadAnnex();
-          })
-          .catch(function(err){ alert('생성 실패: '+err); });
-        }else{
-          if(document.getElementById('panelSummary').style.display!=='none') loadSummary(); else loadAnnex();
-        }
-      };
+  // ↓↓↓ 기존 click 핸들러 "전체"를 유지해서 붙여넣기 ↓↓↓
+  btnLoad.addEventListener('click', function(e){
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+
+    var ym = val('ym');
+    if (!ym) { 
+      alert('귀속월(YYYY-MM)을 먼저 입력해 주세요.');
+      window.__suspendRefundAuto = false; // 해제
+      return; 
     }
-    var tabSummary=document.getElementById('tabSummary');
-    var tabAnnex=document.getElementById('tabAnnex');
-    if(tabSummary) tabSummary.onclick=function(){ activate('summary'); loadSummary(); };
-    if(tabAnnex)   tabAnnex.onclick=function(){ activate('annex');   loadAnnex();   };
-  })();
+
+    if (!confirm('기존에 등록된 자료는 삭제됩니다. 삭제하시겠습니까?')) {
+      window.__suspendRefundAuto = false; // 해제
+      return;
+    }
+
+    function reload(){
+      // 확인 후에만 자동계산 허용
+      window.__suspendRefundAuto = false; // 해제
+      if (document.getElementById('panelSummary').style.display !== 'none') {
+        loadSummary();
+      } else {
+        loadAnnex();
+      }
+    }
+
+    if (GENERATE_URL) {
+      fetch(GENERATE_URL + '?applyYyyymm=' + encodeURIComponent(ym), {
+        method:'POST', headers:{ 'Accept':'application/json' }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        alert((j && (j.message||'')) || '생성 완료');
+        window.__resetAfterRender = true;  // ← 렌더 완료 후 초기화하도록 표시
+        reload();
+      })
+      .catch(function(err){
+        alert('생성 실패: ' + err);
+        window.__suspendRefundAuto = false; // 에러 시에도 해제
+      });
+    } else {
+    	 window.__suspendRefundAuto = false; 
+      reload();
+    }
+  }, false);
+
+
+	  var tabSummary = document.getElementById('tabSummary');
+	  var tabAnnex   = document.getElementById('tabAnnex');
+	  if (tabSummary) tabSummary.addEventListener('click', function(){ activate('summary'); loadSummary(); });
+	  if (tabAnnex)   tabAnnex.addEventListener('click',   function(){ activate('annex');   loadAnnex();   });
+	})();
+
 
   /* ========================= 스크롤 영역 자동 높이 ========================= */
   (function(){
@@ -361,19 +405,24 @@
 
     // 사용자 입력 가능 칸
     [A,B,E,F,G,K].forEach(function(el){
-      el.addEventListener('input', function(){
-        var n=Number(String(this.value).replace(/[^\d.-]/g,''))||0;
-        this.value = (this===K) ? this.value : (n ? fmt(n) : '');
-        if (this!==K) recalcAll();
-      });
-      el.addEventListener('blur', function(){
-        if (this===K) return;
-        var n=Number(String(this.value).replace(/[^\d.-]/g,''))||0;
-        this.value = fmt(n);
-        recalcAll();
-      });
-    });
+    	  el.addEventListener('input', function(){
+    	    var raw = String(this.value).replace(/[^\d.-]/g, '');
+    	    if (raw === '') {                // 입력 중 비우면 빈칸 유지
+    	      this.value = '';
+    	      return;
+    	    }
+    	    var n = Number(raw) || 0;
+    	    this.value = fmt(n);
+    	    if (this !== K) recalcAll();
+    	  });
 
+    	  el.addEventListener('blur', function(){
+    	    var n = Number(String(this.value).replace(/[^\d.-]/g,'')) || 0;
+    	    this.value = fmt(n);             // blur 시 0으로 고정 포맷
+    	    if (this !== K) recalcAll();
+    	  });
+    	});
+    
     // 전월(A,B) 값을 서버에서 받아와 채우기
     function prefillPrevRefund() {
       if (!PREV_REFUND_URL) return;
@@ -404,12 +453,22 @@
         })
         .catch(function(){ /* quiet */ });
     }
+    
+    
+    function resetManualFields(){
+      [E,F,G,K].forEach(function(el){
+        if (el) el.value = fmt(0);
+      });
+      recalcAll();
+    }
 
     // 귀속월 바뀔 때마다 전월값 재주입
     var ymInput = document.getElementById('ym');
     if (ymInput) {
       ['change','blur'].forEach(function(ev){
         ymInput.addEventListener(ev, function(){
+          if (window.__suspendRefundAuto) return; // 확인 이전 정지
+          resetManualFields();                    // ← 여기서 수동 입력 필드 초기화
           recalcFromTable();
           prefillPrevRefund();
         });
@@ -418,9 +477,16 @@
 
     // 요약표 갱신 훅(요약 로딩 후 호출됨)
     window.recalcRefundByTables = function(){
-      recalcFromTable();
-      prefillPrevRefund();
-    };
+     if (window.__suspendRefundAuto) return;
+     // 렌더 완료 후 한 번만 초기화
+     if (window.__resetAfterRender) {
+       resetManualFields();              // ← E/F/G/K 0으로
+       window.__resetAfterRender = false;
+     }
+
+     recalcFromTable();
+     prefillPrevRefund();
+   };
 
     // 초기 1회
     window.recalcRefundByTables();
