@@ -4,6 +4,8 @@
 <%-- JSTL Core 태그 / JSTL Core タグ --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%-- 숫자·날짜 포맷 / 数値・日付フォーマット --%>
+<%@ include file="../../includes/commonform.jsp" %>
+<%@ include file="../../includes/table.jsp" %>
 
 
 <style>

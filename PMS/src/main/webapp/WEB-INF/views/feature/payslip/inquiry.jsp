@@ -168,11 +168,12 @@
     .grid { grid-template-columns: 1.4fr 1fr; }
   }
 
-  /* 테이블 / テーブル */
+   /* 테이블 / テーブル */
+   /*
   table{ width:100%; border-collapse:collapse; table-layout:fixed; }
   th,td{ border:1px solid var(--border-300); padding:6px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   thead th{ background:#fafbfc; text-align:center; }
-  .right{ text-align:right; } .center{ text-align:center; }
+  .right{ text-align:right; } .center{ text-align:center; } */
 
   /* 좌측 테이블 특화 / 左側テーブル特化 */
   #listTbl { table-layout: fixed; }

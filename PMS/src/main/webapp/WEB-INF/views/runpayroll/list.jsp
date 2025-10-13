@@ -1,5 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ include file="../includes/commonform.jsp" %>
+<%@ include file="../includes/table.jsp" %>
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -393,6 +396,15 @@ tbody tr.active {
 	<script
 		src="${pageContext.request.contextPath}/resources/js/runpayroll.js"
 		defer></script>
-
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			enableSort('#tblSummary');
+			enableSort('#tblItems');
+			enableSort('#tblDeds');
+			enablePaging('#tblSummary', 20);
+			enablePaging('#tblItems', 20);
+			enablePaging('#tblDeds', 20);
+		});
+	</script>
 </body>
 </html>

@@ -1,5 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ include file="../includes/commonform.jsp" %>
+<%@ include file="../includes/table.jsp" %>
+
 
 <c:url var="apiSummary" value="/api/report/withholding"/>
 <c:url var="apiAnnex"   value="/api/report/withholding/annex"/>
@@ -140,10 +143,10 @@
 	
 	
 	/* 표/탭 */
-	.wh table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+/* 	.wh table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
 	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 	.wh th{ background:#f0f3f7; }
-	.wh td.num{text-align:right} .wh td.center{text-align:center} .wh td.code{font-family:Consolas,monospace}
+	.wh td.num{text-align:right} .wh td.center{text-align:center} .wh td.code{font-family:Consolas,monospace} */
 	
 	.wh .tabs{ display:flex; gap:8px; margin:16px 0; }
 	.wh .tab{ padding:8px 12px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
@@ -411,7 +414,7 @@
    <div class="data-scroll"  id="dataScroll">
    <div class="scroll-inner">
   <div id="panelSummary" class="panel">
-    <table>
+    <table id = tblSummary>
       <thead>
         <tr>
           <th style="width:50px;">No</th>
@@ -433,7 +436,7 @@
 
   <!-- 부표 -->
   <div id="panelAnnex" class="panel" style="display:none;">
-    <table>
+    <table id = tblAnnex>
       <thead>
         <tr>
 
@@ -509,6 +512,13 @@
 
 <!-- 4) 너의 페이지 스크립트 -->
 <script src="<c:url value='/resources/js/withholding.js'/>"></script>
-
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			enableSort('#tblSummary');
+			enablePaging('#tblSummary', 20);
+			enableSort('#tblAnnex');
+			enablePaging('#tblAnnex', 20);
+		});
+	</script>
 </body>
 </html>
