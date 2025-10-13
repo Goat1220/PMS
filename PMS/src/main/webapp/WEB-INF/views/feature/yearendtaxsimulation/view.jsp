@@ -532,13 +532,12 @@ function onReason() {
       renderSim(rows);
       showTab('sim');
       return refreshTaxApplyResult();
-    })
-    .catch(function() {
+    }).catch(function() {
       alert('산출근거 조회 실패 또는 API 미구현');
     });
 }
 
-/* ✅ 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
+/ 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
 function onSim() {
   if (needEmp()) return;
   var y = document.getElementById('baseYear').value.trim();
@@ -563,13 +562,12 @@ function onSim() {
       document.getElementById('yrtId').value = cleanYrtId;
       onReason();
       refreshTaxApplyResult(cleanYrtId);
-    })
-    .catch(function() {
+    }) .catch(function() {
       alert('시뮬레이션 처리 실패 또는 API 미구현');
     });
 }
 
-/* ✅ 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
+/시뮬레이션 결과 삭제 / シミュレーション結果削除 */
 function onDelete() {
   var id = yrt();
   if (!id) {
@@ -591,13 +589,12 @@ function onDelete() {
       document.getElementById('yrtId').value = '';
       refreshTaxApplyResult();
       alert('삭제 완료되었습니다.');
-  })
-  .catch(function(err) {
+  }).catch(function(err) {
       alert(err.message || '삭제 실패 또는 API 미구현');
   });
 }
 
-/* ✅ 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
+/* 분납 시뮬레이션 실행 / 分納シミュレーション実行 */
 function onInstallment() {
   var id = yrt();
   if (!id) {
@@ -612,7 +609,7 @@ function onInstallment() {
     startMonth : start
   });
 
-  // ✅ 여기 경로를 수정해야 함
+  
   fetch(ctx() + '/feature/yearend-tax-simulation/api/installment', {
       method : 'POST',
       body : form
