@@ -515,9 +515,7 @@
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			enableSort('#tblSummary');
-			enablePaging('#tblSummary', 20);
 			enableSort('#tblAnnex');
-			enablePaging('#tblAnnex', 20);
 		});
 	</script>
 </body>

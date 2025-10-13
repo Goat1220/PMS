@@ -253,7 +253,6 @@ tbody tr:hover {
 			<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			enableSort('#tblVoucher');
-			enablePaging('#tblVoucher', 20);
 		});
 	</script>
 </body>

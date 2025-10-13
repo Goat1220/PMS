@@ -401,9 +401,6 @@ tbody tr.active {
 			enableSort('#tblSummary');
 			enableSort('#tblItems');
 			enableSort('#tblDeds');
-			enablePaging('#tblSummary', 20);
-			enablePaging('#tblItems', 20);
-			enablePaging('#tblDeds', 20);
 		});
 	</script>
 </body>
