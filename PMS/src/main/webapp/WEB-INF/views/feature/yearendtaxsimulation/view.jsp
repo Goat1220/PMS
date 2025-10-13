@@ -532,7 +532,7 @@ function onReason() {
       renderSim(rows);
       showTab('sim');
       return refreshTaxApplyResult();
-    })['catch'](function() {
+    }).catch(function() {
       alert('산출근거 조회 실패 또는 API 미구현');
     });
 }
@@ -557,16 +557,17 @@ function onSim() {
   fetch(url, { method: 'POST', body: form })
     .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
     .then(function(yrtIdRaw) {
+      // 숫자만 추출
       var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
       document.getElementById('yrtId').value = cleanYrtId;
       onReason();
       refreshTaxApplyResult(cleanYrtId);
-    })['catch'](function() {
+    }) .catch(function() {
       alert('시뮬레이션 처리 실패 또는 API 미구현');
     });
 }
 
-/* 시뮬레이션 결과 삭제 / シミュレーション結果削除 */
+/*시뮬레이션 결과 삭제 / シミュレーション結果削除 */
 function onDelete() {
   var id = yrt();
   if (!id) {
@@ -576,20 +577,20 @@ function onDelete() {
   if (!confirm('기존 시뮬레이션 결과를 삭제하시겠습니까?')) return;
 
   fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate?yrtId=' + encodeURIComponent(id), {
-    method: 'DELETE'
+      method: 'DELETE'
   })
   .then(function(r) {
-    if (r.ok) return r.text();
-    return r.text().then(function(t){ throw new Error(t || '삭제 실패'); });
+      if (r.ok) return r.text();
+      return r.text().then(function(t){ throw new Error(t || '삭제 실패'); });
   })
   .then(function() {
-    document.getElementById('simBody').innerHTML =
-        '<tr><td colspan="4" style="text-align:center;">삭제됨</td></tr>';
-    document.getElementById('yrtId').value = '';
-    refreshTaxApplyResult();
-    alert('삭제 완료되었습니다.');
-  })['catch'](function(err) {
-    alert(err.message || '삭제 실패 또는 API 미구현');
+      document.getElementById('simBody').innerHTML =
+          '<tr><td colspan="4" style="text-align:center;">삭제됨</td></tr>';
+      document.getElementById('yrtId').value = '';
+      refreshTaxApplyResult();
+      alert('삭제 완료되었습니다.');
+  }).catch(function(err) {
+      alert(err.message || '삭제 실패 또는 API 미구현');
   });
 }
 
@@ -608,16 +609,57 @@ function onInstallment() {
     startMonth : start
   });
 
+  
   fetch(ctx() + '/feature/yearend-tax-simulation/api/installment', {
-    method : 'POST',
-    body : form
+      method : 'POST',
+      body : form
   })
   .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
   .then(renderInstallment)
-  ['catch'](function() {
-    alert('분납 시뮬레이션 실패 또는 API 미구현');
+  .catch(function() {
+      alert('분납 시뮬레이션 실패 또는 API 미구현');
   });
   showTab('sim');
+}
+
+
+/* 시뮬 표 렌더링 / シミュ表レンダリング */
+function renderSim(rows) {
+  var tb = document.getElementById('simBody');
+  tb.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#777;">데이터 없음</td></tr>';
+    return;
+  }
+  rows.forEach(function(r) {
+    tb.insertAdjacentHTML('beforeend',
+      '<tr>'
+      + '<td>' + (r.itemClass || '') + '</td>'
+      + '<td>' + (r.itemName || '') + '</td>'
+      + '<td class="right">' + fmt(r.amount) + '</td>'
+      + '<td class="right">' + fmt(r.expectedAmount) + '</td>'
+      + '</tr>'
+    );
+  });
+}
+
+/* 분납 결과 렌더링 / 分納結果レンダリング */
+function renderInstallment(res) {
+  var box = document.getElementById('installmentBox');
+  if (!res || !res.schedule) {
+    box.innerHTML = '';
+    return;
+  }
+  var html = '<h4 style="margin:10px 0 6px 0;">분납 스케줄</h4>'
+           + '<table class="grid"><tr><th>월</th><th>국세</th><th>지방세</th><th>합계</th></tr>';
+  res.schedule.forEach(function(s) {
+    html += '<tr><td>' + s.yyyymm + '</td>'
+         + '<td class="right">' + fmt(s.national) + '</td>'
+         + '<td class="right">' + fmt(s.local) + '</td>'
+         + '<td class="right">' + fmt(s.total) + '</td></tr>';
+  });
+  html += '</table>';
+  box.innerHTML = html;
 }
 
 /* 세금적용결과 갱신 / 税適用結果更新 */
@@ -637,11 +679,11 @@ function refreshTaxApplyResult(yrtId) {
     .then(function(r) { return r.ok ? r.text() : Promise.reject(r); })
     .then(function(t) {
       document.getElementById('taxApplyResult').value = t || '미판정';
-    })['catch'](function() {
+    })
+    .catch(function() {
       document.getElementById('taxApplyResult').value = '미판정';
     });
 }
-
 </script>
 
 
