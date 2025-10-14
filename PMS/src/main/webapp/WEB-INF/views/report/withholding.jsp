@@ -103,7 +103,7 @@
 	
 	/* 체크 영역을 가로 배치하고, 두 번째(.mid)만 오른쪽 끝으로 밀기 */
 	.wh .row-split .checks{display:flex; width:100%; gap:12px;}
-	.wh .row-split .checks .mid{margin-left: auto; margin-right:24px;}  /* ← 이게 포인트 */
+	.wh .row-split .checks .mid{margin-left: auto; margin-right:300px;}  /* ← 이게 포인트 */
 	
 	/* 우측 블록은 너무 벌어지지 않게 */
 	.wh .row-split .right{justify-self:end; margin-right:210px;}
