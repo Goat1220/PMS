@@ -107,12 +107,12 @@ nav {
 
 iframe[name="contentFrame"] {
 	width: 100%;
-	height: 140vh;
+	height: 125vh;
 	border: 0;
 	/* ↓ 표시 비율 줄이기 */
 	/* transform: scale(0.9);	 */
 	transform-origin: top left;
-	zoom : 0.65;
+	zoom : 0.75;
 }
 
 .content {
