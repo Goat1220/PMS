@@ -14,15 +14,16 @@
 	margin: 4px;
 	border: none;
 	border-radius: 4px;
-	background-color: #4CAF50;
+	background-color: #265ed6; 
 	color: white;
 	cursor: pointer;
 }
 
 .common-btn:hover {
-	background-color: #45a049;
+	background-color: #265ed6; 
 }
 </style>
+
 <script>
 	/**
 	 * 공용 버튼 생성 / 共通ボタン生成
@@ -203,8 +204,8 @@
 }
 /* 활성 탭 컬러 = 공통 버튼 컬러(#4CAF50) / アクティブ色＝共通ボタン色 */
 .tab.active {
-	background: #4CAF50;
-	border-color: #4CAF50;
+	background: #17A2E8;
+	border-color: #17A2E8;
 	color: #fff;
 	font-weight: 600;
 }
