@@ -3,46 +3,58 @@
 <mapper namespace="org.pms.feature.yearendtaxsimulation.mapper.YearendTaxSimMapper">
 
   <!-- ===================================================== -->
-  <!-- 1) 최종 탭: 확정건 (confirm_yn='Y')                    -->
+  <!-- 1) 최종 탭: 확정건 (confirm_yn='Y') 전체 항목 조회 -->
   <!-- ===================================================== -->
-<select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
-  SELECT it.category       AS itemClass,
-         it.item_name      AS itemName,
-         d.amount          AS amount,
-         d.expected_amount AS expectedAmount
-    FROM yrt_header h
-    JOIN yrt_detail d ON d.yrt_id = h.yrt_id
-    JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
-   WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
-     AND h.base_year = #{baseYear, jdbcType=NUMERIC}
-     AND h.confirm_yn = 'Y'
-   ORDER BY it.category, it.item_name
-</select>
-
-
-  <!-- ===================================================== -->
-  <!-- 2) 시뮬 탭: 특정 yrtId 또는 최신 미확정 1건             -->
-  <!-- ===================================================== -->
-  <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
-    SELECT it.category       AS itemClass,
-           it.item_name      AS itemName,
-           d.amount          AS amount,
-           d.expected_amount AS expectedAmount
-      FROM yrt_detail d
-      JOIN yrt_item it ON it.yrt_item_id = d.yrt_item_id
-     WHERE d.yrt_id = COALESCE(
-                       #{yrtId, jdbcType=NUMERIC},
-                       (SELECT yrt_id FROM (
-                          SELECT h.yrt_id
-                            FROM yrt_header h
-                           WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
-                             AND h.base_year = #{baseYear, jdbcType=NUMERIC}
-                             AND h.confirm_yn = 'N'
-                           ORDER BY h.created_at DESC
-                        ) WHERE ROWNUM = 1)
-                     )
+  <select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
+    SELECT 
+           it.category             AS itemClass,          -- 항목분류 / カテゴリ
+           it.item_name            AS itemName,           -- 항목명 / 項目名
+           NVL(d.amount,0)         AS amount,             -- 금액(일반) / 金額(一般)
+           NVL(d.expected_amount,0)AS expectedAmount,     -- 예상공제금액 / 予想控除額
+           h.tax_apply_type        AS taxApplyType,       -- 세액적용유형 / 税額適用タイプ
+           h.tax_apply_result      AS taxApplyResult,     -- 세액적용결과 / 税額適用結果(표준/특별/미산출)
+           h.confirm_yn            AS confirmYn           -- 확정여부 / 確定フラグ
+      FROM yrt_header h
+      JOIN yrt_detail d ON d.yrt_id = h.yrt_id
+      JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
+     WHERE h.emp_id = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+       AND h.base_year = #{baseYear, jdbcType=NUMERIC}
+       AND h.confirm_yn = 'Y'
      ORDER BY it.category, it.item_name
   </select>
+
+
+    <!-- ===================================================== -->
+  <!-- 2) 시뮬 탭: 특정 yrtId 또는 최신 미확정 1건 (전체 항목 조회) -->
+  <!-- ===================================================== -->
+  <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
+    SELECT 
+           it.category             AS itemClass,          -- 항목분류 / カテゴリ
+           it.item_name            AS itemName,           -- 항목명 / 項目名
+           NVL(d.amount,0)         AS amount,             -- 금액(일반) / 金額(一般)
+           NVL(d.expected_amount,0)AS expectedAmount,     -- 예상공제금액 / 予想控除額
+           h.tax_apply_type        AS taxApplyType,       -- 세액적용유형 / 税額適用タイプ
+           h.tax_apply_result      AS taxApplyResult,     -- 세액적용결과 / 税額適用結果(표준/특별/미산출)
+           h.confirm_yn            AS confirmYn           -- 확정여부 / 確定フラグ
+      FROM yrt_header h
+      JOIN yrt_detail d ON d.yrt_id = h.yrt_id
+      JOIN yrt_item   it ON it.yrt_item_id = d.yrt_item_id
+     WHERE h.yrt_id = COALESCE(
+                        #{yrtId, jdbcType=NUMERIC},
+                        (SELECT yrt_id FROM (
+                            SELECT h2.yrt_id
+                              FROM yrt_header h2
+                             WHERE h2.emp_id = (SELECT e.emp_id 
+                                                  FROM emp e 
+                                                 WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+                               AND h2.base_year = #{baseYear, jdbcType=NUMERIC}
+                               AND h2.confirm_yn = 'N'
+                             ORDER BY h2.created_at DESC
+                          ) WHERE ROWNUM = 1)
+                      )
+     ORDER BY it.category, it.item_name
+  </select>
+
 
   <!-- ===================================================== -->
   <!-- 3) 최신 헤더(확정/미확정 플래그로 분기)                 -->

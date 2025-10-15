@@ -402,50 +402,54 @@ td.right {
 		</div>
 
 		<table class="grid">
-			<thead>
-				<tr>
-					<th style="width: 22%">정산항목분류</th>
-					<th style="width: 38%">정산항목</th>
-					<th style="width: 20%">금액</th>
-					<th style="width: 20%">예상적용금액</th>
-				</tr>
-			</thead>
-			<tbody>
-				<c:forEach var="row" items="${finalList}">
-					<tr>
-						<td>${row.itemClass}</td>
-						<td>${row.itemName}</td>
-						<td class="right"><fmt:formatNumber value="${row.amount}" /></td>
-						<td class="right"><fmt:formatNumber
-								value="${row.expectedAmount}" /></td>
-					</tr>
-				</c:forEach>
-				<c:if test="${empty finalList}">
-					<tr>
-						<td colspan="4" style="text-align: center; color: #777;">데이터가
-							없습니다</td>
-					</tr>
-				</c:if>
-			</tbody>
-		</table>
+  <thead>
+    <tr>
+      <th style="width:18%">정산항목분류</th>
+      <th style="width:28%">정산항목</th>
+      <th style="width:14%">금액</th>
+      <th style="width:14%">예상적용금액</th>
+      <th style="width:13%">세액유형</th>   <%-- taxApplyType / 税額タイプ --%>
+      <th style="width:13%">확정여부</th>   <%-- confirmYn / 確定フラグ --%>
+    </tr>
+  </thead>
+  <tbody>
+    <c:forEach var="row" items="${finalList}">
+      <tr>
+        <td>${row.itemClass}</td>
+        <td>${row.itemName}</td>
+        <td class="right"><fmt:formatNumber value="${row.amount}" /></td>
+        <td class="right"><fmt:formatNumber value="${row.expectedAmount}" /></td>
+        <td>${row.taxApplyType}</td>
+        <td>${row.confirmYn}</td>
+      </tr>
+    </c:forEach>
+    <c:if test="${empty finalList}">
+      <tr><td colspan="6" style="text-align:center;color:#777;">데이터가 없습니다</td></tr>
+    </c:if>
+  </tbody>
+</table>
+
 	</div>
 
 	<!-- 시뮬레이션 탭 / シミュレーションタブ -->
 	<div id="panel-sim" class="panel" style="display: none;">
 		<table class="grid">
-			<thead>
-				<tr>
-					<th>정산항목분류</th>
-					<th>정산항목</th>
-					<th>금액</th>
-					<th>예상적용금액</th>
-				</tr>
-			</thead>
-			<tbody id="simBody">
-				<tr>
-					<td colspan="4" style="text-align: center;">버튼으로 조회하세요</td>
-				</tr>
-			</tbody>
+		<thead>
+  <tr>
+    <th>정산항목분류</th>
+    <th>정산항목</th>
+    <th>금액</th>
+    <th>예상적용금액</th>
+    <th>세액유형</th>
+    <th>확정여부</th>
+  </tr>
+</thead>
+<tbody id="simBody">
+  <tr>
+    <td colspan="6" style="text-align:center;">버튼으로 조회하세요</td>
+  </tr>
+</tbody>
+
 		</table>
 		<div id="installmentBox" style="margin-top: 10px;"></div>
 	</div>
@@ -477,7 +481,7 @@ function fmt(n) {
   var v = document.getElementById('baseYear').value;
   if (!/^\d{4}$/.test(v)) {
     var d = new Date();
-    document.getElementById('baseYear').value = d.getFullYear() - 1;
+    document.getElementById('baseYear').value = d.getFullYear() ;
   }
 })();
 
@@ -632,7 +636,7 @@ function renderSim(rows) {
   var tb = document.getElementById('simBody');
   tb.innerHTML = '';
   if (!rows || rows.length === 0) {
-    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#777;">데이터 없음</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">데이터 없음</td></tr>';
     return;
   }
   rows.forEach(function(r) {
@@ -642,10 +646,13 @@ function renderSim(rows) {
       + '<td>' + (r.itemName || '') + '</td>'
       + '<td class="right">' + fmt(r.amount) + '</td>'
       + '<td class="right">' + fmt(r.expectedAmount) + '</td>'
+      + '<td>' + (r.taxApplyType || '') + '</td>'  
+      + '<td>' + (r.confirmYn || '') + '</td>'     
       + '</tr>'
     );
   });
 }
+
 
 /* 분납 결과 렌더링 / 分納結果レンダリング */
 function renderInstallment(res) {
