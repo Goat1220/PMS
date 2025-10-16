@@ -29,8 +29,8 @@ public interface WithholdingReportMapper {
     /**  월 기준 인원수(고유 지급대상자 수) 카운트  */
     Integer countHeadsByMonth(@Param("applyYyyymm") String applyYyyymm);
     
-    /** 총 지급액 = 전표라인(D) 차변 합계 (pay_voucher/pay_voucher_line 기준) */
-    BigDecimal sumTotalPaymentByMonth(@Param("applyYyyymm") String applyYyyymm);
+    /** 총 지급액 = 전표처리 차변  */
+    BigDecimal sumVoucherDebitByMonth(@Param("applyYyyymm") String applyYyyymm);
 
     /** 징수 소득세 = 확정 급여의 공제(T% 코드) 합계 (payslip/payslip_deduction 기준) */
     BigDecimal sumWithheldTaxByMonthByPrefix(@Param("applyYyyymm") String applyYyyymm);

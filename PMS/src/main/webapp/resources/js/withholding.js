@@ -496,7 +496,7 @@
   onReady(function(){ loadSummary(); });
 
   /* ========================= PDF 저장(한 장에 합치기) ========================= */
-  window.exportWHtoPDF = function (encrypt, password) {
+  window.exportWHtoPDF = function () {
     var JsPDFCtor = window.__getJsPDFCtor();
     if (!JsPDFCtor || !window.html2canvas) {
       alert('PDF 라이브러리가 로드되지 않았습니다.\nhtml2canvas/jsPDF 스크립트를 확인하세요.');
@@ -530,15 +530,6 @@
       var sByHeight = (HMM - (canvases.length - 1) * GAP_MM) / sumHpx;
       var s = Math.min(sByWidth, sByHeight);
 
-      // 암호(플러그인 있을 때만)
-      if (encrypt) {
-        try {
-          if (typeof pdf.setEncryption === 'function') {
-            var pwd = (password || '').trim();
-            if (pwd) pdf.setEncryption({ userPassword: pwd, ownerPassword: pwd, userPermissions: ['print','copy','modify'] });
-          }
-        } catch (e) { /* 실패해도 평문으로 계속 */ }
-      }
 
       // 한 장에 위→아래 배치
       var y = M;
@@ -562,7 +553,7 @@
     });
   };
 
-  /* ========================= 신고/암호화 버튼 바인딩 ========================= */
+  /* ========================= 신고 버튼 바인딩 ========================= */
   (function(){
     function toNum(v){ return Number(String(v||'').replace(/[^\d.-]/g,'')) || 0; }
     function requireYm(){
@@ -587,7 +578,6 @@
 
     onReady(function(){
       var btnMake    = document.getElementById('btnMake');
-      var btnEncrypt = document.getElementById('btnEncrypt');
 
       function handleMakeClick(e){
         if (e && e.preventDefault) e.preventDefault();
@@ -601,7 +591,7 @@
           .then(function(){
             alert('환급 저장 완료. PDF 생성 진행합니다.\n파일명: ' + fileName);
             if (!window.__ensurePdfLibs()) return;
-            window.exportWHtoPDF(false);
+            window.exportWHtoPDF();
           })
           .catch(function(err){
             alert('환급 저장 실패: ' + err + '\nPDF 생성은 계속 진행합니다.');
@@ -610,37 +600,8 @@
           });
       }
 
-      function handleEncryptClick(e){
-        if (e && e.preventDefault) e.preventDefault();
-        var ym = requireYm(); if (!ym) return;
-
-        var p1El = document.getElementById('pwd1');
-        var p2El = document.getElementById('pwd2');
-        var p1 = (p1El && p1El.value || '').trim();
-        var p2 = (p2El && p2El.value || '').trim();
-
-        if (!p1 || !p2) { alert('비밀번호를 입력하세요.'); (p1? p2El:p1El).focus(); return; }
-        if (p1 !== p2)   { alert('비밀번호가 일치하지 않습니다.'); if (p2El && p2El.focus) p2El.focus(); return; }
-
-        var fileName = makeFileName(ym);
-        var j = toNum((document.getElementById('J')||{}).value);
-        var k = toNum((document.getElementById('K')||{}).value);
-
-        saveJK(ym, j, k)
-          .then(function(){
-            alert('환급 저장 완료. 암호화 PDF 생성 진행합니다.\n파일명: ' + fileName);
-            if (!window.__ensurePdfLibs()) return;
-            window.exportWHtoPDF(true, p1);
-          })
-          .catch(function(err){
-            alert('환급 저장 실패: ' + err + '\n암호화 PDF 생성은 계속 진행합니다.');
-            if (!window.__ensurePdfLibs()) return;
-            window.exportWHtoPDF(true, p1);
-          });
-      }
 
       if (btnMake)    btnMake.onclick    = handleMakeClick;
-      if (btnEncrypt) btnEncrypt.onclick = handleEncryptClick;
     });
   })();
 

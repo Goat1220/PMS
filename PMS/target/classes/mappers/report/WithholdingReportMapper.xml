@@ -213,14 +213,15 @@ ORDER BY c.ord
 	</select>
 
 
-  <!-- 총 지급액: 전표라인 차변(D) 합계 -->
-  <select id="sumTotalPaymentByMonth" parameterType="string" resultType="java.math.BigDecimal">
-    SELECT NVL(SUM(l.debit_amt), 0)
-    FROM   pay_voucher_line l
-           JOIN pay_voucher v ON v.voucher_id = l.voucher_id
-    WHERE  l.drcr_code = 'D'
-      AND  TO_CHAR(v.pay_date,'YYYY-MM') = #{applyYyyymm}
-  </select>
+<!-- WithholdingReportMapper.xml -->
+<!-- 총 지급액: 전표처리 차변 -->
+<select id="sumVoucherDebitByMonth" resultType="java.math.BigDecimal">
+  SELECT COALESCE(SUM(pms.total_pay_amt), 0)
+  FROM pay_month_summary pms
+  WHERE pms.apply_yyyymm = #{applyYyyymm}
+    AND pms.total_pay_amt > 0
+</select>
+
 
   <!-- 징수 소득세: 확정된 급여의 공제 중 T% 코드 합계 -->
   <select id="sumWithheldTaxByMonthByPrefix" parameterType="string" resultType="java.math.BigDecimal">

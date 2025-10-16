@@ -103,7 +103,7 @@
 	
 	/* 체크 영역을 가로 배치하고, 두 번째(.mid)만 오른쪽 끝으로 밀기 */
 	.wh .row-split .checks{display:flex; width:100%; gap:12px;}
-	.wh .row-split .checks .mid{margin-left: auto; margin-right:300px;}  /* ← 이게 포인트 */
+	.wh .row-split .checks .mid{margin-left: auto; margin-right:250px;}  /* ← 이게 포인트 */
 	
 	/* 우측 블록은 너무 벌어지지 않게 */
 	.wh .row-split .right{justify-self:end; margin-right:210px;}
@@ -167,8 +167,7 @@
 	  display:grid;
 	  grid-template-columns: max-content var(--file-name-w) 180px;
 	  grid-template-areas:
-	    "lblName name btns"
-	    "lblPwd  pwd  btns";
+	    "lblName name btns";
 	  gap:10px 12px; align-items:center;
 	}
 	.wh .file-grid{ row-gap:6px; }
@@ -302,24 +301,30 @@
       <div class="card-title">신고집계기준(원천징수명세서 및 부표)</div>
 
       <!-- 1줄: 라벨+입력 촘촘, 오른쪽에 '데이터생성' -->
-      <div class="form-row">
+      <div class="form-row" style = "gap: 16px;">
+      	<div>
         <span class="label-80 req">원천세사업장</span>
         <select class="w-110 min-160"><option>원천세사업장</option></select>
-
+		</div>
+		<div>
         <span class="label-80 req">귀속월</span>
         <input id="ym" type="text" class="w-110" value="2025-09"/>
-
+		</div>
+		<div>
         <span class="label-80 req">지급월</span>
         <input id="payYm" type="text" class="w-110" placeholder="yyyy-MM"/>
-
+		</div>
+		<div>
         <span class="label-80 req">신고연월</span>
         <input id="reportYm" type="text" class="w-110" placeholder="yyyy-MM"/>
-
+		</div>
+		<div>
         <span class="label-80">신고구분</span>
         <select class="w-110">
           <option>정기신고</option>
           <option>기한후신고</option>
         </select>
+        </div>
 
         <button id="btnLoad" class="btn primary ml-auto no-shrink">데이터생성</button>
       </div>
@@ -331,9 +336,9 @@
           <label class="chk mid"><input type="checkbox" id="opt2"> 연말정산반영</label>
         </div>
 
-        <div class="right pair">
+        <div class="right pair" style="margin-right:204px">
           <span class="label-80 req">연말정산연도</span>
-          <input id="annYear" type="text" class="w-80" placeholder="YYYY"/>
+          <input id="annYear" style="width:84px" type="text" class="w-80" placeholder="YYYY"/>
         </div>
       </div>
     </div>
@@ -369,39 +374,29 @@
     </div>
   </div><!-- /.two-cols -->
 
-  <!-- ▣ 신고파일생성 (접기/펼치기 지원) -->
-  <div class="card file-card" id="fileCard">
+ <!-- ▣ 신고파일생성 (접기/펼치기 지원) -->
+<div class="card file-card" id="fileCard">
   <div class="card-title file-card__header" id="fileCardHeader">
     <span>▼ 신고파일생성</span>
   </div>
 
   <div class="file-card__body">
     <div class="file-grid">
-      <!-- 1행 -->
       <span class="label-80 lbl-name" style="margin-right:10px;">파일명</span>
       <input id="fileName"
              class="in-name"
              type="text"
              readonly
-             placeholder="귀속월로 자동 생성됩니다."
-             />
-	
-	    <div class="btns-col">
-	      <button id="btnMake"    class="btn-primary">신고파일생성</button>
-	      <button id="btnEncrypt" class="btn-primary">암호화파일생성</button>
-	    </div>
-	
-	    <!-- 2행: 라벨 | 비번 2개 | (버튼묶음은 위에서 아래까지 고정) -->
-	    <span class="label-80 lbl-pwd" style="margin-right:15px;">비밀번호</span>
-	    <div class="pwd-row in-pwd">
-	      <input id="pwd1" type="password" class="w-160" placeholder="*****"/>
-	      <span class="label-80" style="margin-left:40px;">비밀번호 확인</span>
-	      <input id="pwd2" type="password" class="w-160" placeholder="*****"/>
-	    </div>
-	
-	  </div>
-	</div>
+             style="width:448px;"
+             placeholder="귀속월로 자동 생성됩니다." />
+
+      <div class="btns-col">
+        <button id="btnMake" class="btn-primary">신고파일생성</button>
+      </div>
+    </div>
   </div>
+</div>
+
 
   <!-- 탭 -->
   <div class="data-area">

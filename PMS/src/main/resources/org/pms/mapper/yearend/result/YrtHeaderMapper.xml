@@ -27,7 +27,7 @@
       AND e.emp_name LIKE '%' || #{empName} || '%'
     </if>
   </where>
-		
+		<![CDATA[ORDER BY h.yrt_id ASC]]>
 	</select>
 
 
