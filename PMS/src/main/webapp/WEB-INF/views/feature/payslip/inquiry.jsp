@@ -5,19 +5,15 @@
 <%@ include file="../../includes/table.jsp" %>
 
 
-<!-- ==========================================
-     	 Design Tokens (서비스 가이드 설정)
-     [デザイントークン] サービスガイド設定
-     ※ 가이드 값으로 교체하세요 (색/폰트/폭/브레이크포인트)
-========================================== -->
+
 <style>
   :root{
     /* 컨테이너 폭 / コンテナ幅 */
-    --container-max: 1280px;            /* 가이드 폭: 1200/1280/1366/1440 등 */
+    --container-max: 1280px;           
     --container-padding-x: 16px;
 
     /* 컬러 / カラー */
-    --brand-primary: #4CAF50;           /* 공통 버튼/탭 활성 색 */
+    --brand-primary: #4CAF50;           
     --brand-primary-hover: #45a049;
     --neutral-0: #ffffff;
     --neutral-700: #222222;
@@ -38,10 +34,7 @@
   }
 </style>
 
-<!-- ==========================================
-     	 공용 버튼 폼 (스타일 + 팩토리)
-     [共通ボタン] スタイル＋ファクトリ
-========================================== -->
+
 <style>
   .common-btn {
     padding: 8px 16px;
@@ -57,6 +50,166 @@
   }
   .common-btn:hover { background-color: var(--brand-primary-hover); }
 </style>
+
+<style>
+
+.grid{
+  display:grid;
+  grid-template-columns: 1.1fr 0.9fr;   
+  grid-template-rows: 1fr 1fr;         
+  grid-template-areas:
+    "left rightTop"
+    "left rightBottom";
+  gap:20px;
+  align-items:start;                     
+  justify-content:center;
+  padding:8px;
+  box-sizing:border-box;
+}
+
+
+.card{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:12px 16px;
+  height:100%;
+}
+
+
+.card.left{ grid-area:left; }
+.card.right-top{ grid-area:rightTop; }
+.card.right-btm{ grid-area:rightBottom; }
+
+
+.card .title{
+  font-weight:600;
+  background:#f7f9fb;
+  border-bottom:1px solid #e5e7eb;
+  padding:8px 12px;
+  margin:-12px -16px 10px -16px;        
+  border-radius:8px 8px 0 0;
+}
+
+/* 표가 카드 안에서 ‘한 개 모듈’처럼 보이도록 */
+.card table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  flex:1 1 auto;                        /* 표가 카드 높이를 고르게 채움 */
+  margin:0;
+}
+.card th,.card td{
+  border:1px solid #d1d5db;
+  padding:8px 10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  vertical-align:middle;
+}
+.card thead th{
+  background:#f4f6f8;
+  text-align:center;
+  font-weight:600;
+}
+
+/* 내용이 적어도 일정 공간 확보(카드가 너무 얇아지지 않게) */
+.card tbody{ min-height:200px; }
+
+/* 숫자 정렬 헬퍼 */
+.right{ text-align:right; }
+.center{ text-align:center; }
+
+/* 반응형: 좁은 화면에서는 세로 스택 */
+@media (max-width:960px){
+  .grid{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "left"
+      "rightTop"
+      "rightBottom";
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;   
+  grid-template-areas:
+    "left rightTop"
+    "left rightBottom";
+  grid-auto-rows: auto;               
+  gap: 20px;
+  align-items: start;                 
+  justify-content: center;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  height: auto;                     
+}
+
+
+.card.left {
+  grid-area: left;
+  max-height: 420px;                   
+  overflow-y: auto;                     
+}
+
+
+.card.right-top { grid-area: rightTop; min-height: 200px; }
+.card.right-btm { grid-area: rightBottom; min-height: 200px; }
+
+
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.card th, .card td {
+  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card thead th {
+  background: #f4f6f8;
+  font-weight: 600;
+}
+
+
+#listTbl th:first-child, #listTbl td:first-child,
+#payTbl  th:first-child, #payTbl  td:first-child,
+#dedTbl  th:first-child, #dedTbl  td:first-child{
+  width: 44px;          
+  max-width: 44px;
+  min-width: 36px;
+  text-align: center;
+  padding-left: 0;       
+  padding-right: 0;
+}
+
+
+</style>
+
 <script>
   /**
    * 공용 버튼 생성 함수 / 共通ボタン生成
@@ -216,7 +369,7 @@
        ページヘッダー：タイトル＋Excel出力ボタン
   ========================================== -->
   <div class="page-head">
-    <h2>급여명세서(조회/출력)(개인)</h2> <!-- 제목 / タイトル -->
+    <h2>給与明細書（照会／出力）（個人）</h2> <!-- 제목 / タイトル -->
     <!-- 엑셀(CSV) 다운로드 / Excel(CSV) ダウンロード -->
     <div id="pageHeadBtnArea"></div>
   </div>
@@ -224,7 +377,7 @@
     // 공용 버튼으로 Excel 버튼 주입 / 共通ボタンでExcelボタンを挿入
     (function mountHeadButtons(){
       var area = document.getElementById('pageHeadBtnArea');
-      area.appendChild(createCommonButton('엑셀 추출', 'downloadPayslipExcel'));
+      area.appendChild(createCommonButton('エクセル抽出', 'downloadPayslipExcel'));
     })();
   </script>
 
@@ -234,15 +387,15 @@
   ========================================== -->
   <form id="searchForm" method="get" action="">
     <div class="qbar">
-      <div>적용연월: <!-- 適用年月 -->
+      <div>適用年月: <!-- 적용연월 -->
         <input class="input" type="text" name="fromYm" value="${fromYm}" placeholder="YYYY-MM / yyyymm" style="width:110px;">
         ~
         <input class="input" type="text" name="toYm"   value="${toYm}"   placeholder="YYYY-MM / yyyymm" style="width:110px;">
       </div>
 
-      <div>급상여종류: <!-- 支給／賞与区分 -->
+      <div>支給／賞与区分: <!-- 급상여종류 -->
         <select class="sel" name="payType">
-          <option value="" <c:if test="${empty payType}">selected</c:if>>전체</option> <!-- 全体 -->
+          <option value="" <c:if test="${empty payType}">selected</c:if>>全体</option> <!-- 全体 -->
           <c:forEach var="c" items="${payTypeCodes}">
             <option value="${c.code}" <c:if test="${payType == c.code}">selected</c:if>>
               ${c.name} (${c.code})
@@ -252,17 +405,17 @@
       </div>
 
       <div class="emp-block">
-        <span>사원:</span> <!-- 社員 -->
+        <span>社員:</span> <!-- 사원 -->
         <input class="input readonly emp-name" type="text" value="${empName}" readonly aria-readonly="true">
         <input class="input readonly emp-no"   type="text" name="empNo" value="${empNo}" readonly aria-readonly="true">
       </div>
 
       <label style="user-select:none;">
         <input type="checkbox" name="excludeZero" value="Y" <c:if test="${excludeZero == 'Y'}">checked</c:if> />
-        금액 0 미출력 <!-- 金額0を非表示 -->
+        金額0を非表示 <!-- 금액0미출력-->
       </label>
 
-      <button type="submit" class="btn">조회</button> <!-- 検索 -->
+      <button type="submit" class="btn">検索</button> <!-- 조희 -->
       <input type="hidden" name="selectedId" id="selectedId"
              value="<c:out value='${selected != null ? selected.payslipId : param.selectedId}'/>"><!-- 현재 선택 payslipId / 現在選択のpayslipId -->
     </div>
@@ -276,17 +429,17 @@
 
     <!-- 좌측: 월별급상여내역 / 左：月別支給・賞与一覧 -->
     <div class="card left">
-      <div class="title">월별급상여내역</div>
+      <div class="title">月別支給・賞与一覧</div>
       <table id="listTbl">
         <thead>
           <tr>
             <th>⚙</th>
-            <th>급상여종류</th>
-            <th>적용연월</th>
-            <th class="right">지급총액</th>
-            <th class="right">기지급액</th>
-            <th class="right">공제총액</th>
-            <th class="right">실지급액</th>
+            <th>月別支給・賞与一区分</th>
+            <th>適用年月</th>
+            <th class="right">支給総額</th>
+            <th class="right">既支給額</th>
+            <th class="right">控除総額</th>
+            <th class="right">実支給額</th>
           </tr>
         </thead>
         <tbody>
@@ -302,7 +455,7 @@
             </tr>
           </c:forEach>
           <c:if test="${empty rows}">
-            <tr><td colspan="7" class="muted">데이터가 없습니다. (사번/연월을 확인하세요)</td></tr> <!-- データなし -->
+            <tr><td colspan="7" class="muted">データがありません。（社員番号／年月をご確認ください）</td></tr> <!-- データなし -->
           </c:if>
         </tbody>
       </table>
@@ -310,7 +463,7 @@
 
     <!-- 우측 상단: 지급항목내역(0번행=합계) / 右上：支給項目(0行目=合計) -->
     <div class="card right-top">
-      <div class="title">지급항목내역</div>
+      <div class="title">支給項目内訳</div>
       
 		
 		
@@ -326,9 +479,9 @@
         <thead>
           <tr>
             <th>⚙</th>
-            <th>기지급여부</th>
-            <th>인정상여여부</th>
-            <th class="right">금액</th>
+            <th>既支給</th>
+            <th>認定賞与</th>
+            <th class="right">金額</th>
           </tr>
         </thead>
         <tbody>
@@ -356,7 +509,7 @@
               </c:forEach>
             </c:when>
             <c:otherwise>
-              <tr><td colspan="4" class="muted">지급 내역이 없습니다.</td></tr> <!-- 支給内訳なし -->
+              <tr><td colspan="4" class="muted">支給内訳がありません。</td></tr> <!-- 支給内訳なし -->
             </c:otherwise>
           </c:choose>
         </tbody>
@@ -365,7 +518,7 @@
 
     <!-- 우측 하단: 공제항목내역(0번행=TOTAL) / 右下：控除項目(0行目=TOTAL) -->
     <div class="card right-btm">
-      <div class="title">공제항목내역</div>
+      <div class="title">控除項目内訳</div>
 
       <!-- 합계 계산 / 合計計算 -->
       <c:set var="dedTotal" value="0"/>
@@ -379,9 +532,9 @@
         <thead>
           <tr>
             <th>⚙</th>
-            <th>공제항목</th>
-            <th>공제항목코드</th>
-            <th class="right">금액</th>
+            <th>控除項目</th>
+            <th>控除項目コード</th>
+            <th class="right">金額</th>
           </tr>
         </thead>
         <tbody>
@@ -405,7 +558,7 @@
               </c:forEach>
             </c:when>
             <c:otherwise>
-              <tr><td colspan="4" class="muted">공제 내역이 없습니다.</td></tr> <!-- 控除内訳なし -->
+              <tr><td colspan="4" class="muted">控除内訳がありません。</td></tr> <!-- 控除内訳なし -->
             </c:otherwise>
           </c:choose>
         </tbody>
@@ -460,9 +613,9 @@
      合計行をtbodyの先頭に固定 */
   function pinTotalRowsToTop(tableSelector) {
     var table = document.querySelector(tableSelector);
-    if (!table) { console.warn("[pinTotalRowsToTop] 테이블 못 찾음:", tableSelector); return; }
+    if (!table) { console.warn("[pinTotalRowsToTop]  テーブルが見つかりません:", tableSelector); return; }
     var tbody = table.tBodies && table.tBodies[0];
-    if (!tbody) { console.warn("[pinTotalRowsToTop] tbody 없음:", tableSelector); return; }
+    if (!tbody) { console.warn("[pinTotalRowsToTop] tbodyがありません:", tableSelector); return; }
 
     var rows = Array.prototype.slice.call(tbody.rows);
     function isTotal(tr){
@@ -487,9 +640,9 @@
   if (typeof window.enableSort !== "function") {
     window.enableSort = function(selector) {
       var table = document.querySelector(selector);
-      if (!table) { console.warn("[enableSort] 테이블 못 찾음:", selector); return; }
+      if (!table) { console.warn("[enableSort] テーブルが見つかりません:", selector); return; }
       var tbody = table.tBodies && table.tBodies[0];
-      if (!tbody) { console.warn("[enableSort] tbody 없음:", selector); return; }
+      if (!tbody) { console.warn("[enableSort] tbodyがありません:", selector); return; }
 
       var ths = table.tHead ? Array.prototype.slice.call(table.tHead.rows[0].cells) : [];
       ths.forEach(function(th, colIdx){
@@ -529,7 +682,7 @@
   if (typeof window.exportTableToExcel !== "function") {
     window.exportTableToExcel = function(selector, filename) {
       var table = document.querySelector(selector);
-      if (!table) { alert("내보낼 테이블을 찾지 못했습니다: " + selector); return; }
+      if (!table) { alert("エクスポート対象のテーブルが見つかりません: " + selector); return; }
       var lines = Array.prototype.slice.call(table.rows).map(function(tr){
         return Array.prototype.slice.call(tr.cells).map(function(td){
           var t = (td.innerText || "").replace(/\r?\n|\r/g, " ").trim(); // 줄바꿈 제거 / 改行除去
@@ -563,20 +716,9 @@
   /* 엑셀 버튼 핸들러(전역 노출)
      Excelボタン用ハンドラ（グローバル公開） */
   window.downloadPayslipExcel = function(){
-    try { exportTableToExcel("#listTbl","급여명세_요약.csv"); }
-    catch(e) { console.error(e); alert("CSV 내보내기 중 오류가 발생했습니다."); }
+    try { exportTableToExcel("#listTbl","給与明細_概要.csv"); }
+    catch(e) { console.error(e); alert("CSVエクスポート中にエラーが発生しました。"); }
   };
 
 })();  // IIFE 종료 / IIFE 終了
 </script>
-
-<!-- ==========================================
-    include를 '보이지 않게' 하단 로드
-     余白原因対策：includeを「非表示」でページ下部に読み込み
-     ※ 스크립트/스타일은 정상 로드됨 / script・styleは正常に読み込まれます
-========================================== -->
-<div style="display:none" aria-hidden="true">
-<%--   <%@ include file="/WEB-INF/views/includes/form.jsp" %> --%>
-  <%@ include file="/WEB-INF/views/includes/table.jsp" %>
-</div>
-
