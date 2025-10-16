@@ -28,8 +28,8 @@ select {
 /* ====== layout ====== */
 .layout {
 	display: grid;
-	grid-template-columns: 900px 1fr;
-	gap: var(- -gap);
+	grid-template-columns: 1fr;
+	gap: var(--gap);
 	height: calc(100vh - 180px)
 }
 
@@ -50,14 +50,15 @@ select {
 .left-wrap {
 	height: 100%;
 	overflow: auto;
-	border: 1px solid var(- -border);
+	border: 1px solid var(--border);
 	border-radius: 8px;
 	background: #fff
 }
 
 /* 표 */
 #adminTable {
-	min-width: 1200px !important;
+width: 100%;
+	min-width: 1200px;
 	table-layout: fixed
 }
 
@@ -337,190 +338,20 @@ select {
 				</div>
 			</div>
 
-			<!-- ============ RIGHT: 신고/출력 패널 ============ -->
-			<div class="card">
-				<div class="card-body">
-
-					<!-- 정산출력 -->
-					<div class="panel" style="margin-bottom: 12px">
-						<div class="title">● 정산출력</div>
-						<div class="form-grid">
-							<!-- 1행: 출력구분 + (같은 셀에 버튼) -->
-							<div class="label">출력구분</div>
-							<div class="inline-join span-all">
-								<select id="outputType" style="width: 180px">
-									<option>근로소득자소득공제신고서</option>
-									<option>근로소득원천징수영수증</option>
-									<option>근로소득원천징수영수증(영문)</option>
-									<option>소득자료제출집계표</option>
-									<option>의료비지급명세서</option>
-									<option>기부금지급명세서</option>
-									<option>연금저축명세서</option>
-									<option>주택자금명세서</option>
-									<option>신용카드등소득공제신청서</option>
-									<option>을근원천징수영수증(영문)</option>
-									<option>출산지원금비과세적용명세서</option>
-								</select>
-								<button>출력</button>
-							</div>
-
-
-							<!-- 2행 -->
-							<div class="label">신고일자</div>
-							<div>
-								<input type="text" style="width: 100px" placeholder="YYYYMMDD">
-							</div>
-							<div class="label">출력종류</div>
-							<div>
-								<select id="outputKind" disabled>
-									<option>소득자 보관용</option>
-									<option>원천징수의무자 제출용</option>
-									<option>발행자 보고용</option>
-								</select>
-							</div>
-							<div class="label">주민번호암호화</div>
-							<div>
-								<input type="checkbox">
-							</div>
-
-							<!-- 3행 -->
-							<div class="label">신고대상</div>
-							<div>
-								<select id="submitTarget" style="width: 100px" disabled>
-									<option>연말정산</option>
-									<option>중도정산</option>
-									<option>전체</option>
-								</select>
-							</div>
-							<div class="label">출력파일명</div>
-							<div>
-								<input type="text" placeholder="_" readonly>
-							</div>
-							<div></div>
-							<div></div>
-						</div>
-					</div>
-
-					<!-- 정산신고 -->
-					<div class="panel">
-						<div class="title">● 정산신고</div>
-						<div class="form-grid report">
-
-							<div class="label">신고구분</div>
-							<div>
-								<select>
-									<option>근로소득원천징수영수증</option>
-									<option>의료비지급명세서</option>
-								</select>
-							</div>
-							<div class="label">신고대상</div>
-							<div>
-								<select>
-									<option>전체</option>
-									<option>중도정산</option>
-									<option>연말정산</option>
-								</select>
-							</div>
-							<div class="label">영수일</div>
-							<div>
-								<input type="text" style="width: 70px" placeholder="YYYYMMDD">
-							</div>
-
-							<div class="label">대상기간</div>
-							<div>
-								<select>
-									<option>연간(1~12/31)지급분</option>
-									<option>폐업으로인한수시제출분</option>
-									<option>수시분할제출분</option>
-								</select>
-							</div>
-							<div class="label">퇴직대상월</div>
-							<div class="inline-join">
-								<select id="startMonth"></select> <span class="muted">~</span> <select
-									id="endMonth"></select>
-
-							</div>
-							<div class="label">제출일</div>
-							<div>
-								<input type="text" style="width: 70px" placeholder="YYYYMMDD">
-							</div>
-
-							<div class="label">담당자부서</div>
-							<div>
-								<input type="text">
-							</div>
-							<div class="label">담당자</div>
-							<div>
-								<input type="text">
-							</div>
-							<div class="label">
-								담당자<br />연락처
-							</div>
-							<div>
-								<input type="text" style="width: 70px">
-							</div>
-
-							<div class="label">파일생성</div>
-							<div class="inline-join" style="grid-column: 2/7;">
-								<input type="text"
-									value="&lt;암호화파일생성&gt; 으로 생성된 파일을 저장하여 신고합니다." readonly>
-								<button>파일생성</button>
-							</div>
-
-							<div class="label">비밀번호</div>
-							<div>
-								<input type="text">
-							</div>
-							<div class="label">비밀번호확인</div>
-							<div class="inline-join">
-								<input type="text">
-								<button class="secondary">암호화파일생성</button>
-							</div>
-							<div></div>
-							<div></div>
-						</div>
-					</div>
-
-				</div>
-			</div>
 		</div>
 	</div>
 
 	<script>
-  /* 정산출력 패널 로직 */
-const outputType    = document.getElementById("outputType");
-const outputKind    = document.getElementById("outputKind");
-const submitTarget  = document.getElementById("submitTarget");
-
-outputType.addEventListener("change", () => {
-  const val = outputType.value;
-
-  // 신고대상: 소득자료제출집계표일때만 활성화, 아니면 비활성화 + 값 유지
-  if (val === "소득자료제출집계표") {
-    submitTarget.disabled = false;
-  } else {
-    submitTarget.disabled = true;
-    // 선택값은 유지
-  }
-
-  // 출력종류: 근로소득원천징수영수증/영문일 때만 활성화, 아니면 비활성화 + 빈칸 초기화
-  if (val === "근로소득원천징수영수증" || val === "근로소득원천징수영수증(영문)") {
-    outputKind.disabled = false;
-  } else {
-    outputKind.disabled = true;
-    outputKind.value = "";
-  }
-});
 
   /* 선택된 행 수집 */
-  function getSelectedRows(){
+   function getSelectedRows(){
     const rows=[];
     document.querySelectorAll('#adminTable tbody tr').forEach(tr=>{
       const cb=tr.querySelector('input[type=checkbox][data-col="select"]');
       if(cb && cb.checked) rows.push(tr);
     });
     return rows;
-  }
+  } 
 
   /* 상단 버튼 동작 */
 document.getElementById('btnAllSettle').addEventListener('click', ()=>{
@@ -573,7 +404,7 @@ document.getElementById('btnAllSettle').addEventListener('click', ()=>{
   });
   
   // 1~12월 옵션 자동 생성
-  function fillMonths(selectId) {
+/*   function fillMonths(selectId) {
     const sel = document.getElementById(selectId);
     for (let m = 1; m <= 12; m++) {
       const opt = document.createElement("option");
@@ -582,9 +413,6 @@ document.getElementById('btnAllSettle').addEventListener('click', ()=>{
       sel.appendChild(opt);
     }
   }
-
-  fillMonths("startMonth");
-  fillMonths("endMonth");
 
 </script>
 
