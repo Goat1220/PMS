@@ -33,13 +33,17 @@ public class WithholdingReportService {
         }
 
         // 1) 상단 실제 원장 합계 주입: A01
-        BigDecimal totalPayment = mapper.sumTotalPaymentByMonth(cond.getApplyYyyymm());
+        BigDecimal totalPayment = mapper.sumVoucherDebitByMonth(cond.getApplyYyyymm());
+       
+        System.out.println("=== totalPayment: " + totalPayment);  // 디버그 로그
         BigDecimal withheldTax  = mapper.sumWithheldTaxByMonthByPrefix(cond.getApplyYyyymm());
-  
+        System.out.println("=== withheldTax: " + withheldTax);    // 디버그 로그
         Integer headCount = mapper.countHeadsByMonth(cond.getApplyYyyymm());
         if (headCount == null) headCount = 0;
         
         WithholdingRow a01 = byCode.get("A01");
+        System.out.println("=== A01: " + (a01 == null ? "NULL" : "EXISTS")); // 디버그
+        
         if (a01 != null) {
         	a01.setHeadCount(headCount);
             a01.setTaxTotal(nL(totalPayment));
