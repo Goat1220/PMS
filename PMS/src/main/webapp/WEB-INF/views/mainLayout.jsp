@@ -84,7 +84,7 @@ iframe[name="contentFrame"] {
   border-radius: var(--radius);
   background: #fff;
   box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-  zoom: 0.9;
+  zoom: 0.73;
   transform-origin: top left;
 }
 </style>
