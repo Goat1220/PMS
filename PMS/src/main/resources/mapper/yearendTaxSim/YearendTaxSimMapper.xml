@@ -3,7 +3,7 @@
 <mapper namespace="org.pms.feature.yearendtaxsimulation.mapper.YearendTaxSimMapper">
 
   <!-- ===================================================== -->
-  <!-- 🔸공통 본문: SELECT/JOIN + emp/baseYear 까지 (확정여부/yrtId는 각 쿼리에서 분기) -->
+  <!-- 🔸공통 본문: SELECT/JOIN + emp/baseYear 까지 (확정여부/yrtId는 각 쿼리에서 분기)共通本文:SELECT/JOIN + emp/base Year まで(確定可否/yrtIdは各クエリーから分岐) -->
   <!-- ===================================================== -->
   <sql id="GridCore">
     SELECT 
@@ -25,7 +25,7 @@
   </sql>
 
  <!-- ===================================================== -->
-  <!-- 1) 최종 탭: 확정건(Y) 없으면 미확정건(N) fallback 조회 -->
+  <!-- 1) 최종 탭: 확정건(Y) 없으면 미확정건(N) fallback 조회 最終タブ:確定件(Y)なければ未確定件(N)fallback照会 -->
   <!-- ===================================================== -->
   <select id="selectFinalGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
     <include refid="GridCore"/>
@@ -49,7 +49,7 @@
 
 
   <!-- ===================================================== -->
-  <!-- 2) 시뮬 탭: 특정 yrtId 또는 (없으면) 최신 미확정 1건 전체 조회 -->
+  <!-- 2) 시뮬 탭: 특정 yrtId 또는 (없으면) 최신 미확정 1건 전체 조회 シミュレーションタブ:特定のyrtIdまたは(なければ)最新の未確定1件すべて照会-->
   <!-- ===================================================== -->
   <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
   WITH hY AS (  /* 최신 확정(Y) */
@@ -121,7 +121,7 @@
 </select>
 
   <!-- ===================================================== -->
-  <!-- 3) 최신 헤더(확정/미확정 플래그로 분기) -->
+  <!-- 3) 최신 헤더(확정/미확정 플래그로 분기)最新ヘッダー（確定/未確定フラグで分岐） -->
   <!-- ===================================================== -->
   <select id="selectLatestHeader" resultType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini">
     SELECT h.yrt_id               AS yrtId,
@@ -144,7 +144,7 @@
   </select>
 
   <!-- ===================================================== -->
-  <!-- 4) 분납 합계 조회(result_total) -->
+  <!-- 4) 분납 합계 조회(result_total) 分納合計照会(result_total)-->
   <!-- ===================================================== -->
   <select id="selectResultTotal" resultType="org.pms.feature.yearendtaxsimulation.domain.ResultTotal">
     SELECT NVL(r.settle_income,0) AS addNational,
@@ -154,7 +154,7 @@
   </select>
 
   <!-- ===================================================== -->
-  <!-- 5) 미확정 실행 전체 삭제(사번+연도 기준) -->
+  <!-- 5) 미확정 실행 전체 삭제(사번+연도 기준)未確定実行の全削除(社番+年度基準) -->
   <!-- ===================================================== -->
   <delete id="deleteUnconfirmedForEmpYear">
     BEGIN
@@ -182,7 +182,7 @@
   </delete>
 
   <!-- ===================================================== -->
-  <!-- 6) 헤더 생성 -->
+  <!-- 6) 헤더 생성 ヘッダー作成-->
   <!-- ===================================================== -->
   <insert id="insertHeader"
           parameterType="org.pms.feature.yearendtaxsimulation.domain.SimHeaderMini"
@@ -205,7 +205,7 @@
   </insert>
 
   <!-- ===================================================== -->
-  <!-- 7) 항목 입력/갱신(yrt_detail UPSERT) -->
+  <!-- 7) 항목 입력/갱신(yrt_detail UPSERT)項目入力/更新(yrt_detail UPSERT) -->
   <!-- ===================================================== -->
   <insert id="insertItem">
     MERGE INTO yrt_detail d
@@ -229,7 +229,7 @@
   </insert>
 
   <!-- ===================================================== -->
-  <!-- 8) 합계 upsert(result_total) -->
+  <!-- 8) 합계 合計upsert(result_total) -->
   <!-- ===================================================== -->
   <insert id="upsertResultTotal">
     MERGE INTO yrt_result_total r
@@ -247,7 +247,7 @@
   </insert>
 
   <!-- ===================================================== -->
-  <!-- 9) 단일 실행 삭제(미확정건만 header 삭제 허용) -->
+  <!-- 9) 단일 실행 삭제(미확정건만 header 삭제 허용)単一実行削除(未確定件のみヘッダー削除許容) -->
   <!-- ===================================================== -->
   <delete id="deleteByYrtId">
     BEGIN
@@ -258,7 +258,7 @@
   </delete>
 
   <!-- ===================================================== -->
-  <!-- 10) 세액적용결과 판정 보조 쿼리 -->
+  <!-- 10) 세액적용결과 판정 보조 쿼리 税額適用結果判定補助クエリ-->
   <!-- ===================================================== -->
   <select id="selectTaxCreditSum" resultType="long">
     SELECT NVL(SUM(d.expected_amount),0)
@@ -271,7 +271,7 @@
        AND it.category LIKE '세액공제%'
   </select>
 
-  <!-- 임시: 표준세액공제 기준 -->
+  <!-- 임시: 표준세액공제 기준 暫定:標準税額控除基準 -->
   <select id="selectStandardCredit" parameterType="int" resultType="long">
     SELECT 130000 FROM dual
   </select>

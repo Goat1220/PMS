@@ -62,8 +62,8 @@ public class YearendTaxSimCommandService {
      // 3) 확정 데이터 복제 시딩 / 確定データのコピーシーディング
         List<SimItemRow> finalRows = mapper.selectFinalGrid(empId, baseYear);
         if (finalRows == null || finalRows.isEmpty()) {
-            log.warn("확정 데이터가 없어 기본 샘플 항목으로 대체합니다. / 確定データが存在しないため、サンプル項目を使用します。");
-            seedScenarioItems(yrtId); // 백업용 시딩
+            log.warn("確定データがないため、デフォルトのサンプル項目に置き換えます / 確定データが存在しないため、サンプル項目を使用します");
+            seedScenarioItems(yrtId); //バックアップ用シーディング
         } else {
             for (SimItemRow row : finalRows) {
                 mapper.insertItem(yrtId,
@@ -72,7 +72,7 @@ public class YearendTaxSimCommandService {
                         row.getAmount(),
                         row.getExpectedAmount());
             }
-            log.info("확정 데이터 {}건 복제 완료 / 確定データ {}件をコピー完了", finalRows.size());
+            log.info("確定データ{}件複製完了 / 確定データ {}件をコピー完了", finalRows.size());
         }
 
 
@@ -94,15 +94,15 @@ public class YearendTaxSimCommandService {
     @Transactional
     public boolean delete(Long yrtId) {
         if (yrtId == null) {
-            log.warn("삭제 요청 실패: yrtId 없음");
+            log.warn("削除要請失敗: yrtId 無し");
             return false;
         }
         try {
             int deleted = mapper.deleteByYrtId(yrtId);
-            log.info("yrtId={} 삭제 결과 {}건", yrtId, deleted);
+            log.info("yrtId={} 削除結果{}件", yrtId, deleted);
             return deleted > 0;
         } catch (Exception e) {
-            log.error("삭제 중 예외 발생", e);
+            log.error("削除中に例外発生", e);
             return false;
         }
     }
@@ -111,7 +111,7 @@ public class YearendTaxSimCommandService {
     @Transactional(readOnly = true)
     public InstallmentResponse installment(Long yrtId, int months, String startMonth) {
         if (yrtId == null) {
-            throw new IllegalArgumentException("yrtId가 필요합니다。");
+            throw new IllegalArgumentException("yrtIdが必要です。");
         }
         if (months < 2 || months > 12) {
             throw new IllegalArgumentException("분납 개월수는 2~12 범위여야 합니다。");
@@ -119,7 +119,7 @@ public class YearendTaxSimCommandService {
 
         ResultTotal rt = query.findResultTotal(yrtId);
         if (rt == null) {
-            throw new IllegalStateException("정산 결과가 존재하지 않습니다。먼저 시뮬레이션을 실행하세요。");
+            throw new IllegalStateException("分納月数は2~12の範囲でなければなりません。");
         }
 
         long nat = rt.getAddNational() == null ? 0L : rt.getAddNational();
@@ -130,7 +130,7 @@ public class YearendTaxSimCommandService {
         try {
             ym = YearMonth.parse(startMonth);
         } catch (Exception e) {
-            log.warn("시작월 형식 오류: {}", startMonth);
+            log.warn("開始月形式エラー: {}", startMonth);
             ym = YearMonth.now();
         }
 
@@ -145,7 +145,7 @@ public class YearendTaxSimCommandService {
             ));
         }
 
-        return new InstallmentResponse(list, "균등 분할, 잔액은 마지막 달 가산");
+        return new InstallmentResponse(list, "均等分割、残額は最後の月加算");
     }
 
     /* -----------------------------------------------------
