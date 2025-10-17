@@ -3,83 +3,89 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!--
+[검색 팝업 Mapper XML] / 検索ポップアップ用Mapper
+- 직원(Employee)과 부서(Department) 검색 쿼리 정의
+- MyBatis Mapper 인터페이스(SearchPopupMapper.java)와 연결됨
+-->
 <mapper namespace="org.pms.feature.searchpopup.mapper.SearchPopupMapper">
 
   <!-- ================= Employee ================= -->
+  <!-- 직원 매핑 정의 / 社員マッピング定義 -->
   <resultMap id="EmployeeRowMap" type="org.pms.feature.searchpopup.domain.EmployeeRow">
-    <result property="empId"            column="EMP_ID"/>
-    <result property="empNo"            column="EMP_NO"/>
-    <result property="empName"          column="EMP_NAME"/>
-    <result property="deptName"         column="DEPT_NAME"/>
-    <result property="deptCode"         column="DEPT_CODE"/>
-    <result property="workDeptName"     column="WORK_DEPT_NAME"/>
-    <result property="positionName"     column="POSITION_NAME"/>
-    <result property="titleName"        column="TITLE_NAME"/>
-    <result property="dutyName"         column="DUTY_NAME"/>
-    <result property="appointDate"      column="APPOINT_DATE"    jdbcType="DATE"/>
-    <result property="workStatusName"   column="WORK_STATUS_NAME"/>
-    <result property="workStatusDetail" column="WORK_STATUS_DETAIL"/>
-    <result property="payTypeName"      column="PAY_TYPE_NAME"/>
-    <result property="payApplyCode"     column="PAY_APPLY_CODE"/>
-    <result property="birthDate"        column="BIRTH_DATE"      jdbcType="DATE"/>
+    <result property="empId"            column="EMP_ID"/>            <!-- 사원ID / 社員ID -->
+    <result property="empNo"            column="EMP_NO"/>            <!-- 사번 / 社員番号 -->
+    <result property="empName"          column="EMP_NAME"/>          <!-- 이름 / 氏名 -->
+    <result property="deptName"         column="DEPT_NAME"/>         <!-- 부서명 / 部署名 -->
+    <result property="deptCode"         column="DEPT_CODE"/>         <!-- 부서코드 / 部署コード -->
+    <result property="workDeptName"     column="WORK_DEPT_NAME"/>    <!-- 근무부서 / 勤務部署 -->
+    <result property="positionName"     column="POSITION_NAME"/>     <!-- 직위 / 職位 -->
+    <result property="titleName"        column="TITLE_NAME"/>        <!-- 직급 / 職級 -->
+    <result property="dutyName"         column="DUTY_NAME"/>         <!-- 직책 / 職責 -->
+    <result property="appointDate"      column="APPOINT_DATE" jdbcType="DATE"/> <!-- 발령일 / 発令日 -->
+    <result property="workStatusName"   column="WORK_STATUS_NAME"/>  <!-- 재직/퇴직 / 在職・退職 -->
+    <result property="workStatusDetail" column="WORK_STATUS_DETAIL"/> <!-- 근무상태 상세 / 勤務状態詳細 -->
+    <result property="payTypeName"      column="PAY_TYPE_NAME"/>     <!-- 급여형태 / 給与形態 -->
+    <result property="payApplyCode"     column="PAY_APPLY_CODE"/>    <!-- 급여적용군 / 給与適用区分 -->
+    <result property="birthDate"        column="BIRTH_DATE" jdbcType="DATE"/> <!-- 생년월일 / 生年月日 -->
   </resultMap>
 
-  <!-- Employee 목록 (뷰 없이 EMP/DEPT 조인) -->
+  <!-- 직원 목록 조회 / 社員一覧取得 -->
   <select id="searchEmployees" resultMap="EmployeeRowMap">
     SELECT * FROM (
       SELECT a.*, ROWNUM rnum
       FROM (
         SELECT
-          e.emp_id         AS EMP_ID,
-          e.emp_no         AS EMP_NO,
-          e.emp_name       AS EMP_NAME,
-          d.dept_name      AS DEPT_NAME,
-          d.dept_code      AS DEPT_CODE,
-          NVL(wd.dept_name, d.dept_name) AS WORK_DEPT_NAME,
-          e.position_name  AS POSITION_NAME,
-          e.title_name     AS TITLE_NAME,
-          e.duty_name      AS DUTY_NAME,
-          e.appoint_date   AS APPOINT_DATE,
-          CASE WHEN e.retire_date IS NOT NULL THEN '퇴직' ELSE '재직' END AS WORK_STATUS_NAME,
-          e.work_status_detail AS WORK_STATUS_DETAIL,
-          e.pay_type_name  AS PAY_TYPE_NAME,
-          e.pay_apply_code AS PAY_APPLY_CODE,
-          TRUNC(e.birth_date) AS BIRTH_DATE
+          e.emp_id         AS EMP_ID,               <!-- 사원ID / 社員ID -->
+          e.emp_no         AS EMP_NO,               <!-- 사번 / 社員番号 -->
+          e.emp_name       AS EMP_NAME,             <!-- 이름 / 氏名 -->
+          d.dept_name      AS DEPT_NAME,            <!-- 부서명 / 部署名 -->
+          d.dept_code      AS DEPT_CODE,            <!-- 부서코드 / 部署コード -->
+          NVL(wd.dept_name, d.dept_name) AS WORK_DEPT_NAME, <!-- 근무부서 없을 시 기본부서 / 勤務部署が無ければ所属部署を使用 -->
+          e.position_name  AS POSITION_NAME,        <!-- 직위 / 職位 -->
+          e.title_name     AS TITLE_NAME,           <!-- 직급 / 職級 -->
+          e.duty_name      AS DUTY_NAME,            <!-- 직책 / 職責 -->
+          e.appoint_date   AS APPOINT_DATE,         <!-- 발령일 / 発令日 -->
+          CASE WHEN e.retire_date IS NOT NULL THEN '退職' ELSE '在職' END AS WORK_STATUS_NAME, <!-- 재직여부 / 在職区分 -->
+          e.work_status_detail AS WORK_STATUS_DETAIL, <!-- 근무상태 상세 / 勤務状態詳細 -->
+          e.pay_type_name  AS PAY_TYPE_NAME,        <!-- 급여형태 / 給与形態 -->
+          e.pay_apply_code AS PAY_APPLY_CODE,       <!-- 급여적용군 / 給与適用区分 -->
+          TRUNC(e.birth_date) AS BIRTH_DATE         <!-- 생년월일 / 生年月日 -->
         FROM emp e
-        JOIN dept d       ON d.dept_id  = e.dept_id
-        LEFT JOIN dept wd ON wd.dept_id = e.work_dept_id
-        WHERE 1=1
+        JOIN dept d       ON d.dept_id  = e.dept_id      <!-- 사원-부서 조인 / 社員と部署を結合 -->
+        LEFT JOIN dept wd ON wd.dept_id = e.work_dept_id <!-- 근무부서 LEFT JOIN / 勤務部署LEFT結合 -->
+        WHERE 1=1  <!-- 기본조건 / 基本条件 -->
 
-        <!-- 재직/퇴직 필터 -->
+        <!-- 재직/퇴직 필터 / 在職・退職フィルタ -->
         <if test="status != null and status != '' and status != '전체'">
           <choose>
             <when test="status == '재직'">
-              AND e.retire_date IS NULL
+              AND e.retire_date IS NULL   <!-- 재직자만 / 在職者のみ -->
             </when>
             <otherwise>
-              AND e.retire_date IS NOT NULL
+              AND e.retire_date IS NOT NULL <!-- 퇴직자만 / 退職者のみ -->
             </otherwise>
           </choose>
         </if>
 
-        <!-- 검색 -->
+        <!-- 검색조건 / 検索条件 -->
         <choose>
           <when test="by == 'empName' and keyword != null and keyword != ''">
-            AND e.emp_name LIKE '%' || #{keyword} || '%'
+            AND e.emp_name LIKE '%' || #{keyword} || '%'  <!-- 이름 검색 / 氏名検索 -->
           </when>
           <when test="by == 'empNo' and keyword != null and keyword != ''">
-            AND e.emp_no   LIKE '%' || #{keyword} || '%'
+            AND e.emp_no   LIKE '%' || #{keyword} || '%'  <!-- 사번 검색 / 社員番号検索 -->
           </when>
         </choose>
 
-        ORDER BY e.emp_name
+        ORDER BY e.emp_name   <!-- 이름순 정렬 / 氏名順ソート -->
       ) a
-      WHERE ROWNUM &lt;= (#{page} * #{size})
+      WHERE ROWNUM &lt;= (#{page} * #{size}) <!-- 페이지 상한 / ページ上限 -->
     )
-    WHERE rnum &gt; ((#{page} - 1) * #{size})
+    WHERE rnum &gt; ((#{page} - 1) * #{size}) <!-- 페이지 시작 / ページ開始 -->
   </select>
 
-  <!-- Employee 카운트 (동일 조건) -->
+  <!-- 직원 수 카운트 / 社員総件数取得 -->
   <select id="countEmployees" resultType="long">
     SELECT COUNT(*)
     FROM emp e
@@ -87,6 +93,7 @@
     LEFT JOIN dept wd ON wd.dept_id = e.work_dept_id
     WHERE 1=1
 
+    <!-- 재직/퇴직 필터 / 在職・退職フィルタ -->
     <if test="status != null and status != '' and status != '전체'">
       <choose>
         <when test="status == '재직'">
@@ -98,6 +105,7 @@
       </choose>
     </if>
 
+    <!-- 검색조건 / 検索条件 -->
     <choose>
       <when test="by == 'empName' and keyword != null and keyword != ''">
         AND e.emp_name LIKE '%' || #{keyword} || '%'
@@ -109,33 +117,36 @@
   </select>
 
   <!-- ================= Department ================= -->
+  <!-- 부서 매핑 정의 / 部署マッピング定義 -->
   <resultMap id="DepartmentRowMap" type="org.pms.feature.searchpopup.domain.DepartmentRow">
-    <result property="deptId"    column="DEPT_ID"/>
-    <result property="deptCode"  column="DEPT_CODE"/>
-    <result property="deptName"  column="DEPT_NAME"/>
-    <result property="startDate" column="START_DATE" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
-    <result property="endDate"   column="END_DATE"   javaType="java.util.Date" jdbcType="TIMESTAMP"/>
-    <result property="memo"      column="MEMO"/>
-    <result property="useYn"     column="USE_YN"/>
-    <result property="useName"   column="USE_NAME"/>
+    <result property="deptId"    column="DEPT_ID"/>       <!-- 부서ID / 部署ID -->
+    <result property="deptCode"  column="DEPT_CODE"/>     <!-- 부서코드 / 部署コード -->
+    <result property="deptName"  column="DEPT_NAME"/>     <!-- 부서명 / 部署名 -->
+    <result property="startDate" column="START_DATE" javaType="java.util.Date" jdbcType="TIMESTAMP"/> <!-- 시작일 / 開始日 -->
+    <result property="endDate"   column="END_DATE"   javaType="java.util.Date" jdbcType="TIMESTAMP"/> <!-- 종료일 / 終了日 -->
+    <result property="memo"      column="MEMO"/>          <!-- 메모 / 備考 -->
+    <result property="useYn"     column="USE_YN"/>        <!-- 사용여부(Y/N) / 使用可否 -->
+    <result property="useName"   column="USE_NAME"/>      <!-- 사용상태명 / 使用状態名 -->
   </resultMap>
 
-  <!-- Department 목록 -->
+  <!-- 부서 목록 조회 / 部署一覧取得 -->
   <select id="searchDepartments" parameterType="map" resultMap="DepartmentRowMap">
     SELECT * FROM (
       SELECT a.*, ROWNUM rnum
       FROM (
         SELECT
-          d.dept_id    AS DEPT_ID,
-          d.dept_code  AS DEPT_CODE,
-          d.dept_name  AS DEPT_NAME,
-          d.start_date AS START_DATE,
-          d.end_date   AS END_DATE,
-          d.memo       AS MEMO,
-          d.use_yn     AS USE_YN,
-          CASE WHEN d.use_yn = 'Y' THEN '사용' ELSE '미사용' END AS USE_NAME
+          d.dept_id    AS DEPT_ID,     <!-- 부서ID / 部署ID -->
+          d.dept_code  AS DEPT_CODE,   <!-- 부서코드 / 部署コード -->
+          d.dept_name  AS DEPT_NAME,   <!-- 부서명 / 部署名 -->
+          d.start_date AS START_DATE,  <!-- 시작일 / 開始日 -->
+          d.end_date   AS END_DATE,    <!-- 종료일 / 終了日 -->
+          d.memo       AS MEMO,        <!-- 메모 / 備考 -->
+          d.use_yn     AS USE_YN,      <!-- 사용여부(Y/N) / 使用可否 -->
+          CASE WHEN d.use_yn = 'Y' THEN '사용' ELSE '미사용' END AS USE_NAME <!-- 표시용 상태명 / 表示用状態名 -->
         FROM dept d
-        WHERE 1=1
+        WHERE 1=1  <!-- 기본조건 / 基本条件 -->
+
+        <!-- 코드/이름 검색 / コード・名称検索 -->
         <choose>
           <when test="by == 'deptCode' and keyword != null and keyword != ''">
             AND d.dept_code LIKE '%' || #{keyword} || '%'
@@ -144,21 +155,25 @@
             AND d.dept_name LIKE '%' || #{keyword} || '%'
           </when>
         </choose>
+
+        <!-- 사용여부 필터 / 使用可否フィルタ -->
         <if test="use != null and use != '' and use != 'ALL'">
-          AND d.use_yn = #{use}   <!-- 'Y' 또는 'N' -->
+          AND d.use_yn = #{use}   <!-- Y/N만 필터 / YまたはNのみフィルタ -->
         </if>
-        ORDER BY d.dept_code
+
+        ORDER BY d.dept_code  <!-- 코드순 정렬 / コード順ソート -->
       ) a
-      WHERE ROWNUM &lt;= (#{page} * #{size})
+      WHERE ROWNUM &lt;= (#{page} * #{size}) <!-- 페이지 상한 / ページ上限 -->
     )
-    WHERE rnum &gt; ((#{page} - 1) * #{size})
+    WHERE rnum &gt; ((#{page} - 1) * #{size}) <!-- 페이지 시작 / ページ開始 -->
   </select>
 
-  <!-- Department 카운트 -->
+  <!-- 부서 카운트 쿼리 / 部署件数取得 -->
   <select id="countDepartments" parameterType="map" resultType="long">
     SELECT COUNT(*)
     FROM dept d
     WHERE 1=1
+    <!-- 코드/이름 검색 / コード・名称検索 -->
     <choose>
       <when test="by == 'deptCode' and keyword != null and keyword != ''">
         AND d.dept_code LIKE '%' || #{keyword} || '%'
@@ -167,6 +182,7 @@
         AND d.dept_name LIKE '%' || #{keyword} || '%'
       </when>
     </choose>
+    <!-- 사용여부 필터 / 使用可否フィルタ -->
     <if test="use != null and use != '' and use != 'ALL'">
       AND d.use_yn = #{use}
     </if>
