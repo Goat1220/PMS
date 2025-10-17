@@ -52,31 +52,73 @@
   <!-- 2) 시뮬 탭: 특정 yrtId 또는 (없으면) 최신 미확정 1건 전체 조회 -->
   <!-- ===================================================== -->
   <select id="selectSimGrid" resultType="org.pms.feature.yearendtaxsimulation.domain.SimItemRow">
-    <include refid="GridCore"/>
-    <choose>
-      <when test="yrtId != null">
-        AND h.yrt_id = #{yrtId, jdbcType=NUMERIC}
-      </when>
-   <otherwise>
-  AND h.yrt_id = (
-    SELECT yrt_id FROM (
-      SELECT h2.yrt_id
-        FROM yrt_header h2
-       WHERE h2.emp_id = (
-               SELECT e.emp_id FROM emp e
-                WHERE e.emp_no = #{empId, jdbcType=VARCHAR}
-             )
-         AND h2.base_year = #{baseYear, jdbcType=NUMERIC}
-       ORDER BY 
-         CASE WHEN h2.confirm_yn = 'N' THEN 0 ELSE 1 END, 
-         h2.created_at DESC
-    ) WHERE ROWNUM = 1
+  WITH hY AS (  /* 최신 확정(Y) */
+    SELECT yrt_id
+      FROM (
+        SELECT h.yrt_id
+          FROM yrt_header h
+         WHERE h.emp_id    = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+           AND h.base_year = #{baseYear, jdbcType=NUMERIC}
+           AND h.confirm_yn = 'Y'
+         ORDER BY h.created_at DESC
+      ) WHERE ROWNUM = 1
+  ),
+  hN AS (  /* 최신 미확정(N) */
+    SELECT yrt_id
+      FROM (
+        SELECT h.yrt_id
+          FROM yrt_header h
+         WHERE h.emp_id    = (SELECT e.emp_id FROM emp e WHERE e.emp_no = #{empId, jdbcType=VARCHAR})
+           AND h.base_year = #{baseYear, jdbcType=NUMERIC}
+           AND h.confirm_yn = 'N'
+         ORDER BY h.created_at DESC
+      ) WHERE ROWNUM = 1
+  ),
+  chosen AS ( /* 우선순위: 명시 yrtId > 최신 Y */
+    SELECT COALESCE(#{yrtId, jdbcType=NUMERIC}, (SELECT yrt_id FROM hY)) AS yrt_id FROM dual
   )
-</otherwise>
+  SELECT
+         it.category AS itemClass,
+         it.item_name AS itemName,
 
-    </choose>
-     ORDER BY it.category, it.item_name
-  </select>
+         /* 금액 우선순위: yrtId가 있으면 그 실행(dS) > Y(dY), 없으면 Y(dY) */
+         CASE
+           WHEN #{yrtId, jdbcType=NUMERIC} IS NOT NULL THEN NVL(dS.amount, NVL(dY.amount, 0))
+           ELSE NVL(dY.amount, 0)
+         END AS amount,
+
+         /* 예상금액: 선택 실행 expected_amount 없으면 amount → Y로 fallback */
+         CASE
+           WHEN #{yrtId, jdbcType=NUMERIC} IS NOT NULL
+             THEN NVL(dS.expected_amount, NVL(dS.amount, NVL(dY.amount, 0)))
+           ELSE NVL(dY.expected_amount, NVL(dY.amount, 0))
+         END AS expectedAmount,
+
+         /* 헤더 메타: yrtId가 있으면 그 실행 헤더(hS), 없으면 Y(hY2) */
+         COALESCE(hS.tax_apply_type,  hY2.tax_apply_type)  AS taxApplyType,
+         COALESCE(hS.tax_apply_result,hY2.tax_apply_result)AS taxApplyResult,
+         COALESCE(hS.confirm_yn,      hY2.confirm_yn)      AS confirmYn
+
+    FROM yrt_item it
+
+    /* 확정(Y) 디테일/헤더 */
+    LEFT JOIN hY ON 1=1
+    LEFT JOIN yrt_detail dY
+           ON dY.yrt_item_id = it.yrt_item_id
+          AND dY.yrt_id      = hY.yrt_id
+    LEFT JOIN yrt_header hY2
+           ON hY2.yrt_id     = hY.yrt_id
+
+    /* 선택 실행(yrtId 명시 or 최신 Y) 디테일/헤더 */
+    LEFT JOIN chosen c ON 1=1
+    LEFT JOIN yrt_detail dS
+           ON dS.yrt_item_id = it.yrt_item_id
+          AND dS.yrt_id      = c.yrt_id
+    LEFT JOIN yrt_header hS
+           ON hS.yrt_id      = c.yrt_id
+
+   ORDER BY it.category, it.item_name
+</select>
 
   <!-- ===================================================== -->
   <!-- 3) 최신 헤더(확정/미확정 플래그로 분기) -->
