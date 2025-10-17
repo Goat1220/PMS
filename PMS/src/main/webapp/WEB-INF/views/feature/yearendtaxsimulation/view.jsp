@@ -309,7 +309,7 @@ td.right {
 	<div class="searchbar">
 		<div class="field field-year">
 			<span>精算年度</span> <input id="baseYear" class="w-yr" type="text"
-				value="${baseYear}" placeholder="YYYY">
+				value="${baseYear+1}" placeholder="YYYY">
 		</div>
 
 		<div class="field">
