@@ -392,14 +392,14 @@ td.right {
 
 	<!-- 최종 탭 / 最終タブ -->
 	<div id="panel-final" class="panel">
-		<div class="meta">
+		<%-- <div class="meta">
 			実行ラベル: <strong><c:out
 					value="${simHeader != null ? simHeader.runLabel : '-'}" /></strong> · 기준연도:
 			<strong><c:out value="${baseYear}" /></strong> · 作成/更新:
 			<c:out value="${simHeader != null ? simHeader.updatedAt : '-'}" />
 			· 確定可否:
 			<c:out value="${simHeader != null ? simHeader.confirmYn : '-'}" />
-		</div>
+		</div> --%>
 
 		<table class="grid">
   <thead>
