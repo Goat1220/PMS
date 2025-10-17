@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ======================================================
+     WithholdingReportMapper.xml
+     源泉徴収レポートマッパー / 원천징수 보고서 매퍼
+     - 요약(Aコード) / 부표(Cコード)
+     - A・CコードはXML内に固定定義
+====================================================== -->
 <mapper namespace="org.pms.feature.report.mapper.WithholdingReportMapper">
 
-  <!-- ===== 공통 resultMap ===== -->
+  <!-- =====================================================
+       resultMap 설정 / 結果マッピング設定
+  ===================================================== -->
   <resultMap id="WithholdingRowMap" type="org.pms.feature.report.domain.WithholdingRow">
-    <result property="applyYyyymm" column="apply_yyyymm"/>
-    <result property="incomeType"  column="income_type"/>
-    <result property="code"        column="code"/>
-    <result property="headCount"   column="headCount"/>
-    <result property="taxTotal"    column="tax_total"/>
-    <result property="ntWithheld"  column="nt_withheld"/>
-    <result property="taxIncome"   column="tax_income"/>
-    <result property="penaltyTax"  column="penalty_tax"/>
-    <result property="taxWithheld" column="tax_withheld"/>
-    <result property="adjRefund"   column="adj_refund"/>
-    <result property="taxNt"       column="tax_nt"/>
-    <result property="no"          column="no"/>
+    <result property="applyYyyymm" column="apply_yyyymm"/> <!-- 귀속월 / 対象年月 -->
+    <result property="incomeType"  column="income_type"/>  <!-- 소득유형 / 所得区分 -->
+    <result property="code"        column="code"/>         <!-- 코드 / コード -->
+    <result property="headCount"   column="headCount"/>    <!-- 인원수 / 人数 -->
+    <result property="taxTotal"    column="tax_total"/>    <!-- 총지급액 / 支給総額 -->
+    <result property="ntWithheld"  column="nt_withheld"/>  <!-- 징수농특세 / 農特税徴収 -->
+    <result property="taxIncome"   column="tax_income"/>   <!-- 납부소득세 / 納付所得税 -->
+    <result property="penaltyTax"  column="penalty_tax"/>  <!-- 가산세 / 加算税 -->
+    <result property="taxWithheld" column="tax_withheld"/> <!-- 원천징수세액 / 源泉徴収税額 -->
+    <result property="adjRefund"   column="adj_refund"/>   <!-- 조정환급세액 / 調整還付税額 -->
+    <result property="taxNt"       column="tax_nt"/>       <!-- 납부농특세 / 納付農特税 -->
+    <result property="no"          column="no"/>           <!-- 행번호 / 行番号 -->
   </resultMap>
 
   <resultMap id="AnnexRowMap" type="org.pms.feature.report.domain.AnnexRow">
@@ -34,251 +43,267 @@
     <result property="no"          column="no"/>
   </resultMap>
 
-  <!-- ======================
-       요약
-       ====================== -->
-<select id="selectSummary"
-        parameterType="org.pms.feature.report.domain.WithholdingSearch"
-        resultMap="WithholdingRowMap">
+
+  <!-- ======================================================
+       요약 (A코드) / サマリー (Aコード)
+       - XML 내부에서 코드 정의 (한글→일본어 변환)
+  ====================================================== -->
+  <select id="selectSummary"
+          parameterType="org.pms.feature.report.domain.WithholdingSearch"
+          resultMap="WithholdingRowMap">
+
 WITH code_list(label, code, ord) AS (
-  SELECT '근로소득/간이세액','A01',  1 FROM dual UNION ALL
-  SELECT '근로소득/중도퇴사','A02',  2 FROM dual UNION ALL
-  SELECT '근로소득/일용근로','A03',  3 FROM dual UNION ALL
-  SELECT '근로소득/연말정산/합계','A04', 4 FROM dual UNION ALL
-  SELECT '근로소득/연말정산/분납금액','A05', 5 FROM dual UNION ALL
-  SELECT '근로소득/연말정산/납부금액','A06', 6 FROM dual UNION ALL
-
-  SELECT '근로소득/가감계','A10', 7 FROM dual UNION ALL
-  SELECT '퇴직소득/연금계좌','A21', 8 FROM dual UNION ALL
-  SELECT '퇴직소득/그 외','A22', 9 FROM dual UNION ALL
-  SELECT '퇴직소득/가감계','A20',10 FROM dual UNION ALL
-
-  SELECT '사업소득/매월징수','A25',11 FROM dual UNION ALL
-  SELECT '사업소득/연말정산','A26',12 FROM dual UNION ALL
-  SELECT '사업소득/가감계','A30',13 FROM dual UNION ALL
-
-  SELECT '기타소득/연금계좌','A41',14 FROM dual UNION ALL
-  SELECT '종교인소득(매월징수)','A43',15 FROM dual UNION ALL
-  SELECT '종교인소득(연말정산)','A44',16 FROM dual UNION ALL
-  SELECT '기타소득/그 외','A42',17 FROM dual UNION ALL
-  SELECT '기타소득/가감계','A40',18 FROM dual UNION ALL
-
-  SELECT '연금소득/연금계좌','A48',19 FROM dual UNION ALL
-  SELECT '연금소득/정정연금(매월)','A45',20 FROM dual UNION ALL
-  SELECT '연금소득/연말정산','A46',21 FROM dual UNION ALL
-  SELECT '연금소득/가감계','A47',22 FROM dual UNION ALL
-
-  SELECT '이자소득','A50',23 FROM dual UNION ALL
-  SELECT '배당소득','A60',24 FROM dual UNION ALL
-  SELECT '저축해지 추징세액 등','A69',25 FROM dual UNION ALL
-  SELECT '비거주자 양도소득','A70',26 FROM dual UNION ALL
-  SELECT '내∙외국법인원천','A80',27 FROM dual UNION ALL
-  SELECT '수정신고(세액)','A90',28 FROM dual UNION ALL
-  SELECT '총합계','A99',29 FROM dual
+  SELECT '給与所得/簡易税額','A01',1 FROM dual UNION ALL
+  SELECT '給与所得/中途退職','A02',2 FROM dual UNION ALL
+  SELECT '給与所得/日雇い労働','A03',3 FROM dual UNION ALL
+  SELECT '給与所得/年末調整/合計','A04',4 FROM dual UNION ALL
+  SELECT '給与所得/年末調整/分納金額','A05',5 FROM dual UNION ALL
+  SELECT '給与所得/年末調整/納付金額','A06',6 FROM dual UNION ALL
+  SELECT '給与所得/加減計','A10',7 FROM dual UNION ALL
+  SELECT '退職所得/年金口座','A21',8 FROM dual UNION ALL
+  SELECT '退職所得/その他','A22',9 FROM dual UNION ALL
+  SELECT '退職所得/加減計','A20',10 FROM dual UNION ALL
+  SELECT '事業所得/毎月徴収','A25',11 FROM dual UNION ALL
+  SELECT '事業所得/年末調整','A26',12 FROM dual UNION ALL
+  SELECT '事業所得/加減計','A30',13 FROM dual UNION ALL
+  SELECT '雑所得/年金口座','A41',14 FROM dual UNION ALL
+  SELECT '宗教人所得(月次徴収)','A43',15 FROM dual UNION ALL
+  SELECT '宗教人所得(年末調整)','A44',16 FROM dual UNION ALL
+  SELECT '雑所得/その他','A42',17 FROM dual UNION ALL
+  SELECT '雑所得/加減計','A40',18 FROM dual UNION ALL
+  SELECT '年金所得/年金口座','A48',19 FROM dual UNION ALL
+  SELECT '年金所得/訂正年金(月次)','A45',20 FROM dual UNION ALL
+  SELECT '年金所得/年末調整','A46',21 FROM dual UNION ALL
+  SELECT '年金所得/加減計','A47',22 FROM dual UNION ALL
+  SELECT '利子所得','A50',23 FROM dual UNION ALL
+  SELECT '配当所得','A60',24 FROM dual UNION ALL
+  SELECT '貯蓄解約追徴税額等','A69',25 FROM dual UNION ALL
+  SELECT '非居住者譲渡所得','A70',26 FROM dual UNION ALL
+  SELECT '国内・国外法人源泉','A80',27 FROM dual UNION ALL
+  SELECT '修正申告(税額)','A90',28 FROM dual UNION ALL
+  SELECT '総合計','A99',29 FROM dual
 )
 SELECT
   #{applyYyyymm} AS apply_yyyymm,
-  c.label         AS income_type,
-  c.code          AS code,
-  NVL(s.headcount, 0)  AS headCount,
-  NVL(s.tax_total, 0)  AS tax_total,
-  0                    AS nt_withheld,
-  NVL(s.tax_income, 0) AS tax_income,
-  0                    AS penalty_tax,
-  (NVL(s.tax_income,0) - NVL(s.adj_refund,0)) AS tax_withheld,
-  NVL(s.adj_refund, 0) AS adj_refund,
-  NVL(s.tax_nt, 0)     AS tax_nt,
+  c.label AS income_type,
+  c.code  AS code,
+  NVL(s.headcount,0) AS headCount,
+  NVL(s.tax_total,0) AS tax_total,
+  0 AS nt_withheld,
+  NVL(s.tax_income,0) AS tax_income,
+  0 AS penalty_tax,
+  (NVL(s.tax_income,0)-NVL(s.adj_refund,0)) AS tax_withheld,
+  NVL(s.adj_refund,0) AS adj_refund,
+  NVL(s.tax_nt,0) AS tax_nt,
   ROW_NUMBER() OVER (ORDER BY c.ord) AS no
 FROM code_list c
 LEFT JOIN wh_withholding_summary s
   ON s.apply_yyyymm = #{applyYyyymm}
  AND s.code = c.code
 ORDER BY c.ord
-</select>
+  </select>
 
 
-<!-- ======================
-     부표 (엑셀 순서 고정)
-     ====================== -->
-<select id="selectAnnex"
-        parameterType="org.pms.feature.report.domain.WithholdingSearch"
-        resultMap="AnnexRowMap">
-WITH code_list (label, code, ord) AS (
-  SELECT '거주자 개인 이자배당소득 비과세소득 장기주택마련저축','C01',  1 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 비과세저축','C02',           2 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 개인연금저축','C03',          3 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 장기저축성보험차익','C05',    4 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 조합 등 예탁금','C06',        5 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 조합 등 출자금','C07',        6 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 농어가목돈마련저축','C08',    7 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 우리사주 배당소득','C10',     8 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 농업회사법인 배당소득','C20', 9 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 영농ㆍ영어조합법인 배당소득','C23',10 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 미분양주택투자신탁등 배당소득','C28',11 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 재형저축 이자ㆍ배당소득','C40',12 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 기타 비과세이자소득','C19',  13 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비과세소득 기타 비과세배당소득','C29',  14 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 기타 이자∙배당소득','C11',     15 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 사회기반시설투융자회사 배당소득','C31',16 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 해외자원개발투자회사 등배당소득','C33',17 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 선박투자회사 배당소득','C34',  18 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 영농ㆍ영어조합법인 배당소득','C54',19 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 농업회사법인 배당소득','C55',  20 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 부동산집합투자기구등 집합투자증권의 배당소득','C56',21 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금특례 고위험ㆍ고수익투자신탁 배당소득','C57',22 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금우대 이자소득 (9%)','C12',         23 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 세금우대 배당소득 (9%)','C22',          24 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 기타 분리과세 이자소득','C13',25 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 직장공제회 초과반환금(기본세율)','C18',26 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 사회기반시설투ㆍ융자회사 배당소득','C36',27 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 해외자원개발투자회사 등 배당소득','C37',28 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 미분양주택투자신탁 등 배당소득','C38',29 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 선박투자회사 배당소득','C52',30 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 부동산집합투자기구등 집합투자증권의 배당소득','C58',31 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반세율(14%)분리과세 기타 분리과세 배당소득','C39',32 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반과세 이자소득','C14',              33 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 일반과세 배당소득','C24',               34 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비실명소득 비실명이자소득','C15',       35 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비실명소득 비실명배당소득','C25',       36 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 비영업대금이익 (25%)','C16',            37 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 출자공동사업자 (25%)','C26',            38 FROM dual UNION ALL
-  SELECT '거주자 개인 이자배당소득 계','C30',                               39 FROM dual UNION ALL
-  SELECT '거주자 개인 근로 파견근로에 대한 대가 (19%)','C59',               40 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 장기주식형저축 (5,2.4,1.2%)','C41',    41 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 장기주택마련저축 (4,8%)','C42',        42 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 연금저축 (2%)','C43',                  43 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 소기업ㆍ소상공인공제부금 (2%)','C44', 44 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 주택청약종합저축 (6%)','C45',          45 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 장기집합투자증권저축 (6%)','C46',      46 FROM dual UNION ALL
-  SELECT '거주자 개인 해지추징세액등 계','C50',                               47 FROM dual UNION ALL
-  SELECT '비거주자 개인 이자 (제한,20%)','C61',                              48 FROM dual UNION ALL
-  SELECT '비거주자 개인 배당 (제한,20%)','C62',                               49 FROM dual UNION ALL
-  SELECT '비거주자 개인 사업 선박 등 임대,사업 (2%)','C63',                 50 FROM dual UNION ALL
-  SELECT '비거주자 개인 사업 인적용역 (20％)','C64',                          51 FROM dual UNION ALL
-  SELECT '비거주자 개인 사업 사용료 (제한,20%)','C65',                       52 FROM dual UNION ALL
-  SELECT '비거주자 개인 양도 유가증권양도 (10,20％）','C66',                 53 FROM dual UNION ALL
-  SELECT '비거주자 개인 양도 부동산양도 (10,20％）','C67',                   54 FROM dual UNION ALL
-  SELECT '비거주자 개인 기타 (20％）','C68',                                   55 FROM dual UNION ALL
-  SELECT '비거주자 개인 근로 파견근로에 대한 대가 (19%)','C69',              56 FROM dual UNION ALL
-  SELECT '비거주자 개인 계','C70',                                            57 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 이자 (14％）','C71',                              58 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 투자신탁의 이익 (14％）','C72',                  59 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 신탁재산 분배 (14％）','C73',                    60 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 신탁업자 징수분 (14％）','C74',                  61 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 비영업대금의 이익 (25％）','C75',                62 FROM dual UNION ALL
-  SELECT '법인원천 내국법인 비과세 소득','C76',                               63 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 이자（제한,20%）','C81',            64 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 배당（제한,20%）','C82',             65 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 선박등 임대,사업 (2％)','C83',      66 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 인적용역 (20%）','C84',              67 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 사용료（제한,20%）','C85',          68 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 유가증권양도 (10,20％）','C86',     69 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 부동산양도 (10,20％）','C87',       70 FROM dual UNION ALL
-  SELECT '법인원천 외국법인 국내원천소득 기타 (20%）','C88',                  71 FROM dual UNION ALL
-  SELECT '법인원천 법인세 계','C90',                                          72 FROM dual
+  <!-- ======================================================
+       부표 (C코드) / 附表 (Cコード)
+       - wh_annex와 LEFT JOIN
+       - 한국어 표현 전체 일본어로 변환
+  ====================================================== -->
+  <select id="selectAnnex"
+          parameterType="org.pms.feature.report.domain.WithholdingSearch"
+          resultMap="AnnexRowMap">
+
+WITH code_list(label, code, ord) AS (
+  SELECT '居住者 個人 利子・配当所得 非課税 長期住宅貯蓄','C01',1 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 非課税貯蓄','C02',2 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 個人年金貯蓄','C03',3 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 長期貯蓄性保険差益','C05',4 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 組合 預託金','C06',5 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 組合 出資金','C07',6 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 農漁家積立貯蓄','C08',7 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 社員持株会配当','C10',8 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 農業法人配当','C20',9 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 農漁協法人配当','C23',10 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 未販売住宅投資信託配当','C28',11 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 財形貯蓄 利子・配当','C40',12 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 その他非課税利子所得','C19',13 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非課税 その他非課税配当所得','C29',14 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 その他利子・配当','C11',15 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 インフラ投資会社配当','C31',16 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 海外資源開発投資会社配当','C33',17 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 船舶投資会社配当','C34',18 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 農漁協法人配当','C54',19 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 農業法人配当','C55',20 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 不動産投資信託配当','C56',21 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 税制特例 高リスク投資信託配当','C57',22 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 優遇税率 利子所得(9%)','C12',23 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 優遇税率 配当所得(9%)','C22',24 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 その他利子所得','C13',25 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 職場共済 超過返還金','C18',26 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 インフラ投資会社配当','C36',27 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 海外資源開発投資会社配当','C37',28 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 未販売住宅投資信託配当','C38',29 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 船舶投資会社配当','C52',30 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 不動産投資信託配当','C58',31 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 分離課税 その他配当所得','C39',32 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 一般課税 利子所得','C14',33 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 一般課税 配当所得','C24',34 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 匿名利子所得','C15',35 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 匿名配当所得','C25',36 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 非営業貸付利息','C16',37 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 出資共同事業者','C26',38 FROM dual UNION ALL
+  SELECT '居住者 個人 利子・配当所得 計','C30',39 FROM dual UNION ALL
+  SELECT '居住者 個人 労務提供報酬(派遣労働)','C59',40 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 長期株式型投信','C41',41 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 長期住宅貯蓄','C42',42 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 年金貯蓄','C43',43 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 小企業共済','C44',44 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 住宅積立貯蓄','C45',45 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 長期投信','C46',46 FROM dual UNION ALL
+  SELECT '居住者 個人 解約追徴税 計','C50',47 FROM dual UNION ALL
+  SELECT '非居住者 個人 利子(20%)','C61',48 FROM dual UNION ALL
+  SELECT '非居住者 個人 配当(20%)','C62',49 FROM dual UNION ALL
+  SELECT '非居住者 個人 事業 船舶貸付(2%)','C63',50 FROM dual UNION ALL
+  SELECT '非居住者 個人 事業 人的役務(20%)','C64',51 FROM dual UNION ALL
+  SELECT '非居住者 個人 事業 使用料(20%)','C65',52 FROM dual UNION ALL
+  SELECT '非居住者 個人 譲渡 有価証券(10,20%)','C66',53 FROM dual UNION ALL
+  SELECT '非居住者 個人 譲渡 不動産(10,20%)','C67',54 FROM dual UNION ALL
+  SELECT '非居住者 個人 その他(20%)','C68',55 FROM dual UNION ALL
+  SELECT '非居住者 個人 労務報酬(19%)','C69',56 FROM dual UNION ALL
+  SELECT '非居住者 個人 計','C70',57 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 利子(14%)','C71',58 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 投資信託利益(14%)','C72',59 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 信託財産分配(14%)','C73',60 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 信託業者徴収分(14%)','C74',61 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 非営業貸付利息(25%)','C75',62 FROM dual UNION ALL
+  SELECT '法人源泉 国内法人 非課税所得','C76',63 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 国内利子(20%)','C81',64 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 国内配当(20%)','C82',65 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 国内貸付(2%)','C83',66 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 国内人的役務(20%)','C84',67 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 国内使用料(20%)','C85',68 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 有価証券譲渡(10,20%)','C86',69 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 不動産譲渡(10,20%)','C87',70 FROM dual UNION ALL
+  SELECT '法人源泉 外国法人 その他(20%)','C88',71 FROM dual UNION ALL
+  SELECT '法人源泉 法人税 計','C90',72 FROM dual
 )
 SELECT
-  #{applyYyyymm}   AS apply_yyyymm,
-  c.label          AS income_type,
-  c.code           AS code,
-  0                AS headCount,
-  0                AS tax_total,
-  0                AS nt_withheld,
-  0                AS tax_income,
-  0                AS penalty_tax,
-  NVL(a.amount, 0) AS tax_withheld,
-  0                AS adj_refund,
-  0                AS tax_nt,
+  #{applyYyyymm} AS apply_yyyymm,
+  c.label AS income_type,
+  c.code  AS code,
+  0 AS headCount,
+  0 AS tax_total,
+  0 AS nt_withheld,
+  0 AS tax_income,
+  0 AS penalty_tax,
+  NVL(a.amount,0) AS tax_withheld,
+  0 AS adj_refund,
+  0 AS tax_nt,
   ROW_NUMBER() OVER (ORDER BY c.ord) AS no
 FROM code_list c
 LEFT JOIN wh_annex a
   ON a.apply_yyyymm = #{applyYyyymm}
  AND a.code = c.code
 ORDER BY c.ord
-</select>
-
-
-  <!-- ==========================================
-        상단 합계(총지급/징수소득세) 쿼리
-       ========================================== -->
-       
-	<!-- 확정 급여 인원수(해당 월, 중복 제거) -->
-	<select id="countHeadsByMonth"
-	        parameterType="string"
-	        resultType="java.lang.Integer">
-	  SELECT COUNT(DISTINCT p.emp_id)
-	  FROM   payslip p
-	  WHERE  p.confirmed_yn = 'Y'
-	    AND  p.apply_yyyymm = #{applyYyyymm}
-	</select>
-
-
-<!-- WithholdingReportMapper.xml -->
-<!-- 총 지급액: 전표처리 차변 -->
-<select id="sumVoucherDebitByMonth" resultType="java.math.BigDecimal">
-  SELECT COALESCE(SUM(pms.total_pay_amt), 0)
-  FROM pay_month_summary pms
-  WHERE pms.apply_yyyymm = #{applyYyyymm}
-    AND pms.total_pay_amt > 0
-</select>
-
-
-  <!-- 징수 소득세: 확정된 급여의 공제 중 T% 코드 합계 -->
-  <select id="sumWithheldTaxByMonthByPrefix" parameterType="string" resultType="java.math.BigDecimal">
-    SELECT NVL(SUM(d.amount), 0)
-    FROM   payslip p
-           JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
-    WHERE  p.confirmed_yn = 'Y'
-      AND  p.apply_yyyymm = #{applyYyyymm}
-      AND  d.deduction_code LIKE 'T%'
   </select>
 
-  <!-- (옵션) 코드목록으로 합계 -->
+  <!-- ==========================================
+       상단 합계(총지급/징수소득세) 쿼리
+       上部集計（総支給額・源泉所得税）クエリ
+       ========================================== -->
+       
+  <!-- 확정 급여 인원수(해당 월, 중복 제거)
+       確定給与人数（該当月、重複除外） -->
+  <select id="countHeadsByMonth"
+          parameterType="string"
+          resultType="java.lang.Integer">
+    SELECT COUNT(DISTINCT p.emp_id)     -- 중복 제거된 사원 수 / 重複を除いた社員数
+    FROM   payslip p
+    WHERE  p.confirmed_yn = 'Y'         -- 확정된 급여만 대상 / 確定済み給与のみ対象
+      AND  p.apply_yyyymm = #{applyYyyymm}  -- 조회할 귀속월 / 対象年月
+  </select>
+
+
+  <!-- WithholdingReportMapper.xml -->
+  <!-- 총 지급액: 전표처리 차변
+       総支給額：仕訳処理の借方合計 -->
+  <select id="sumVoucherDebitByMonth" resultType="java.math.BigDecimal">
+    SELECT COALESCE(SUM(pms.total_pay_amt), 0)  -- 차변 금액 총합 / 借方金額の合計
+    FROM pay_month_summary pms
+    WHERE pms.apply_yyyymm = #{applyYyyymm}     -- 귀속월 기준 / 対象年月ベース
+      AND pms.total_pay_amt > 0                 -- 0보다 큰 금액만 / 0超の金額のみ
+  </select>
+
+
+  <!-- 징수 소득세: 확정된 급여의 공제 중 T% 코드 합계
+       源泉所得税：確定給与の控除項目のうち T%コードの合計 -->
+  <select id="sumWithheldTaxByMonthByPrefix"
+          parameterType="string"
+          resultType="java.math.BigDecimal">
+    SELECT NVL(SUM(d.amount), 0)  -- 세액 합계 / 税額合計
+    FROM   payslip p
+           JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
+    WHERE  p.confirmed_yn = 'Y'          -- 확정 급여만 / 確定済給与のみ
+      AND  p.apply_yyyymm = #{applyYyyymm}  -- 귀속월 조건 / 対象年月条件
+      AND  d.deduction_code LIKE 'T%'    -- T로 시작하는 공제코드 / Tで始まる控除コード
+  </select>
+
+
+  <!-- (옵션) 코드목록으로 합계
+       （オプション）コードリスト指定で合計 -->
   <select id="sumWithheldTaxByMonthByCodes" resultType="java.math.BigDecimal">
-    SELECT NVL(SUM(d.amount), 0)
+    SELECT NVL(SUM(d.amount), 0)  -- 코드리스트 내 세액 합계 / コードリスト内の税額合計
     FROM   payslip p
            JOIN payslip_deduction d ON d.payslip_id = p.payslip_id
     WHERE  p.confirmed_yn = 'Y'
       AND  p.apply_yyyymm = #{applyYyyymm}
       AND  d.deduction_code IN
       <foreach item="c" collection="taxCodes" open="(" separator="," close=")">
-        #{c}
+        #{c}   <!-- 코드 목록 반복 삽입 / コードリストを繰り返し挿入 -->
       </foreach>
   </select>
 
 
-	<!-- 전월 미환급세액 조회 /저장 -->
-  <!-- 전월 J -->
-  <select id="selectPrevJ" parameterType="string" resultType="java.math.BigDecimal">
-    SELECT NVL(j_value, 0)
-      FROM report_refund
-     WHERE yyyymm = #{yyyymm}
+  <!-- 전월 미환급세액 조회 /저장
+       前月未還付税額の参照・保存 -->
+  <!-- 전월 J 값 조회
+       前月J値の取得 -->
+  <select id="selectPrevJ"
+          parameterType="string"
+          resultType="java.math.BigDecimal">
+    SELECT NVL(j_value, 0)  -- 없을 시 0 반환 / 存在しない場合は0を返す
+    FROM report_refund
+    WHERE yyyymm = #{yyyymm}  -- 조회할 년월 / 対象年月
   </select>
 
-  <!-- 전월 K -->
-  <select id="selectPrevK" parameterType="string" resultType="java.math.BigDecimal">
+  <!-- 전월 K 값 조회
+       前月K値の取得 -->
+  <select id="selectPrevK"
+          parameterType="string"
+          resultType="java.math.BigDecimal">
     SELECT NVL(k_value, 0)
-      FROM report_refund
-     WHERE yyyymm = #{yyyymm}
+    FROM report_refund
+    WHERE yyyymm = #{yyyymm}
   </select>
 
-  <!-- 이번달 저장: MERGE -->
+
+  <!-- 이번달 저장: MERGE (업데이트 또는 삽입)
+       当月データ保存：MERGE（更新または挿入） -->
   <update id="upsertRefund" parameterType="map">
     MERGE INTO report_refund t
     USING (
-      SELECT #{yyyymm} AS yyyymm,
-             #{j}      AS j_value,
-             #{k}      AS k_value
-        FROM dual
+      SELECT #{yyyymm} AS yyyymm,   -- 대상 월 / 対象年月
+             #{j}      AS j_value,  -- J 값 (차월이월환급세액) / J値（翌月繰越還付税額）
+             #{k}      AS k_value   -- K 값 (환급신청금액) / K値（還付申請金額）
+      FROM dual
     ) s
-       ON (t.yyyymm = s.yyyymm)
-     WHEN MATCHED THEN
-       UPDATE SET t.j_value = s.j_value,
-                  t.k_value = s.k_value
-     WHEN NOT MATCHED THEN
-       INSERT (yyyymm, j_value, k_value)
-       VALUES (s.yyyymm, s.j_value, s.k_value)
+      ON (t.yyyymm = s.yyyymm)
+    WHEN MATCHED THEN
+      UPDATE SET t.j_value = s.j_value,
+                 t.k_value = s.k_value   -- 이미 존재하면 갱신 / 既存の場合は更新
+    WHEN NOT MATCHED THEN
+      INSERT (yyyymm, j_value, k_value)  -- 없으면 새로 삽입 / 存在しない場合は新規挿入
+      VALUES (s.yyyymm, s.j_value, s.k_value)
   </update>
-
 
 </mapper>

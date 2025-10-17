@@ -46,7 +46,7 @@
           e.title_name     AS TITLE_NAME,           <!-- 직급 / 職級 -->
           e.duty_name      AS DUTY_NAME,            <!-- 직책 / 職責 -->
           e.appoint_date   AS APPOINT_DATE,         <!-- 발령일 / 発令日 -->
-          CASE WHEN e.retire_date IS NOT NULL THEN '퇴직' ELSE '재직' END AS WORK_STATUS_NAME, <!-- 재직여부 / 在職区分 -->
+          CASE WHEN e.retire_date IS NOT NULL THEN '退職' ELSE '在職' END AS WORK_STATUS_NAME, <!-- 재직여부 / 在職区分 -->
           e.work_status_detail AS WORK_STATUS_DETAIL, <!-- 근무상태 상세 / 勤務状態詳細 -->
           e.pay_type_name  AS PAY_TYPE_NAME,        <!-- 급여형태 / 給与形態 -->
           e.pay_apply_code AS PAY_APPLY_CODE,       <!-- 급여적용군 / 給与適用区分 -->
