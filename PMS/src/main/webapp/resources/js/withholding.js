@@ -760,7 +760,6 @@
           if (window.__suspendRefundAuto) return; // 자동계산 정지 중이면 반환 / 自動計算停止中なら返す
           resetManualFields(); // 수동 필드 초기화 / 手動フィールドを初期化
           recalcFromTable();
-          prefillPrevRefund();
         });
       });
     }
