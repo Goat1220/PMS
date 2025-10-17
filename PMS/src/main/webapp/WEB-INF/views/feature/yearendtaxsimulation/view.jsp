@@ -314,16 +314,16 @@ td.right {
 
 		<div class="field">
 			<span>社員</span> <span class="input-wrap sky"> <input
-				id="empName" type="text" value="${empName}" placeholder="사원 이름"
-				aria-label="사원 이름">
-				<button type="button" class="icon-btn" aria-label="사원 검색"
+				id="empName" type="text" value="${empName}" placeholder="社員名"
+				aria-label="社員名">
+				<button type="button" class="icon-btn" aria-label="社員検索"
 					onclick="openEmployeePopup()">🔍</button>
 			</span>
 		</div>
 
 		<div class="field">
 			<span>社員番号</span> <input id="empNo" class="w-emp readonly-gray"
-				type="text" value="${empId}" placeholder="사번" readonly>
+				type="text" value="${empId}" placeholder="社番" readonly>
 				  <input type="hidden" id="empId" value="${empId}">
 		</div>
 
@@ -564,15 +564,15 @@ function onSim() {
 	  fetch(url, { method: 'POST', body: form })
 	    .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
 	    .then(function(yrtIdRaw) {
-	      // 숫자만 추출
+	      // 숫자만 추출数字のみ抽出
 	      var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
 	      document.getElementById('yrtId').value = cleanYrtId;
 
-	      // 기존 시뮬 탭 갱신
+	      // 기존 시뮬 탭 갱신既存のシミュレーションタブ更新
 	      onReason();
 	      refreshTaxApplyResult(cleanYrtId);
 
-	      //  추가: 시뮬레이션 실행 후 “최종 탭”도 함께 갱신
+	      //  추가: 시뮬레이션 실행 후 “최종 탭”도 함께 갱신追加:シミュレーション実行後、「最終タブ」も一緒に更新
 	      var empNo = document.getElementById('empNo').value.trim();
 	      var year = document.getElementById('baseYear').value.trim();
 	      var finalUrl = ctx() + '/feature/yearend-tax-simulation/api/final?empId='
@@ -581,7 +581,7 @@ function onSim() {
 	      fetch(finalUrl)
 	        .then(function(r){ return r.ok ? r.json() : []; })
 	        .then(renderFinal)
-	        .catch(function(e){ console.log('최종탭 갱신 실패', e); });
+	        .catch(function(e){ console.log('最終タブ更新失敗', e); });
 	    })
 	    .catch(function() {
 	      alert('シミュレーション処理に失敗しました。');
@@ -769,7 +769,7 @@ function refreshTaxApplyResult(yrtId) {
 				.querySelector(isFinalActive ? '#panel-final table.grid'
 						: '#panel-sim table.grid');
 
-		// 파일명: yearend_YYYY_[final|simulation]_yyyyMMdd_HHmmss.csv
+		// 파일명ファイル名: yearend_YYYY_[final|simulation]_yyyyMMdd_HHmmss.csv
 		var baseYearEl = document.getElementById('baseYear');
 		var y = (baseYearEl && baseYearEl.value ? baseYearEl.value : '').trim()
 				|| 'YEAR';
@@ -789,11 +789,11 @@ function refreshTaxApplyResult(yrtId) {
 <script>
 /* 사원 선택 콜백 / 社員選択コールバック */
 window.onEmployeePicked = function(row) {
-  // 1️ 선택한 사원 정보 세팅
+  // 1️ 선택한 사원 정보 세팅選択した社員情報のセッティング
   document.getElementById('empNo').value = row.empNo || '';
   document.getElementById('empName').value = row.empName || '';
 
-  // 2️ 연도 확인
+  // 2️ 연도 확인年度確認
   var year = document.getElementById('baseYear').value;
   if (!year || !/^\d{4}$/.test(year)) {
     var d = new Date();
@@ -801,7 +801,7 @@ window.onEmployeePicked = function(row) {
     document.getElementById('baseYear').value = year;
   }
 
-  // 3️ 자동 조회 트리거 실행
+  // 3️ 자동 조회 트리거 실행自動照会トリガー実行
   console.log("사원 선택됨 → 자동 조회 시작:", row.empNo, year);
   onReason();  // 산출근거 조회 (시뮬탭 자동 로드)
 };
@@ -823,7 +823,7 @@ window.onEmployeePicked = function(row) {
 		var features = 'width=' + w + ',height=' + h + ',left=' + x + ',top='
 				+ y + ',resizable=yes,scrollbars=yes';
 
-		window.open('/popups/employees',  // JSP 경로
+		window.open('/popups/employees',  // JSP 경로	 JSP経路
 			      'empPopup', features);
 	}
 </script>
@@ -846,7 +846,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
   fetch(url)
     .then(function(res) { return res.ok ? res.json() : Promise.reject(res); })
-    .then(renderFinal) //  최종 데이터 렌더링 함수 호출
+    .then(renderFinal) //  최종 데이터 렌더링 함수 호출 最終データレンダリング関数呼び出し
     .catch(function(err) {
       console.error("최종탭 데이터 조회 실패:", err);
     });
@@ -857,7 +857,7 @@ function renderFinal(rows) {
   var tbody = document.querySelector('#panel-final tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = ''; // 기존 내용 초기화
+  tbody.innerHTML = ''; // 기존 내용 초기화 既存の内容を初期化
   if (!rows || rows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">データがありません</td></tr>';
     return;
