@@ -299,7 +299,7 @@ td.right {
 
 	<!-- 제목 + 우측 엑셀 버튼 / タイトル＋右側エクセルボタン -->
 	<div class="page-header">
-		<div class="page-title">연말정산시뮬레이션(개인원본)</div>
+		<div class="page-title">年末調整シミュレーション（個人原本）</div>
 		<div id="titleBtnAreaExcel"></div>
 	</div>
 
@@ -308,12 +308,12 @@ td.right {
 	<!-- ===== 검색 영역 / 検索エリア ===== -->
 	<div class="searchbar">
 		<div class="field field-year">
-			<span>정산연도</span> <input id="baseYear" class="w-yr" type="text"
+			<span>精算年度</span> <input id="baseYear" class="w-yr" type="text"
 				value="${baseYear}" placeholder="YYYY">
 		</div>
 
 		<div class="field">
-			<span>사원</span> <span class="input-wrap sky"> <input
+			<span>社員</span> <span class="input-wrap sky"> <input
 				id="empName" type="text" value="${empName}" placeholder="사원 이름"
 				aria-label="사원 이름">
 				<button type="button" class="icon-btn" aria-label="사원 검색"
@@ -322,35 +322,35 @@ td.right {
 		</div>
 
 		<div class="field">
-			<span>사번</span> <input id="empNo" class="w-emp readonly-gray"
+			<span>社員番号</span> <input id="empNo" class="w-emp readonly-gray"
 				type="text" value="${empId}" placeholder="사번" readonly>
 				  <input type="hidden" id="empId" value="${empId}">
 		</div>
 
 		<div class="field">
-			<span>정산사업장</span> <select id="bizPlace" class="w-biz readonly-gray"
+			<span>精算事業所</span> <select id="bizPlace" class="w-biz readonly-gray"
 				disabled>
-				<option>본사</option>
+				<option>本社</option>
 			</select>
 		</div>
 
 		<div class="field" style="gap: 12px; color: #888;">
-			<label><input type="checkbox" disabled> 개인마감</label> <label><input
-				type="checkbox" disabled> 담당자마감</label> <label><input
-				type="checkbox" checked disabled> 정산대상자</label>
+			<label><input type="checkbox" disabled> 個人締切</label> <label><input
+				type="checkbox" disabled> 担当者締切</label> <label><input
+				type="checkbox" checked disabled> 精算対象者</label>
 		</div>
 
 		<div class="field">
-			<span>조회구분</span> <select id="searchType" class="w-emp readonly-gray"
+			<span>照会区分</span> <select id="searchType" class="w-emp readonly-gray"
 				disabled>
-				<option selected>정산</option>
+				<option selected>精算</option>
 			</select>
 		</div>
 
 		<div class="field">
-			<span>세금적용결과</span> <input id="taxApplyResult"
+			<span>税額適用結果</span> <input id="taxApplyResult"
 				class="w-biz readonly-gray" type="text"
-				value="${empty taxApplyResult ? '표준세액공제' : taxApplyResult}" readonly>
+				value="${empty taxApplyResult ? '標準税額控除' : taxApplyResult}" readonly>
 		</div>
 
 		<div class="spacer"></div>
@@ -365,10 +365,10 @@ td.right {
 			var area = document.getElementById('opsBtnArea');
 			if (area && !area.dataset.inited) {
 				area.dataset.inited = '1';
-				area.appendChild(createCommonButton('산출근거', 'onReason'));
-				area.appendChild(createCommonButton('정산시뮬레이션처리', 'onSim'));
-				area.appendChild(createCommonButton('정산시뮬레이션결과삭제', 'onDelete'));
-				area.appendChild(createCommonButton('납부특례세액시뮬레이션처리',
+				area.appendChild(createCommonButton('算出根拠', 'onReason'));
+				area.appendChild(createCommonButton('精算シミュレーション処理', 'onSim'));
+				area.appendChild(createCommonButton('精算シミュレーション結果削除', 'onDelete'));
+				area.appendChild(createCommonButton('納付特例税額シミュレーション処理',
 						'onInstallment'));
 			}
 
@@ -377,7 +377,7 @@ td.right {
 			if (titleArea
 					&& !titleArea
 							.querySelector('button[data-role="export-csv"]')) {
-				var btn = createCommonButton('엑셀 추출', 'onExportCsv');
+				var btn = createCommonButton('エクセル抽出', 'onExportCsv');
 				btn.dataset.role = 'export-csv';
 				titleArea.appendChild(btn);
 			}
@@ -386,30 +386,30 @@ td.right {
 
 	<!-- ===== 탭 / タブ ===== -->
 	<div class="tabs">
-		<div id="tab-final" class="tab active" onclick="showTab('final')">최종</div>
-		<div id="tab-sim" class="tab" onclick="showTab('sim')">시뮬레이션</div>
+		<div id="tab-final" class="tab active" onclick="showTab('final')">最終</div>
+		<div id="tab-sim" class="tab" onclick="showTab('sim')">シミュレーション</div>
 	</div>
 
 	<!-- 최종 탭 / 最終タブ -->
 	<div id="panel-final" class="panel">
 		<div class="meta">
-			실행라벨: <strong><c:out
+			実行ラベル: <strong><c:out
 					value="${simHeader != null ? simHeader.runLabel : '-'}" /></strong> · 기준연도:
-			<strong><c:out value="${baseYear}" /></strong> · 생성/갱신:
+			<strong><c:out value="${baseYear}" /></strong> · 作成/更新:
 			<c:out value="${simHeader != null ? simHeader.updatedAt : '-'}" />
-			· 확정여부:
+			· 確定可否:
 			<c:out value="${simHeader != null ? simHeader.confirmYn : '-'}" />
 		</div>
 
 		<table class="grid">
   <thead>
     <tr>
-      <th style="width:18%">정산항목분류</th>
-      <th style="width:28%">정산항목</th>
-      <th style="width:14%">금액</th>
-      <th style="width:14%">예상적용금액</th>
-      <th style="width:13%">세액유형</th>   <%-- taxApplyType / 税額タイプ --%>
-      <th style="width:13%">확정여부</th>   <%-- confirmYn / 確定フラグ --%>
+      <th style="width:18%">精算項目分類</th>
+      <th style="width:28%">精算項目</th>
+      <th style="width:14%">金額</th>
+      <th style="width:14%">予想適用金額</th>
+      <th style="width:13%">税額タイプ</th>   <%-- taxApplyType / 税額タイプ --%>
+      <th style="width:13%">確定フラグ</th>   <%-- confirmYn / 確定フラグ --%>
     </tr>
   </thead>
   <tbody>
@@ -424,7 +424,7 @@ td.right {
       </tr>
     </c:forEach>
     <c:if test="${empty finalList}">
-      <tr><td colspan="6" style="text-align:center;color:#777;">데이터가 없습니다</td></tr>
+      <tr><td colspan="6" style="text-align:center;color:#777;">データがありません</td></tr>
     </c:if>
   </tbody>
 </table>
@@ -436,17 +436,17 @@ td.right {
 		<table class="grid">
 		<thead>
   <tr>
-    <th>정산항목분류</th>
-    <th>정산항목</th>
-    <th>금액</th>
-    <th>예상적용금액</th>
-    <th>세액유형</th>
-    <th>확정여부</th>
+    <th>精算項目分類</th>
+    <th>精算項目</th>
+    <th>金額</th>
+    <th>予想適用金額</th>
+    <th>税額タイプ</th>
+    <th>確定フラグ</th>
   </tr>
 </thead>
 <tbody id="simBody">
   <tr>
-    <td colspan="6" style="text-align:center;">버튼으로 조회하세요</td>
+    <td colspan="6" style="text-align:center;">ボタンで照会してください</td>
   </tr>
 </tbody>
 
@@ -502,7 +502,7 @@ function onClickEmpSearch() {
       setEmp(res.name, res.id);
     });
   } else {
-    alert('사원 검색은 외부 기능입니다.');
+    alert('社員検索は外部機能です.');
   }
 }
 
@@ -517,7 +517,7 @@ function setEmp(name, id) {
 /* 사원 선택 여부 검사 / 社員選択チェック */
 function needEmp() {
   if (!emp()) {
-    alert('선택된 사원이 없습니다.');
+    alert('選択された社員がありません。');
     return true;
   }
   return false;
@@ -528,7 +528,7 @@ function onReason() {
   if (needEmp()) return;
   var y = document.getElementById('baseYear').value.trim();
   if (!validYear(y)) {
-    alert('정산연도는 2000~2100의 4자리 숫자');
+    alert('精算年度は2000～2100の4桁の数字で入力してください。');
     return;
   }
   var url = ctx() + '/feature/yearend-tax-simulation/api/sim?empId='
@@ -541,7 +541,7 @@ function onReason() {
       showTab('sim');
       return refreshTaxApplyResult();
     }).catch(function() {
-      alert('산출근거 조회 실패 또는 API 미구현');
+      alert('算出根拠照会失敗またはAPI未実装');
     });
 }
 
@@ -550,10 +550,10 @@ function onSim() {
   if (needEmp()) return;
   var y = document.getElementById('baseYear').value.trim();
   if (!validYear(y)) {
-    alert('정산연도 형식 오류');
+    alert('精算年度の形式が正しくありません。');
     return;
   }
-  if (!confirm('기존 결과를 삭제하고 새로 생성하시겠습니까?')) return;
+  if (!confirm('既存の結果を削除して新しく作成しますか？')) return;
 
   var url = ctx() + '/feature/yearend-tax-simulation/api/simulate';
   var form = new URLSearchParams({
@@ -571,7 +571,7 @@ function onSim() {
       onReason();
       refreshTaxApplyResult(cleanYrtId);
     }) .catch(function() {
-      alert('시뮬레이션 처리 실패 또는 API 미구현');
+      alert('シミュレーション処理に失敗しました。');
     });
 }
 
@@ -579,26 +579,26 @@ function onSim() {
 function onDelete() {
   var id = yrt();
   if (!id) {
-    alert('삭제할 실행이 없습니다.');
+    alert('削除する実行がありません。');
     return;
   }
-  if (!confirm('기존 시뮬레이션 결과를 삭제하시겠습니까?')) return;
+  if (!confirm('既存のシミュレーション結果を削除しますか？')) return;
 
   fetch(ctx() + '/feature/yearend-tax-simulation/api/simulate?yrtId=' + encodeURIComponent(id), {
       method: 'DELETE'
   })
   .then(function(r) {
       if (r.ok) return r.text();
-      return r.text().then(function(t){ throw new Error(t || '삭제 실패'); });
+      return r.text().then(function(t){ throw new Error(t || '削除失敗'); });
   })
   .then(function() {
       document.getElementById('simBody').innerHTML =
-          '<tr><td colspan="4" style="text-align:center;">삭제됨</td></tr>';
+          '<tr><td colspan="4" style="text-align:center;">削除済み</td></tr>';
       document.getElementById('yrtId').value = '';
       refreshTaxApplyResult();
-      alert('삭제 완료되었습니다.');
+      alert('削除が完了しました。');
   }).catch(function(err) {
-      alert(err.message || '삭제 실패 또는 API 미구현');
+      alert(err.message || '削除に失敗しました。');
   });
 }
 
@@ -606,11 +606,11 @@ function onDelete() {
 function onInstallment() {
   var id = yrt();
   if (!id) {
-    alert('시뮬레이션 실행이 없습니다.');
+    alert('シミュレーション実行がありません。');
     return;
   }
-  var months = prompt('분납 개월수(2~3):', '2');
-  var start = prompt('시작월(YYYY-MM):', new Date().toISOString().slice(0, 7));
+  var months = prompt('分納回数(2～3):', '2');
+  var start = prompt('開始月(YYYY-MM):', new Date().toISOString().slice(0, 7));
   var form = new URLSearchParams({
     yrtId : id,
     months : months,
@@ -625,7 +625,7 @@ function onInstallment() {
   .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
   .then(renderInstallment)
   .catch(function() {
-      alert('분납 시뮬레이션 실패 또는 API 미구현');
+      alert('分納シミュレーションに失敗しました');
   });
   showTab('sim');
 }
@@ -636,7 +636,7 @@ function renderSim(rows) {
   var tb = document.getElementById('simBody');
   tb.innerHTML = '';
   if (!rows || rows.length === 0) {
-    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">데이터 없음</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">データなし</td></tr>';
     return;
   }
   rows.forEach(function(r) {
@@ -661,8 +661,8 @@ function renderInstallment(res) {
     box.innerHTML = '';
     return;
   }
-  var html = '<h4 style="margin:10px 0 6px 0;">분납 스케줄</h4>'
-           + '<table class="grid"><tr><th>월</th><th>국세</th><th>지방세</th><th>합계</th></tr>';
+  var html = '<h4 style="margin:10px 0 6px 0;">分納スケジュール</h4>'
+           + '<table class="grid"><tr><th>月</th><th>国税</th><th>地方税</th><th>合計</th></tr>';
   res.schedule.forEach(function(s) {
     html += '<tr><td>' + s.yyyymm + '</td>'
          + '<td class="right">' + fmt(s.national) + '</td>'
@@ -689,10 +689,10 @@ function refreshTaxApplyResult(yrtId) {
   return fetch(ctx() + '/feature/yearend-tax-simulation/api/tax-apply-result?' + q.toString())
     .then(function(r) { return r.ok ? r.text() : Promise.reject(r); })
     .then(function(t) {
-      document.getElementById('taxApplyResult').value = t || '미판정';
+      document.getElementById('taxApplyResult').value = t || '未判定';
     })
     .catch(function() {
-      document.getElementById('taxApplyResult').value = '미판정';
+      document.getElementById('taxApplyResult').value = '未判定';
     });
 }
 </script>
@@ -706,7 +706,7 @@ function refreshTaxApplyResult(yrtId) {
 	 */
 	function exportTableToCsv(tbl, filename) {
 		if (!tbl) {
-			alert('내보낼 표를 찾지 못했습니다.');
+			alert('CSV出力する表を見つけられませんでした。.');
 			return;
 		}
 
