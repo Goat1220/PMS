@@ -18,52 +18,66 @@
 
   <style>
 	/* =========================
-	   상단 제목 + 조회 / 上部タイトル + 検索
+	   페이지 전체 레이아웃 / ページ全体レイアウト
 	   ========================= */
-	.wh .page-header{
-	  display:flex; align-items:center;
-	  padding:6px var(--gutter);
-	  margin-bottom:8px;
-	  border-bottom:1px solid #eee;
-	  background:#fff; border-radius:8px;
+	html, body {
+	  height: 100%;
+	  margin: 0;
+	  overflow: hidden;
 	}
-	.wh .page-title{
-	  font-size:12px; font-weight:700; color:#111;
-	  margin-right:auto;
+	
+	body { 
+	  font-family: Arial, Helvetica, 'Malgun Gothic', sans-serif; 
+	  font-size:12px; 
+	  color:#333;
+	  display: flex;
+	  flex-direction: column;
 	}
-	.wh #btnSearch{
-	  height:28px; padding:0 12px;
+	
+	/* 네임스페이스 컨테이너 전체 높이 사용 / ネームスペースコンテナが全体高さを使用 */
+	.wh {
+	  display: flex;
+	  flex-direction: column;
+	  height: 100vh;
+	  overflow: hidden;
+	}
+	
+	.wh .container { 
+	  --gutter:16px; 
+	  padding-inline: var(--gutter);
+	  padding-top: 2px;
+	  padding-bottom: 2px;
+	  box-sizing: border-box;
+	  flex: 1;
+	  display: flex;
+	  flex-direction: column;
+	  overflow: hidden;
 	}
 	
 	/* =========================
 	   페이지 공통 / ページ共通
 	   ========================= */
-	html { overflow-y: scroll; }
-	body { font-family: Arial, Helvetica, 'Malgun Gothic', sans-serif; font-size:12px; color:#333; }
-	
-	/* 네임스페이스 컨테이너 / ネームスペースコンテナ */
-	.wh .container { --gutter:16px; padding-inline: var(--gutter); box-sizing: border-box; }
 	
 	/* 카드 & 패널 / カード＆パネル */
 	.wh .card, .wh .panel{
 	  box-sizing:border-box; width:100%; background:#fff;
 	  border:1px solid #e5e7eb; border-radius:8px;
 	}
-	.wh .card{ padding:8px 10px; margin-bottom:8px; }
-	.wh .panel{ padding:10px; border-color:#bbb; border-radius:6px; margin-bottom:22px; }
-	.wh .card-title{ font-weight:700; margin-bottom:6px; font-size:12px; }
+	.wh .card{ padding:8px 8px; margin-bottom:10px; }
+	.wh .panel{ padding:3px; border-color:#bbb; border-radius:6px; margin-bottom:2px; }
+	.wh .card-title{ font-weight:700; margin-bottom:3px; font-size:12px; }
 	
 	/* 2컬럼 레이아웃 / 2列レイアウト */
 	.wh .two-cols{
 	  display:grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-	  gap:9px; align-items:stretch;
+	  gap:2px; align-items:stretch; margin-bottom: 5px;
 	}
 	.wh .two-cols > .card{ min-width:0; }
 	
 	/* 폼 공통 / フォーム共通 */
 	.wh .form-row{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
-	.wh .mt-8{ margin-top:8px; }
-	.wh .mt-12{ margin-top:8px; }
+	.wh .mt-8{ margin-top:4px; }
+	.wh .mt-12{ margin-top:4px; }
 	.wh .ml-auto{ margin-left:auto; }
 	.wh .no-shrink{ flex:0 0 auto; }
 	
@@ -77,7 +91,7 @@
 	}
 	
 	/* 유틸 너비 / ユーティリティ幅 */
-	.wh .w-80{width:80px} .wh .w-100{width:100%} .wh .w-110{width:110px}
+	.wh .w-80{width:84px} .wh .w-100{width:100%} .wh .w-110{width:110px}
 	.wh .w-120{width:120px} .wh .w-140{width:140px} .wh .w-160{width:160px}
 	.wh .w-180{width:180px}
 	
@@ -118,16 +132,16 @@
 	}
 	
 	/* 탭 / タブ */
-	.wh .tabs{ display:flex; gap:8px; margin:16px 0; }
-	.wh .tab{ padding:8px 12px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
+	.wh .tabs{ display:flex; gap:8px; margin:2px 0; }
+	.wh .tab{ padding:6px 10px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
 	.wh .tab.active{ background:#fff; font-weight:bold; }
 	
 	/* =========================
 		신고파일생성 / 報告ファイル生成
 	   ========================= */
-	.wh .file-card{ position:relative; margin-bottom:4px; }
+	.wh .file-card{ position:relative; margin-bottom:2px; }
 	.wh .file-card__header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
-	.wh .file-card .card-title{ margin-bottom:4px; }
+	.wh .file-card .card-title{ margin-bottom:2px; }
 	.wh .file-card__body{ display:block; }
 	.wh .file-card.is-collapsed .file-card__body{ display:none; }
 	
@@ -154,19 +168,35 @@
 	/* =========================
 		요약/부표 / サマリー/別紙
 	   ========================= */
-	.wh .data-area { margin-top:4px; }
+	.wh .data-area { 
+	  margin: 2;
+	  flex: 1;
+	  display: flex;
+	  flex-direction: column;
+	  overflow: hidden;
+	}
+	
 	.wh .data-area .tabs{
 	  position:static; top:0; z-index:2; background:#fff;
-	  padding-top:6px; margin-bottom:6px;
+	  padding-top:0px; margin-bottom:0px;
+	  flex-shrink: 0;
 	}
+	
 	.wh .data-scroll{
-	  overflow:auto; border:1px solid #e5e7eb; border-radius:8px; background:#fff; padding:0px;
+	  overflow:auto; 
+	  border:1px solid #e5e7eb; 
+	  border-radius:8px; 
+	  background:#fff; 
+	  padding:0px;
+	  flex: 1;
+	  min-height: 0;
 	}
-	.wh .data-scroll .scroll-inner{ padding:8px; }
+	
+	.wh .data-scroll .scroll-inner{ padding:4px; }
 	
 	/* 테이블 스타일 / テーブルスタイル */
 	.wh table{ width:100%; border-collapse: separate; border-spacing: 0; font-size:12px; }
-	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+	.wh th, .wh td{ border:1px solid #ddd; padding:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 	.wh th{ background:#f0f3f7; font-weight: bold; }
 	.wh td.num{text-align:right}
 	.wh td.center{text-align:center}
@@ -192,13 +222,13 @@
 	/* =========================
 		전월미환급세액 / 前月未還付税額
 	   ========================= */
-	.wh #refundBlock{ padding:6px 8px; }
-	.wh #refundBlock .card-title{ margin-bottom:6px; font-size:12px; }
+	.wh #refundBlock{ padding:4px 6px; margin: 10; flex-shrink: 0; }
+	.wh #refundBlock .card-title{ margin-bottom:3px; font-size:12px; }
 	.wh .refund-compact{
 	  --label-w:150px; --input-w:120px;
 	  display:grid;
 	  grid-template-columns: max-content 16px repeat(4, var(--label-w) var(--input-w));
-	  column-gap:18px; row-gap:6px; align-items:center;
+	  column-gap:18px; row-gap:4px; align-items:center;
 	}
 	.wh .refund-compact .row-title{ font-weight:400; font-size:12px; color:#374151; white-space:nowrap; }
 	.wh .refund-compact label:not(.row-title){
@@ -245,14 +275,6 @@
 	 data-generate-url="${apiGenerate}"
 	 data-prev-refund-url="${apiRefundPrev}"
 	 data-save-refund-url="${apiRefundSave}">
-	</div>
-
-	<!-- 페이지 헤더 / ページヘッダー -->
-	<div class="page-header">
-  <div class="page-title">源泉徴収状況報告書</div>
-  <!-- 조회 버튼 / 検索ボタン -->
-  <button id="btnSearch" class="btn primary">🔍検索</button>
-</div>
 	
   <!-- 상단 2컬럼 / 上部2列 -->
   <div class="two-cols">
@@ -457,12 +479,5 @@
 <script src="https://unpkg.com/jspdf-encrypt/dist/jspdf.plugin.encrypt.min.js"></script>
 
 <script src="<c:url value='/resources/js/withholding.js'/>"></script>
-	<script>
-		// DOM 로드 완료 후 테이블 정렬 기능 활성화 / DOMロード完了後テーブルソート機能を有効化
-		document.addEventListener('DOMContentLoaded', function() {
-			enableSort('#tblSummary');
-			enableSort('#tblAnnex');
-		});
-	</script>
 </body>
 </html>
