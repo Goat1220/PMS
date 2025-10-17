@@ -89,6 +89,7 @@ public class YearendTaxSimController {
         return query.loadSimGrid(empId, baseYear, yrtId);
     }
 
+    
     /** ③ 시뮬레이션 실행 / シミュレーション実行 */
     @PostMapping("/api/simulate")
     public ResponseEntity<?> simulate(@RequestParam String empId,
@@ -96,17 +97,16 @@ public class YearendTaxSimController {
                                       @RequestParam(required=false) Long policyId,
                                       @RequestParam(required=false) String runLabel,
                                       @RequestParam(defaultValue="false") boolean overwrite) {
-        Long yrtId = command.run(empId, baseYear, policyId, runLabel, overwrite);
-        return ResponseEntity.ok(yrtId);
-    }
 
-    /** ④ 시뮬레이션 삭제 / シミュレーション削除 */
-    @DeleteMapping(value = "/api/simulate", produces = "text/plain;charset=UTF-8")
-    public ResponseEntity<?> delete(@RequestParam Long yrtId) {
-        boolean ok = command.delete(yrtId);
-        return ok
-            ? ResponseEntity.ok("削除済み")
-            : ResponseEntity.badRequest().body("確定件は削除不可");
+        // ⚠️ 시뮬레이션 시 실제 DB에 반영되지 않도록 차단
+        log.info("[simulate] 연말정산 시뮬레이션 호출은 무시됩니다. DB에는 아무 변화 없음。");
+        
+        // 필요하다면 아래처럼 임시 응답도 가능
+        return ResponseEntity.ok("SIMULATION_DISABLED");
+
+        // 원래 코드 (임시로 주석처리)
+        // Long yrtId = command.run(empId, baseYear, policyId, runLabel, overwrite);
+        // return ResponseEntity.ok(yrtId);
     }
 
     /** ⑤ 납부 특례(분납) 계산 / 納付特例（分納）計算 */
