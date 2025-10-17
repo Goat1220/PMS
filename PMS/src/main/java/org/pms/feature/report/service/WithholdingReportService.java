@@ -55,6 +55,7 @@ public class WithholdingReportService {
             a01.setTaxIncome(0L); // 납부소득세는 0으로 설정 / 納付所得税は0に設定
         }
 
+        
 
         // 2) 섹션별 가감계 매핑 (LinkedHashMap: 선언 순서 유지) / 2) セクション別加減計マッピング (LinkedHashMap: 宣言順序を保持)
         Map<String, List<String>> groups = new LinkedHashMap<String, List<String>>();

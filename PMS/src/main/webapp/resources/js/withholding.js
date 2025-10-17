@@ -728,8 +728,13 @@
 
       // 전월 데이터 조회 / 前月データ照会
       fetch(PREV_REFUND_URL + '?yyyymm=' + encodeURIComponent(prev), {
-        headers: { 'Accept': 'application/json' }
-      })
+    	  method: 'GET',
+    	  headers: { 
+    	    'Accept': 'application/json',
+    	    'Cache-Control': 'no-cache, no-store, must-revalidate'
+    	  },
+    	  cache: 'no-store'
+    	})
         .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
         .then(function(j){
           setNum(A, j.prevCarryJ); // A ← 전월 J / A ← 前月 J

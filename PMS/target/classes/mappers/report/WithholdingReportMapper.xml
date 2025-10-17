@@ -187,6 +187,7 @@ WITH code_list(label, code, ord) AS (
   SELECT '法人源泉 外国法人 その他(20%)','C88',71 FROM dual UNION ALL
   SELECT '法人源泉 法人税 計','C90',72 FROM dual
 )
+
 SELECT
   #{applyYyyymm} AS apply_yyyymm,
   c.label AS income_type,
