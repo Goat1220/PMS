@@ -98,13 +98,13 @@ public class YearendTaxSimController {
                                       @RequestParam(required=false) String runLabel,
                                       @RequestParam(defaultValue="false") boolean overwrite) {
 
-        // ⚠️ 시뮬레이션 시 실제 DB에 반영되지 않도록 차단
+        //  시뮬레이션 시 실제 DB에 반영되지 않도록 차단 シミュレーション時に実際のDBに反映されないようにブロック
         log.info("[simulate] 연말정산 시뮬레이션 호출은 무시됩니다. DB에는 아무 변화 없음。");
         
-        // 필요하다면 아래처럼 임시 응답도 가능
+        // 필요하다면 아래처럼 임시 응답도 가능必要であれば以下のように臨時回答も可能
         return ResponseEntity.ok("SIMULATION_DISABLED");
 
-        // 원래 코드 (임시로 주석처리)
+        // 원래 코드 (임시로 주석처리)元のコード(一時的に注記処理)
         // Long yrtId = command.run(empId, baseYear, policyId, runLabel, overwrite);
         // return ResponseEntity.ok(yrtId);
     }
@@ -130,7 +130,7 @@ public class YearendTaxSimController {
                 yrtId = Long.valueOf(yrtIdRaw.replaceAll("\\D", ""));
             }
         } catch (Exception e) {
-            log.warn("yrtId 파싱 실패: {}", yrtIdRaw);
+            log.warn("yrtId パーシング失敗: {}", yrtIdRaw);
         }
         return query.computeTaxApplyResult(empId, baseYear, yrtId);
     }
