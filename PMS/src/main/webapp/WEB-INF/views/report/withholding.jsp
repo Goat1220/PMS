@@ -3,7 +3,7 @@
 <%@ include file="../includes/commonform.jsp" %>
 <%@ include file="../includes/table.jsp" %>
 
-
+<!-- API URL 정의 / API URL定義 -->
 <c:url var="apiSummary" value="/api/report/withholding"/>
 <c:url var="apiAnnex"   value="/api/report/withholding/annex"/>
 <c:url var="apiGenerate"    value="/api/report/withholding/generate"/>
@@ -11,40 +11,40 @@
 <c:url var="apiRefundSave"  value="/api/report/withholding/refund-save"/> 
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ja">
 <head>
   <meta charset="UTF-8"/>
-  <title>원천징수이행상황신고서</title>
+  <title>源泉徴収状況報告書</title>
 
   <style>
 	/* =========================
-	   상단 제목 + 조회
+	   상단 제목 + 조회 / 上部タイトル + 検索
 	   ========================= */
 	.wh .page-header{
 	  display:flex; align-items:center;
-	  padding:6px var(--gutter);     /* 컨테이너와 좌우 여백 통일 */
+	  padding:6px var(--gutter);
 	  margin-bottom:8px;
 	  border-bottom:1px solid #eee;
 	  background:#fff; border-radius:8px;
 	}
 	.wh .page-title{
 	  font-size:12px; font-weight:700; color:#111;
-	  margin-right:auto;              /* 버튼을 오른쪽으로 밀기 */
+	  margin-right:auto;
 	}
 	.wh #btnSearch{
 	  height:28px; padding:0 12px;
 	}
 	
 	/* =========================
-	   페이지 공통 (컴팩트 기본)
+	   페이지 공통 / ページ共通
 	   ========================= */
 	html { overflow-y: scroll; }
 	body { font-family: Arial, Helvetica, 'Malgun Gothic', sans-serif; font-size:12px; color:#333; }
 	
-	/* 네임스페이스 컨테이너 */
+	/* 네임스페이스 컨테이너 / ネームスペースコンテナ */
 	.wh .container { --gutter:16px; padding-inline: var(--gutter); box-sizing: border-box; }
 	
-	/* 카드 & 패널 */
+	/* 카드 & 패널 / カード＆パネル */
 	.wh .card, .wh .panel{
 	  box-sizing:border-box; width:100%; background:#fff;
 	  border:1px solid #e5e7eb; border-radius:8px;
@@ -53,14 +53,14 @@
 	.wh .panel{ padding:10px; border-color:#bbb; border-radius:6px; margin-bottom:22px; }
 	.wh .card-title{ font-weight:700; margin-bottom:6px; font-size:12px; }
 	
-	/* 2컬럼 레이아웃 */
+	/* 2컬럼 레이아웃 / 2列レイアウト */
 	.wh .two-cols{
 	  display:grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 	  gap:9px; align-items:stretch;
 	}
 	.wh .two-cols > .card{ min-width:0; }
 	
-	/* 폼 공통 */
+	/* 폼 공통 / フォーム共通 */
 	.wh .form-row{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
 	.wh .mt-8{ margin-top:8px; }
 	.wh .mt-12{ margin-top:8px; }
@@ -76,92 +76,61 @@
 	  height:28px; padding:0 6px; border:1px solid #dcdfe6; border-radius:4px; background:#fff;
 	}
 	
-	/* 유틸 너비 (오타세이프 포함) */
+	/* 유틸 너비 / ユーティリティ幅 */
 	.wh .w-80{width:80px} .wh .w-100{width:100%} .wh .w-110{width:110px}
 	.wh .w-120{width:120px} .wh .w-140{width:140px} .wh .w-160{width:160px}
 	.wh .w-180{width:180px}
 	
 	.wh .min-160 { min-width: 160px; }
-	
-	/* ── 첫 번째 카드의 '첫 번째 줄'만 간격 넓게 */
-	.wh .two-cols > .card:first-child .card-title + .form-row{
-	  gap: 18px;           /* 필요값으로 조절 */
-	  column-gap: 18px;    /* 호환용 */
-	}
 
-	/* 체크박스 라벨 */
+	/* 체크박스 라벨 / チェックボックスラベル */
 	.wh .chk{ display:flex; align-items:center; gap:6px; color:#374151; font-size:12px; white-space:nowrap; }
 	.wh .checks{ display:flex; align-items:center; gap:40px; }
 	
-	/* 2번째 줄(체크/연말정산연도) 정렬 */
+	/* 2번째 줄(체크/연말정산연도) 정렬 / 2行目(チェック/年末調整年度)の整列 */
 	.wh .row-split{
 	  display:grid;
-	  grid-template-columns: 1fr auto;  /* 좌: 체크들 / 우: 연도 */
+	  grid-template-columns: 1fr auto;
 	  align-items:center;
 	  column-gap:12px;
 	}
 	
-	/* 체크 영역을 가로 배치하고, 두 번째(.mid)만 오른쪽 끝으로 밀기 */
 	.wh .row-split .checks{display:flex; width:100%; gap:12px;}
-	.wh .row-split .checks .mid{margin-left: auto; margin-right:250px;}  /* ← 이게 포인트 */
+	.wh .row-split .checks .mid{margin-left: auto; margin-right:250px;}
 	
-	/* 우측 블록은 너무 벌어지지 않게 */
 	.wh .row-split .right{justify-self:end; margin-right:210px;}
 
-	/* 버튼 */
+	/* 버튼 / ボタン */
 	.wh .btn, .wh .btn-primary{
 	  height:32px; padding:0 12px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer;
 	  font-size:12px;
 	}
-	/* 파란 버튼(.btn primary, .btn-primary 둘 다 수용) */
 	.wh .btn.primary, .wh .btn-primary{ background:#2563eb; color:#fff; border-color:#2563eb; }
 	.wh .btn:hover, .wh .btn-primary:hover{ filter:brightness(0.97); }
 	.wh .btn:disabled, .wh .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
 	
-	/* 데이터생성 버튼만 카드 오른쪽에서 살짝 안쪽으로 */
 	.wh #btnLoad{ margin-right:20px; }
 	
-	/* 	연말정산 readonly */
 	.wh input#annYear.is-readonly{
 	  background:#f3f4f6 !important;
 	  color:#6b7280 !important;
 	  cursor:not-allowed;
 	}
-	.wh input#annYear.is-readonly::placeholder{
-	  color:#9ca3af;
-	}
 	
-	/* 	확정버튼 체크박스 readonly */
-	.wh label.chk.is-readonly{
-	  color:#111316;       
-	}
-	.wh label.chk.is-readonly input[type="checkbox"]{
-	  accent-color:#111316;
-	  opacity:1;            
-	  pointer-events:none;
-	}
-	
-	
-	/* 표/탭 */
-/* 	.wh table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
-	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-	.wh th{ background:#f0f3f7; }
-	.wh td.num{text-align:right} .wh td.center{text-align:center} .wh td.code{font-family:Consolas,monospace} */
-	
+	/* 탭 / タブ */
 	.wh .tabs{ display:flex; gap:8px; margin:16px 0; }
 	.wh .tab{ padding:8px 12px; border:1px solid #bbb; border-bottom:none; background:#f7f7f7; cursor:pointer; border-radius:6px 6px 0 0; font-size:12px; }
 	.wh .tab.active{ background:#fff; font-weight:bold; }
+	
 	/* =========================
-		신고파일생성
+		신고파일생성 / 報告ファイル生成
 	   ========================= */
-	/* 신고파일생성 (접기/펼치기) */
 	.wh .file-card{ position:relative; margin-bottom:4px; }
 	.wh .file-card__header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
 	.wh .file-card .card-title{ margin-bottom:4px; }
 	.wh .file-card__body{ display:block; }
 	.wh .file-card.is-collapsed .file-card__body{ display:none; }
 	
-	/* 신고파일생성 내부 그리드 */
 	.wh .file-grid{
 	  --file-name-w: 480px;
 	  display:grid;
@@ -174,23 +143,17 @@
 	.wh .btns-col{ grid-area: btns; display:flex; flex-direction:column; gap:6px; align-items:stretch; width:100%; }
 	.wh .lbl-name{ grid-area: lblName; }
 	.wh .in-name{ grid-area: name; }
-	.wh .lbl-pwd{ grid-area: lblPwd; }
-	.wh .in-pwd{ grid-area: pwd; }
 	
-	/* 파일명 입력: readonly일 때 회색 배경/텍스트 */
 	.wh input#fileName[readonly]{
-	  background:#f3f4f6;   /* 연한 회색 */
-	  color:#6b7280;        /* 회색 글자 */
-	  cursor:not-allowed;   /* 손모양 금지 */
-	  border-color:#e5e7eb; /* (선택) 테두리도 연하게 */
+	  background:#f3f4f6;
+	  color:#6b7280;
+	  cursor:not-allowed;
+	  border-color:#e5e7eb;
 	}
-	/* 플레이스홀더도 연하게 */
-	.wh input#fileName[readonly]::placeholder{ color:#9ca3af; }
 	
 	/* =========================
-		요약/부표
+		요약/부표 / サマリー/別紙
 	   ========================= */
-		/* 요약/부표 스크롤 영역 */
 	.wh .data-area { margin-top:4px; }
 	.wh .data-area .tabs{
 	  position:static; top:0; z-index:2; background:#fff;
@@ -201,34 +164,33 @@
 	}
 	.wh .data-scroll .scroll-inner{ padding:8px; }
 	
-	/* 셀 단위 배경색 */
-	.wh td.cell-grey { background:#f3f4f6 !important; }   /* 회색 */
-	.wh td.cell-pink { background:#ffe2e2 !important; }   /* 연분홍(가감계에서 '소득 구분/코드'만) */
+	/* 테이블 스타일 / テーブルスタイル */
+	.wh table{ width:100%; border-collapse: separate; border-spacing: 0; font-size:12px; }
+	.wh th, .wh td{ border:1px solid #ddd; padding:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+	.wh th{ background:#f0f3f7; font-weight: bold; }
+	.wh td.num{text-align:right}
+	.wh td.center{text-align:center}
+	.wh td.code{font-family:Consolas,monospace}
+	.wh td.cell-grey { background:#f3f4f6 !important; }
+	.wh td.cell-pink { background:#ffe2e2 !important; }
 
-	/* 요약: 2번째 열(소득 구분) 폭 */
+	/* 요약: 2번째 열(소득 구분) 폭 / サマリー: 2番目の列(所得区分)の幅 */
 	#panelSummary table th:nth-child(2),
 	#panelSummary table td:nth-child(2) { width: 450px; }
 	
-	/* 부표: 2번째 열(소득 구분) 폭 */
+	/* 부표: 2번째 열(소득 구분) 폭 / 別紙: 2番目の列(所得区分)の幅 */
 	#panelAnnex table th:nth-child(2),
 	#panelAnnex table td:nth-child(2) { width: 450px; }
 	
-	/* 테이블은 기본값 유지 (보더가 끼어 들뜸 방지) */
-	#panelSummary table, #panelAnnex table{
-	  border-collapse: separate;
-	  border-spacing: 0;
-	}
-	   /* 스크롤 영역 안에서 헤더 고정 */
 	#panelSummary table thead th,
-	#panelAnnex   table thead th {
+	#panelAnnex table thead th {
 	  position: sticky;
 	  top: 0;
-	  z-index: 3;                 /* 본문 셀 위로 */
-
+	  z-index: 3;
 	}
 	
 	/* =========================
-		전월미환급세액
+		전월미환급세액 / 前月未還付税額
 	   ========================= */
 	.wh #refundBlock{ padding:6px 8px; }
 	.wh #refundBlock .card-title{ margin-bottom:6px; font-size:12px; }
@@ -247,15 +209,13 @@
 	.wh .refund-compact input[type="text"]{ width:var(--input-w); height:26px; padding:0 6px; box-sizing:border-box; }
 	.wh .refund-compact .placeholder{ width:var(--label-w); height:1px; display:block; }
 
-	/* 전월 미환급세액 박스 회색 */
 	#refundBlock input.input-grey {
-	  background: #f3f4f6 !important; /* 연회색 */
+	  background: #f3f4f6 !important;
 	  cursor: default;
 	}
 
-	
 	/* =========================
-		반응형
+		반응형 / レスポンシブ
 	   ========================= */
 	@media (max-width:1200px){
 	  .wh .two-cols{ grid-template-columns:1fr; }
@@ -266,187 +226,185 @@
 	    grid-template-areas:
 	      "lblName"
 	      "name"
-	      "lblPwd"
-	      "pwd"
 	      "btns";
 	  }
 	  .wh .btns-col{ grid-column:1; grid-row:auto; flex-direction:row; }
 	  .wh .btns-col .btn-primary{ width:auto; }
 	}
 
-</style>
+  </style>
 </head>
 
 <body>
-	<div class="wh"><!-- 네임스페이스 시작 -->
+	<!-- 네임스페이스 시작 / ネームスペース開始 -->
+	<div class="wh">
+	<!-- 데이터 속성으로 API URL 저장 / データ属性でAPI URLを保存 -->
 	<div class="container"
      data-summary-url="${apiSummary}"
      data-annex-url="${apiAnnex}"
 	 data-generate-url="${apiGenerate}"
 	 data-prev-refund-url="${apiRefundPrev}"
 	 data-save-refund-url="${apiRefundSave}">
-</div>
-	<!-- 페이지 헤더 -->
+	</div>
+
+	<!-- 페이지 헤더 / ページヘッダー -->
 	<div class="page-header">
-  <div class="page-title">원천징수이행상황신고서</div>
-  <button id="btnSearch" class="btn primary">🔍조회</button>
+  <div class="page-title">源泉徴収状況報告書</div>
+  <!-- 조회 버튼 / 検索ボタン -->
+  <button id="btnSearch" class="btn primary">🔍検索</button>
 </div>
 	
-
-  <!-- 상단 2컬럼 -->
+  <!-- 상단 2컬럼 / 上部2列 -->
   <div class="two-cols">
 
-    <!-- ▣ 신고집계기준 -->
+    <!-- ▣ 신고집계기준 / ▣ 報告集計基準 -->
     <div class="card">
-      <div class="card-title">신고집계기준(원천징수명세서 및 부표)</div>
+      <div class="card-title">報告集計基準(源泉徴収明細及び別紙)</div>
 
-      <!-- 1줄: 라벨+입력 촘촘, 오른쪽에 '데이터생성' -->
-      <div class="form-row" style = "gap: 16px;">
+      <!-- 1줄 / 1行 -->
+      <div class="form-row" style="gap: 16px;">
       	<div>
-        <span class="label-80 req">원천세사업장</span>
-        <select class="w-110 min-160"><option>원천세사업장</option></select>
+        <span class="label-80 req">源泉税事業場</span>
+        <select class="w-110 min-160"><option>源泉税事業場</option></select>
 		</div>
 		<div>
-        <span class="label-80 req">귀속월</span>
+        <span class="label-80 req">帰属月</span>
         <input id="ym" type="text" class="w-110" value="2025-09"/>
 		</div>
 		<div>
-        <span class="label-80 req">지급월</span>
+        <span class="label-80 req">支給月</span>
         <input id="payYm" type="text" class="w-110" placeholder="yyyy-MM"/>
 		</div>
 		<div>
-        <span class="label-80 req">신고연월</span>
+        <span class="label-80 req">報告年月</span>
         <input id="reportYm" type="text" class="w-110" placeholder="yyyy-MM"/>
 		</div>
 		<div>
-        <span class="label-80">신고구분</span>
+        <span class="label-80">報告区分</span>
         <select class="w-110">
-          <option>정기신고</option>
-          <option>기한후신고</option>
+          <option>定期報告</option>
+          <option>期限後報告</option>
         </select>
         </div>
 
-        <button id="btnLoad" class="btn primary ml-auto no-shrink">데이터생성</button>
+        <button id="btnLoad" class="btn primary ml-auto no-shrink">データ生成</button>
       </div>
 
-      <!-- 2줄: 좌측(체크 2개) / 우측(연말정산연도) -->
+      <!-- 2줄 / 2行 -->
       <div class="row-split mt-8">
         <div class="checks">
-          <label class="chk"><input type="checkbox" id="opt1"> 퇴직/중도정산 지급월 기준으로 집계</label>
-          <label class="chk mid"><input type="checkbox" id="opt2"> 연말정산반영</label>
+          <label class="chk"><input type="checkbox" id="opt1"> 退職/中途精算支給月基準で集計</label>
+          <label class="chk mid"><input type="checkbox" id="opt2"> 年末調整反映</label>
         </div>
 
         <div class="right pair" style="margin-right:204px">
-          <span class="label-80 req">연말정산연도</span>
+          <span class="label-80 req">年末調整年度</span>
           <input id="annYear" style="width:84px" type="text" class="w-80" placeholder="YYYY"/>
         </div>
       </div>
     </div>
 
-    <!-- ▣ 출력용 -->
+    <!-- ▣ 출력용 / ▣ 印刷用 -->
     <div class="card">
-      <div class="card-title">출력용</div>
+      <div class="card-title">印刷用</div>
 
-      <!-- 신고일 + 체크박스들 -->
+      <!-- 1줄 / 1行 -->
       <div class="form-row" style="gap:20px;">
         <span class="pair">
-          <span class="label-80">신고일</span>
+          <span class="label-80">報告日</span>
           <input id="reportDate" type="text" class="w-80" placeholder="YYYY-MM"/>
         </span>
 
-        <label class="chk"><input type="checkbox" id="optMonthPay" checked> 일괄납부</label>
-        <label class="chk"><input type="checkbox" id="optBizUnit"> 사업자단위과세</label>
-        <label class="chk"><input type="checkbox" id="optConfirm"> 확정</label>
-        <label class="chk"><input type="checkbox" id="optAgent"> 세무대리인</label>
+        <label class="chk"><input type="checkbox" id="optMonthPay" checked> 一括納付</label>
+        <label class="chk"><input type="checkbox" id="optBizUnit"> 事業者単位課税</label>
+        <label class="chk"><input type="checkbox" id="optConfirm"> 確定</label>
+        <label class="chk"><input type="checkbox" id="optAgent"> 税務代理人</label>
       </div>
 
-      <!-- 신고구분(체크박스) : 간격 45px 통일 -->
+      <!-- 2줄 / 2行 -->
       <div class="form-row mt-12" style="gap:12px;">
-        <span class="label-80" style="margin-right:10px;">신고구분</span>
+        <span class="label-80" style="margin-right:10px;">報告区分</span>
         <div class="checks">
-          <label class="chk"><input type="checkbox" name="repType" checked> 매월</label>
-          <label class="chk"><input type="checkbox" name="repType"> 반기</label>
-          <label class="chk"><input type="checkbox" name="repType"> 연말</label>
-          <label class="chk"><input type="checkbox" name="repType"> 소득처분</label>
-          <label class="chk"><input type="checkbox" name="repType"> 환급세액</label>
+          <label class="chk"><input type="checkbox" name="repType" checked> 毎月</label>
+          <label class="chk"><input type="checkbox" name="repType"> 半期</label>
+          <label class="chk"><input type="checkbox" name="repType"> 年末</label>
+          <label class="chk"><input type="checkbox" name="repType"> 所得処分</label>
+          <label class="chk"><input type="checkbox" name="repType"> 還付税額</label>
         </div>
       </div>
     </div>
   </div><!-- /.two-cols -->
 
- <!-- ▣ 신고파일생성 (접기/펼치기 지원) -->
+ <!-- ▣ 신고파일생성 / ▣ 報告ファイル生成 -->
 <div class="card file-card" id="fileCard">
   <div class="card-title file-card__header" id="fileCardHeader">
-    <span>▼ 신고파일생성</span>
+    <span>▼ 報告ファイル生成</span>
   </div>
 
   <div class="file-card__body">
     <div class="file-grid">
-      <span class="label-80 lbl-name" style="margin-right:10px;">파일명</span>
+      <span class="label-80 lbl-name" style="margin-right:10px;">ファイル名</span>
       <input id="fileName"
              class="in-name"
              type="text"
              readonly
              style="width:448px;"
-             placeholder="귀속월로 자동 생성됩니다." />
+             placeholder="帰属月で自動生成されます。" />
 
       <div class="btns-col">
-        <button id="btnMake" class="btn-primary">신고파일생성</button>
+        <button id="btnMake" class="btn-primary">報告ファイル生成</button>
       </div>
     </div>
   </div>
 </div>
 
-
-  <!-- 탭 -->
+  <!-- 탭 / タブ -->
   <div class="data-area">
   <div class="tabs">
-    <button id="tabSummary" class="tab active">원천징수명세및납부세액(요약)</button>
-    <button id="tabAnnex"   class="tab">원천징수이행상황신고서(부표)</button>
+    <button id="tabSummary" class="tab active">源泉徴収明細及び納付税額(要約)</button>
+    <button id="tabAnnex" class="tab">源泉徴収状況報告書(別紙)</button>
   </div>
 
-  <!-- 요약 -->
-   <div class="data-scroll"  id="dataScroll">
+  <!-- 요약 패널 / サマリーパネル -->
+  <div class="data-scroll" id="dataScroll">
    <div class="scroll-inner">
   <div id="panelSummary" class="panel">
-    <table id = tblSummary>
+    <table id="tblSummary">
       <thead>
         <tr>
           <th style="width:50px;">No</th>
-          <th style="width:450px;">소득 구분</th>
-          <th style="width:60px;">코드</th>
-          <th style="width:70px;">인원</th>
-          <th style="width:110px;">총지급액</th>
-          <th style="width:110px;">징수농특세</th>
-          <th style="width:110px;">납부소득세</th>
-          <th style="width:110px;">징수소득세</th>
-          <th style="width:110px;">조정환급세액</th>
-          <th style="width:110px;">납부농특세</th>
-          <th style="width:110px;">징수가산세</th>
+          <th style="width:450px;">所得区分</th>
+          <th style="width:60px;">コード</th>
+          <th style="width:70px;">人員</th>
+          <th style="width:110px;">総支給額</th>
+          <th style="width:110px;">徴収農特税</th>
+          <th style="width:110px;">納付所得税</th>
+          <th style="width:110px;">徴収所得税</th>
+          <th style="width:110px;">調整還付税額</th>
+          <th style="width:110px;">納付農特税</th>
+          <th style="width:110px;">徴収加算税</th>
         </tr>
       </thead>
       <tbody id="gridBody"></tbody>
     </table>
   </div>
 
-  <!-- 부표 -->
+  <!-- 부표 패널 / 別紙パネル -->
   <div id="panelAnnex" class="panel" style="display:none;">
-    <table id = tblAnnex>
+    <table id="tblAnnex">
       <thead>
         <tr>
-
-    <th style="width:50px;">No</th>
-    <th style="width:450px;">소득 구분</th>
-    <th style="width:60px;">코드</th>
-    <th style="width:70px;">인원</th>
-    <th style="width:110px;">총지급액</th>
-    <th style="width:110px;">징수소득세</th>
-    <th style="width:110px;">징수농특세</th>
-    <th style="width:110px;">징수가산세</th>
-    <th style="width:110px;">조정환급세액</th>
-    <th style="width:110px;">납부소득세</th>
-    <th style="width:110px;">납부농특세</th>
-
+          <th style="width:50px;">No</th>
+          <th style="width:450px;">所得区分</th>
+          <th style="width:60px;">コード</th>
+          <th style="width:70px;">人員</th>
+          <th style="width:110px;">総支給額</th>
+          <th style="width:110px;">徴収所得税</th>
+          <th style="width:110px;">徴収農特税</th>
+          <th style="width:110px;">徴収加算税</th>
+          <th style="width:110px;">調整還付税額</th>
+          <th style="width:110px;">納付所得税</th>
+          <th style="width:110px;">納付農特税</th>
         </tr>
       </thead>
       <tbody id="annexBody"></tbody>
@@ -455,59 +413,52 @@
 </div>
 </div>
 
-  <!-- 전월 미환급세액 -->
-<div class="card"  id="refundBlock">
-  <div class="card-title">전월 미환급세액</div>
+  <!-- 전월 미환급세액 / 前月未還付税額 -->
+<div class="card" id="refundBlock">
+  <div class="card-title">前月未還付税額</div>
 
   <div class="refund-compact">
-    <!-- ① 전월미환급세액: A B C + (빈 1쌍) -->
-    <div class="row-title">전월미환급세액 :</div><div></div>
-<label>(A) 전월미환급세액</label><input id="A" type="text" value="0">
-<label>(B) 기환급신청한세액</label><input id="B" type="text" value="0">
-<label>(C) 차감잔액  (A - B)</label><input id="C" type="text" value="0" readonly class="input-grey">
-    <!-- 남는 1쌍을 빈 칸으로 채워 정렬 유지 -->
+    <!-- ① 前月未還付税額 -->
+    <div class="row-title">前月未還付税額 :</div><div></div>
+<label>(A) 前月未還付税額</label><input id="A" type="text" value="0">
+<label>(B) 既還付申請税額</label><input id="B" type="text" value="0">
+<label>(C) 差減残額  (A - B)</label><input id="C" type="text" value="0" readonly class="input-grey">
     <span class="placeholder"></span><span></span>
 
-    <!-- ② 당월발생 환급세액: D E F G -->
-    <div class="row-title">당월발생 환급세액 :</div><div></div>
-<label>(D) 일반환급</label><input id="D" type="text" value="0" readonly class="input-grey">
-<label>(E) 신탁재산(금융회사 등)</label><input id="E" type="text" value="0">
-<label>(F) 금융회사 등 환급잔액</label><input id="F" type="text" value="0">
-<label>(G) 합병 등 환급세액</label><input id="G" type="text" value="0">
+    <!-- ② 当月発生還付税額 -->
+    <div class="row-title">当月発生 還付税額 :</div><div></div>
+<label>(D) 一般還付</label><input id="D" type="text" value="0" readonly class="input-grey">
+<label>(E) 信託資産(金融会社等)</label><input id="E" type="text" value="0">
+<label>(F) 金融会社等還付残額</label><input id="F" type="text" value="0">
+<label>(G) 合併等還付税額</label><input id="G" type="text" value="0">
 
-    <!-- ③ 환급세액: H I J K -->
-    <div class="row-title">환급세액 :</div><div></div>
-<label>(H) 조정대상환급세액 <br><span style="font-size:12px;color:#666">( C + D + E + F + G )</span></label><input id="H" type="text" value="0" readonly class="input-grey">
-<label>(I) 당월조정환급세액</label><input id="I" type="text" value="0" readonly class="input-grey">
-<label>(J) 차월이월환급세액 (H - I)</label><input id="J" type="text" value="0" readonly class="input-grey">
-<label>환급신청금액</label><input id="K" type="text" value="0"> 
+    <!-- ③ 還付税額 -->
+    <div class="row-title">還付税額 :</div><div></div>
+<label>(H) 調整対象還付税額 <br><span style="font-size:12px;color:#666">( C + D + E + F + G )</span></label><input id="H" type="text" value="0" readonly class="input-grey">
+<label>(I) 当月調整還付税額</label><input id="I" type="text" value="0" readonly class="input-grey">
+<label>(J) 翌月繰越還付税額 (H - I)</label><input id="J" type="text" value="0" readonly class="input-grey">
+<label>還付申請金額</label><input id="K" type="text" value="0"> 
   </div>
 </div>
-
 
 </div><!-- /.container -->
 </div><!-- /.wh -->
 
-<!-- PDF 저장 -->
-<!-- 1) html2canvas -->
+<!-- PDF 저장 / PDF保存 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<!-- 2) jsPDF (UMD) -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-<!-- ⭐ UMD→전역 shim (반드시 플러그인보다 먼저) -->
 <script>
   if (window.jspdf && window.jspdf.jsPDF && !window.jsPDF) {
     window.jsPDF = window.jspdf.jsPDF;
   }
 </script>
 
-<!-- 3) 암호 플러그인 -->
 <script src="https://unpkg.com/jspdf-encrypt/dist/jspdf.plugin.encrypt.min.js"></script>
 
-<!-- 4) 너의 페이지 스크립트 -->
 <script src="<c:url value='/resources/js/withholding.js'/>"></script>
 	<script>
+		// DOM 로드 완료 후 테이블 정렬 기능 활성화 / DOMロード完了後テーブルソート機能を有効化
 		document.addEventListener('DOMContentLoaded', function() {
 			enableSort('#tblSummary');
 			enableSort('#tblAnnex');
