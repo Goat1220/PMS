@@ -49,7 +49,7 @@ public class YearendTaxSimController {
 
         model.addAttribute("baseYear", y);
         model.addAttribute("empId", e);
-        model.addAttribute("bizPlace", "본사");
+        model.addAttribute("bizPlace", "本社");
 
         // 최종 탭 데이터 (확정건 우선, 없으면 미확정건 fallback)
         List<SimItemRow> finalList = (e.isEmpty())
@@ -62,7 +62,7 @@ public class YearendTaxSimController {
         model.addAttribute("simHeader", simHead);
 
         // 세액적용결과
-        String taxApply = (e.isEmpty()) ? "미판정" : query.computeTaxApplyResult(e, y, null);
+        String taxApply = (e.isEmpty()) ? "未判定" : query.computeTaxApplyResult(e, y, null);
         model.addAttribute("taxApplyResult", taxApply);
 
         return "feature/yearendtaxsimulation/view";
@@ -105,8 +105,8 @@ public class YearendTaxSimController {
     public ResponseEntity<?> delete(@RequestParam Long yrtId) {
         boolean ok = command.delete(yrtId);
         return ok
-            ? ResponseEntity.ok("삭제 완료")
-            : ResponseEntity.badRequest().body("확정건은 삭제 불가");
+            ? ResponseEntity.ok("削除済み")
+            : ResponseEntity.badRequest().body("確定件は削除不可");
     }
 
     /** ⑤ 납부 특례(분납) 계산 / 納付特例（分納）計算 */
