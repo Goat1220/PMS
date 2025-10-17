@@ -545,35 +545,49 @@ function onReason() {
     });
 }
 
-/* 시뮬레이션 실행(덮어쓰기) / シミュレーション実行（上書き） */
 function onSim() {
-  if (needEmp()) return;
-  var y = document.getElementById('baseYear').value.trim();
-  if (!validYear(y)) {
-    alert('精算年度の形式が正しくありません。');
-    return;
-  }
-  if (!confirm('既存の結果を削除して新しく作成しますか？')) return;
+	  if (needEmp()) return;
+	  var y = document.getElementById('baseYear').value.trim();
+	  if (!validYear(y)) {
+	    alert('精算年度の形式が正しくありません。');
+	    return;
+	  }
+	  if (!confirm('既存の結果を削除して新しく作成しますか？')) return;
 
-  var url = ctx() + '/feature/yearend-tax-simulation/api/simulate';
-  var form = new URLSearchParams({
-    empId: emp(),
-    baseYear: y,
-    overwrite: 'true'
-  });
+	  var url = ctx() + '/feature/yearend-tax-simulation/api/simulate';
+	  var form = new URLSearchParams({
+	    empId: emp(),
+	    baseYear: y,
+	    overwrite: 'true'
+	  });
 
-  fetch(url, { method: 'POST', body: form })
-    .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
-    .then(function(yrtIdRaw) {
-      // 숫자만 추출
-      var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
-      document.getElementById('yrtId').value = cleanYrtId;
-      onReason();
-      refreshTaxApplyResult(cleanYrtId);
-    }) .catch(function() {
-      alert('シミュレーション処理に失敗しました。');
-    });
-}
+	  fetch(url, { method: 'POST', body: form })
+	    .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
+	    .then(function(yrtIdRaw) {
+	      // 숫자만 추출
+	      var cleanYrtId = yrtIdRaw.replace(/\D/g, '');
+	      document.getElementById('yrtId').value = cleanYrtId;
+
+	      // 기존 시뮬 탭 갱신
+	      onReason();
+	      refreshTaxApplyResult(cleanYrtId);
+
+	      //  추가: 시뮬레이션 실행 후 “최종 탭”도 함께 갱신
+	      var empNo = document.getElementById('empNo').value.trim();
+	      var year = document.getElementById('baseYear').value.trim();
+	      var finalUrl = ctx() + '/feature/yearend-tax-simulation/api/final?empId='
+	          + encodeURIComponent(empNo) + '&baseYear=' + encodeURIComponent(year);
+
+	      fetch(finalUrl)
+	        .then(function(r){ return r.ok ? r.json() : []; })
+	        .then(renderFinal)
+	        .catch(function(e){ console.log('최종탭 갱신 실패', e); });
+	    })
+	    .catch(function() {
+	      alert('シミュレーション処理に失敗しました。');
+	    });
+	}
+
 
 /*시뮬레이션 결과 삭제 / シミュレーション結果削除 */
 function onDelete() {
@@ -813,3 +827,53 @@ window.onEmployeePicked = function(row) {
 			      'empPopup', features);
 	}
 </script>
+<script>
+/*  페이지 최초 로드시 '최종 탭' 데이터 자동 로드 / 初期表示時に「最終」タブを自動ロード */
+window.addEventListener('DOMContentLoaded', function() {
+  var empNo = document.getElementById('empNo').value.trim();
+  var year = document.getElementById('baseYear').value.trim();
+
+  if (!empNo || !year) {
+    console.log("사번 또는 연도가 비어있음 → 자동 조회 생략");
+    return;
+  }
+
+  var url = ctx() + '/feature/yearend-tax-simulation/api/final?empId='
+          + encodeURIComponent(empNo) + '&baseYear='
+          + encodeURIComponent(year);
+
+  console.log("최종탭 자동로드 API 호출:", url);
+
+  fetch(url)
+    .then(function(res) { return res.ok ? res.json() : Promise.reject(res); })
+    .then(renderFinal) //  최종 데이터 렌더링 함수 호출
+    .catch(function(err) {
+      console.error("최종탭 데이터 조회 실패:", err);
+    });
+});
+
+/*  최종 탭 렌더링 / 最終タブレンダリング */
+function renderFinal(rows) {
+  var tbody = document.querySelector('#panel-final tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = ''; // 기존 내용 초기화
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">データがありません</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(r) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + (r.itemClass || '') + '</td>' +
+      '<td>' + (r.itemName || '') + '</td>' +
+      '<td class="right">' + fmt(r.amount) + '</td>' +
+      '<td class="right">' + fmt(r.expectedAmount) + '</td>' +
+      '<td>' + (r.taxApplyType || '') + '</td>' +
+      '<td>' + (r.confirmYn || '') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+</script>
+
