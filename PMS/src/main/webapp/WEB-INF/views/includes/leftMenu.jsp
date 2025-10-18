@@ -46,20 +46,19 @@
 }
 </style>
 
-
 <li class="menu-section">
-  <div class="section-title">給与担当者の給与処理</div>
+  <div class="section-title">給与担当者の給与・賞与処理</div>
   <ul class="submenu">
-    <li><a href="<c:url value='/runpayroll'/>">昇給処理</a></li>
-    <li><a href="<c:url value='/voucher'/>">給与伝票処理</a></li>
-    <li><a href="<c:url value='/report/withholding'/>">申告書確認</a></li>
+    <li><a href="<c:url value='/runpayroll'/>">給与・賞与を処理する</a></li>
+    <li><a href="<c:url value='/voucher'/>">給与・賞与の伝票処理</a></li>
+    <li><a href="<c:url value='/report/withholding'/>">申告書を確認する</a></li>
   </ul>
 </li>
 
 <li class="menu-section">
-  <div class="section-title">個人給与処理内訳確認</div>
+  <div class="section-title">個人の給与処理履歴確認</div>
   <ul class="submenu">
-    <li><a href="<c:url value='/feature/payslip/view'/>">給与明細書確認</a></li>
+    <li><a href="<c:url value='/feature/payslip/view'/>">給与明細を確認する</a></li>
   </ul>
 </li>
 
@@ -68,7 +67,7 @@
   <ul class="submenu">
     <li><a href="<c:url value='/feature/yearend-tax-simulation/view'/>">個人別年末調整シミュレーション</a></li>
     <li><a href="<c:url value='/yearend/result/list'/>">個人別年末調整結果照会</a></li>
-    <li><a href="<c:url value='/yearend/admin/list'/>">年末調整処理/申告</a></li>
+    <li><a href="<c:url value='/yearend/admin/list'/>">給与担当者の年末調整処理・申告</a></li>
   </ul>
 </li>
 </ul>
