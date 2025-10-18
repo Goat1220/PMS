@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ include file="../includes/commonform.jsp" %>
-<%@ include file="../includes/table.jsp" %>
+<%@ include file="../includes/commonform.jsp"%>
+<%@ include file="../includes/table.jsp"%>
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -16,7 +16,7 @@
 		<div class="filters">
 			<div class="muted">給与照会</div>
 			<div class="filters">
-				<label>支給年月 <input id="yyyymm" type="month" value="2025-09"></label>
+				<label>支給年月 <input id="yyyymm" value="2025-09"></label>
 				<label>給与区分 <select id="payType">
 						<option value="">全体</option>
 						<option value="SALARY" selected>給与</option>
@@ -171,7 +171,8 @@
 			unconfirm : '${unconfirmUrl}'
 		};
 	</script>
-
+	<script
+		src="${pageContext.request.contextPath}/resources/js/ja-month-calendar.js"></script>
 	<script
 		src="${pageContext.request.contextPath}/resources/js/runpayroll.js"
 		defer></script>

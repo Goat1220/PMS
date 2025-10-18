@@ -521,6 +521,7 @@
   // DOM 로드 완료 시 이벤트 바인드 & 최초 조회 / DOM 読込完了時にイベントをバインドし初回検索
   document.addEventListener('DOMContentLoaded', function () {
     bindEvents();
+    attachJaMonthOnly('#yyyymm', { position: 'below' }); 
     doSearch();
   });
 })();

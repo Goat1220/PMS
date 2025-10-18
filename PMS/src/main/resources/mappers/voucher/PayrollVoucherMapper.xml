@@ -314,7 +314,7 @@
       )
     )                                         AS display_seq,      -- 화면 번호 / 表示番号
     r.account_id                              AS account_id,       -- accountName/accountCode 둘 다 매핑 / 両方に同値マッピング
-    CASE r.drcr_code WHEN 'D' THEN '차변' ELSE '대변' END AS drcr_name,
+    CASE r.drcr_code WHEN 'D' THEN '借方' ELSE '貸方' END AS drcr_name,
     r.debit_amt                               AS debit_amt,
     r.credit_amt                              AS credit_amt,
     dp.dept_name                              AS occur_dept_name,

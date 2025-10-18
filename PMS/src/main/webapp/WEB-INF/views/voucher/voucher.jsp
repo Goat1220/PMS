@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ include file="../includes/commonform.jsp" %>
-<%@ include file="../includes/table.jsp" %>
+<%@ include file="../includes/commonform.jsp"%>
+<%@ include file="../includes/table.jsp"%>
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -163,46 +163,36 @@ tbody tr:hover {
 
 	<header>
 		<div class="filters">
-			<label>会計単位
-				<select id="orgUnit">
+			<label>会計単位 <select id="orgUnit">
 					<option value="본사" selected>本社</option>
-				</select>
-			</label>
-			<label>給与作業グループ
-				<select id="jobGroup">
+			</select>
+			</label> <label>給与作業グループ <select id="jobGroup">
 					<option value="정기급여" selected>定期給与</option>
-				</select>
-			</label>
-			<label>伝票処理対象
-				<select id="targetType">
+			</select>
+			</label> <label>伝票処理対象 <select id="targetType">
 					<option value="재직" selected>在職</option>
 					<option value="퇴직">退職</option>
 					<option value="재직+퇴직">在職+退職</option>
-				</select>
-			</label>
-			<label>適用年月
-				<input id="yyyymm" type="month" value="${defaultYyyymm != null ? defaultYyyymm : '2018-08'}">
-			</label>
-			<label>給与種別
-				<select id="payType">
+			</select>
+			</label> <label>適用年月 <input id="yyyymm"
+				value="${defaultYyyymm != null ? defaultYyyymm : '2025-09'}">
+			</label> <label>給与種別 <select id="payType">
 					<option value="SALARY" ${defaultPayType=='SALARY'?'selected':''}>給与</option>
 					<option value="BONUS" ${defaultPayType=='BONUS'?'selected':''}>賞与</option>
-				</select>
-			</label>
-			<label>処理区分
-				<select id="procKind">
+			</select>
+			</label> <label>処理区分 <select id="procKind">
 					<option value="분개">仕訳</option>
-				</select>
+			</select>
 			</label>
 
 			<button id="btnBaseGenerate">基礎データ生成</button>
 			<button id="btnProcess" class="secondary">仕訳伝票処理</button>
 
 			<div class="totals">
-				<span style="color: var(- -muted); font-size: 12px;">借方合計</span>
-				<input id="sumDebit" type="text" readonly>
-				<span style="color: var(- -muted); font-size: 12px;">貸方合計</span>
-				<input id="sumCredit" type="text" readonly>
+				<span style="color: var(- -muted); font-size: 12px;">借方合計</span> <input
+					id="sumDebit" type="text" readonly> <span
+					style="color: var(- -muted); font-size: 12px;">貸方合計</span> <input
+					id="sumCredit" type="text" readonly>
 			</div>
 		</div>
 	</header>
@@ -240,8 +230,7 @@ tbody tr:hover {
 					</table>
 				</div>
 				<div style="margin-top: 8px; color: var(- -muted); font-size: 12px;">
-					※ 「仕訳伝票処理」をクリックすると、伝票および伝票行に反映されます。
-				</div>
+					※ 「仕訳伝票処理」をクリックすると、伝票および伝票行に反映されます。</div>
 			</div>
 		</div>
 	</div>
@@ -258,7 +247,10 @@ tbody tr:hover {
 			process : '${processUrl}'
 		};
 	</script>
-	<script src="${pageContext.request.contextPath}/resources/js/voucher.js" defer></script>
+	<script
+		src="${pageContext.request.contextPath}/resources/js/ja-month-calendar.js"></script>
+	<script
+		src="${pageContext.request.contextPath}/resources/js/voucher.js" defer></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			enableSort('#tblVoucher');

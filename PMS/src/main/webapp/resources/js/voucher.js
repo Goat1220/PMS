@@ -238,6 +238,7 @@
       console.warn('VoucherConfig.preview が空です'); // 개발자 콘솔용 / 開発者コンソール用
     }
     bind();
+    attachJaMonthOnly('#yyyymm', { position: 'below' }); 
     // 필요 시 자동 미리보기 / 必要に応じて自動プレビュー
     doPreview();
   });
