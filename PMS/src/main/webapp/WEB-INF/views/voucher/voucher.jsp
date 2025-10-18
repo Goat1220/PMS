@@ -4,10 +4,10 @@
 <%@ include file="../includes/table.jsp" %>
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>급상여 전표처리</title>
+<title>給与・賞与 伝票処理</title>
 <style>
 :root { -
 	-gap: 12px; -
@@ -163,81 +163,91 @@ tbody tr:hover {
 
 	<header>
 		<div class="filters">
-			<label>회계단위 <select id="orgUnit">
-					<option value="본사" selected>본사</option>
-			</select>
-			</label> <label>급여작업군 <select id="jobGroup">
-					<option value="정기급여" selected>정기급여</option>
-			</select>
-			</label> <label>전표처리대상자 <select id="targetType">
-					<option value="재직" selected>재직</option>
-					<option value="퇴직">퇴직</option>
-					<option value="재직+퇴직">재직+퇴직</option>
-			</select>
-			</label> <label>적용연월 <input id="yyyymm" type="month"
-				value="${defaultYyyymm != null ? defaultYyyymm : '2018-08'}">
-			</label> <label>급상여종류 <select id="payType">
-					<option value="SALARY" ${defaultPayType=='SALARY'?'selected':''}>급여</option>
-					<option value="BONUS" ${defaultPayType=='BONUS'?'selected':''}>상여</option>
-			</select>
-			</label> <label>처리구분 <select id="procKind">
-					<option value="분개">분개</option>
-			</select>
+			<label>会計単位
+				<select id="orgUnit">
+					<option value="본사" selected>本社</option>
+				</select>
+			</label>
+			<label>給与作業グループ
+				<select id="jobGroup">
+					<option value="정기급여" selected>定期給与</option>
+				</select>
+			</label>
+			<label>伝票処理対象
+				<select id="targetType">
+					<option value="재직" selected>在職</option>
+					<option value="퇴직">退職</option>
+					<option value="재직+퇴직">在職+退職</option>
+				</select>
+			</label>
+			<label>適用年月
+				<input id="yyyymm" type="month" value="${defaultYyyymm != null ? defaultYyyymm : '2018-08'}">
+			</label>
+			<label>給与種別
+				<select id="payType">
+					<option value="SALARY" ${defaultPayType=='SALARY'?'selected':''}>給与</option>
+					<option value="BONUS" ${defaultPayType=='BONUS'?'selected':''}>賞与</option>
+				</select>
+			</label>
+			<label>処理区分
+				<select id="procKind">
+					<option value="분개">仕訳</option>
+				</select>
 			</label>
 
-			<button id="btnBaseGenerate">기초자료생성</button>
-			<button id="btnProcess" class="secondary">분개전표처리</button>
+			<button id="btnBaseGenerate">基礎データ生成</button>
+			<button id="btnProcess" class="secondary">仕訳伝票処理</button>
 
 			<div class="totals">
-				<span style="color: var(- -muted); font-size: 12px;">차변합계</span> <input
-					id="sumDebit" type="text" readonly> <span
-					style="color: var(- -muted); font-size: 12px;">대변합계</span> <input
-					id="sumCredit" type="text" readonly>
+				<span style="color: var(- -muted); font-size: 12px;">借方合計</span>
+				<input id="sumDebit" type="text" readonly>
+				<span style="color: var(- -muted); font-size: 12px;">貸方合計</span>
+				<input id="sumCredit" type="text" readonly>
 			</div>
 		</div>
 	</header>
 
 	<div class="container">
 		<div class="card">
-			<div class="card-header">전표 미리보기</div>
+			<div class="card-header">伝票プレビュー</div>
 			<div class="card-body">
 				<div class="table-wrap">
 					<table id="tblVoucher">
 						<thead>
 							<tr>
 								<th style="width: 40px;">#</th>
-								<th>계정과목</th>
-								<th>차대구분</th>
-								<th class="right">차변금액</th>
-								<th class="right">대변금액</th>
-								<th>발생부서</th>
-								<th>발생원천</th>
-								<th>지급일</th>
-								<th>적요</th>
-								<th>전표형번호</th>
-								<th>전표내부코드</th>
-								<th>승인여부</th>
-								<th>순번</th>
-								<th>계정내부코드</th>
-								<th>차대구분코드</th>
-								<th>발생부서코드</th>
-								<th>비용구분코드</th>
-								<th>처리구분</th>
-								<th>전표처리대상자코드</th>
+								<th>勘定科目</th>
+								<th>借貸区分</th>
+								<th class="right">借方金額</th>
+								<th class="right">貸方金額</th>
+								<th>発生部門</th>
+								<th>発生元</th>
+								<th>支給日</th>
+								<th>摘要</th>
+								<th>伝票型番号</th>
+								<th>伝票内部コード</th>
+								<th>承認有無</th>
+								<th>連番</th>
+								<th>勘定内部コード</th>
+								<th>借貸区分コード</th>
+								<th>発生部門コード</th>
+								<th>費用区分コード</th>
+								<th>処理区分</th>
+								<th>伝票処理対象者コード</th>
 							</tr>
 						</thead>
 						<tbody></tbody>
 					</table>
 				</div>
 				<div style="margin-top: 8px; color: var(- -muted); font-size: 12px;">
-					※ ‘분개전표처리’ 클릭 시 전표, 전표라인에 반영됩니다.</div>
+					※ 「仕訳伝票処理」をクリックすると、伝票および伝票行に反映されます。
+				</div>
 			</div>
 		</div>
 	</div>
 
-	<%-- API URL 바인딩 --%>
-	<c:url var="baseGenerateUrl"
-		value="/voucher/api//basegenerate" />
+	<%-- API URL バインド --%>
+	<c:url var="baseGenerateUrl" value="/voucher/api//basegenerate" />
 	<c:url var="viewUrl" value="/voucher/api/view" />
 	<c:url var="processUrl" value="/voucher/api/process" />
 
@@ -248,9 +258,8 @@ tbody tr:hover {
 			process : '${processUrl}'
 		};
 	</script>
-	<script
-		src="${pageContext.request.contextPath}/resources/js/voucher.js" defer></script>
-			<script>
+	<script src="${pageContext.request.contextPath}/resources/js/voucher.js" defer></script>
+	<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			enableSort('#tblVoucher');
 		});

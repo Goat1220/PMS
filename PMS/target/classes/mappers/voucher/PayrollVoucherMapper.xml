@@ -5,12 +5,11 @@
 <mapper
 	namespace="org.pms.feature.voucher.mapper.PayrollVoucherMapper">
 
-
-	<!-- 도메인 매핑 -->
+	<!-- 도메인 매핑 / ドメインマッピング -->
 	<resultMap id="VoucherLedgerRowMap"
 		type="org.pms.feature.voucher.domain.VoucherLedgerRow">
 		<result property="displaySeq" column="display_seq" />
-		<result property="accountName" column="account_id" />  <!-- 계정명을 account_id로 대체 -->
+		<result property="accountName" column="account_id" />  <!-- 계정명을 account_id로 대체 / 勘定名は account_id を代替表示 -->
 		<result property="drcrName" column="drcr_name" />
 		<result property="debitAmt" column="debit_amt" />
 		<result property="creditAmt" column="credit_amt" />
@@ -21,7 +20,7 @@
 		<result property="voucherNo" column="voucher_no" />
 		<result property="approvedYn" column="approved_yn" />
 		<result property="lineSeq" column="line_seq" />
-		<result property="accountCode" column="account_id" />   <!-- accountCode도 account_id 그대로 -->
+		<result property="accountCode" column="account_id" />   <!-- accountCode도 account_id 그대로 / accountCode も account_id をそのまま使用 -->
 		<result property="drcrCode" column="drcr_code" />
 		<result property="occurDeptCode" column="occur_dept_code" />
 		<result property="costTypeCode" column="cost_type_code" />
@@ -29,7 +28,7 @@
 		<result property="targetCode" column="target_code" />
 	</resultMap>
 
-	<!-- 2) 헤더: 없으면 INSERT -->
+	<!-- 2) 헤더: 없으면 INSERT / ヘッダー：無ければ INSERT -->
 	<insert id="insertVoucherIfAbsent">
     <![CDATA[
     INSERT INTO pay_voucher (voucher_id, voucher_no, pay_date, summary_note, approved_yn)
@@ -43,7 +42,7 @@
     ]]>
 	</insert>
 
-	<!-- 3) 토큰으로 헤더 ID 조회 -->
+	<!-- 3) 토큰으로 헤더 ID 조회 / トークンでヘッダーIDを取得 -->
 	<select id="findVoucherIdByToken" resultType="long">
     <![CDATA[
     SELECT v.voucher_id
@@ -52,14 +51,14 @@
     ]]>
 	</select>
 
-	<!-- 4) 기존 라인 삭제 -->
+	<!-- 4) 기존 라인 삭제 / 既存ライン削除 -->
 	<delete id="deleteVoucherLines">
     <![CDATA[
     DELETE FROM pay_voucher_line WHERE voucher_id = #{voucherId}
     ]]>
 	</delete>
 
-	<!-- 5) 차변 INSERT (부서별 지급합계) -->
+	<!-- 5) 차변 INSERT (부서별 지급합계) / 借方 INSERT（部署別 支給合計） -->
 	<insert id="insertDebitLinesForMonth">
     <![CDATA[
     INSERT INTO pay_voucher_line
@@ -85,7 +84,7 @@
     ]]>
 	</insert>
 
-	<!-- 6) 대변 INSERT (부서별 공제합계) -->
+	<!-- 6) 대변 INSERT (부서별 공제합계) / 貸方 INSERT（部署別 控除合計） -->
 	<insert id="insertCreditLinesForMonth">
     <![CDATA[
     INSERT INTO pay_voucher_line
@@ -104,7 +103,7 @@
         FROM payslip p
         JOIN emp  e ON e.emp_id  = p.emp_id
         LEFT JOIN payslip_deduction dd ON dd.payslip_id = p.payslip_id
-             /* 세금만 반영하려면: AND dd.deduction_code LIKE 'T%' */
+             /* 세금만 반영하려면: AND dd.deduction_code LIKE 'T%' / 税金だけを反映する場合 */
        WHERE p.apply_yyyymm = #{yyyymm}
          AND p.pay_type     = #{payType}
        GROUP BY e.dept_id
@@ -112,7 +111,7 @@
     ]]>
 	</insert>
 
-	<!-- 7) 대변 INSERT (부서별 미지급급여 = 실지급액) -->
+	<!-- 7) 대변 INSERT (부서별 미지급급여 = 실지급액) / 貸方 INSERT（部署別 未払給与＝実支給） -->
 	<insert id="insertAccruedLinesForMonth">
   <![CDATA[
   INSERT INTO pay_voucher_line
@@ -120,14 +119,14 @@
   SELECT
     SEQ_PAY_VOUCHER_LINE.NEXTVAL,
     #{voucherId},
-    ROW_NUMBER() OVER (ORDER BY x.dept_id) + 1000 AS line_seq, -- 충돌 방지 오프셋
+    ROW_NUMBER() OVER (ORDER BY x.dept_id) + 1000 AS line_seq, -- 충돌 방지 오프셋 / 衝突回避のオフセット
     #{accountId},
     'C',
     x.dept_id,
     0,
     GREATEST(x.net_sum, 0)
   FROM (
-    WITH i AS (  -- 지급합계(부서별)
+    WITH i AS (  -- 지급합계(부서별) / 支給合計（部署別）
       SELECT e.dept_id, NVL(SUM(i.amount),0) AS pay_sum
         FROM payslip p
         JOIN emp  e ON e.emp_id = p.emp_id
@@ -136,7 +135,7 @@
          AND p.pay_type     = #{payType}
        GROUP BY e.dept_id
     ),
-    d AS (  -- 공제합계(부서별)
+    d AS (  -- 공제합계(부서별) / 控除合計（部署別）
       SELECT e.dept_id, NVL(SUM(dd.amount),0) AS ded_sum
         FROM payslip p
         JOIN emp  e ON e.emp_id = p.emp_id
@@ -152,8 +151,7 @@
   ]]>
 	</insert>
 
-
-	<!-- 8) 지급 전표: 차변(미지급급여 = net, 부서별) -->
+	<!-- 8) 지급 전표: 차변(미지급급여 = net, 부서별) / 支給伝票：借方（未払給与=net、部署別） -->
 	<insert id="insertPaymentAccruedDebitForMonth">
   <![CDATA[
   INSERT INTO pay_voucher_line
@@ -194,8 +192,7 @@
   ]]>
 	</insert>
 
-
-	<!-- 9) 지급 전표: 대변(보통예금 = net, 부서별) -->
+	<!-- 9) 지급 전표: 대변(보통예금 = net, 부서별) / 支給伝票：貸方（普通預金=net、部署別） -->
 	<insert id="insertPaymentBankCreditForMonth">
   <![CDATA[
   INSERT INTO pay_voucher_line
@@ -236,12 +233,11 @@
   ]]>
 	</insert>
 
-
-	<!-- 전표 기초자료생성(미리보기) — 발생(#ACCRUAL)만 -->
+	<!-- 전표 기초자료생성(미리보기) — 발생(#ACCRUAL)만 / 伝票基礎データ生成（プレビュー）— 発生(#ACCRUAL)のみ -->
 	<select id="selectVoucherPreviewAccrual" parameterType="map"
 		resultMap="VoucherLedgerRowMap">
   <![CDATA[
-  WITH base_ps AS (  /* 대상 payslip + emp + dept (사번 필터 포함) */
+  WITH base_ps AS (  /* 대상 payslip + emp + dept (사번 필터 포함) / 対象 payslip + emp + dept（社員番号フィルタを含む） */
     SELECT p.payslip_id, e.emp_id, d.dept_id, d.dept_code, d.dept_name
       FROM payslip p
       JOIN emp  e ON e.emp_id = p.emp_id
@@ -259,19 +255,19 @@
 		</if>
   <![CDATA[
   ),
-  earn_sum AS (  /* 지급합계(부서별) */
+  earn_sum AS (  /* 지급합계(부서별) / 支給合計（部署別） */
     SELECT b.dept_id, NVL(SUM(i.amount),0) AS pay_sum
       FROM base_ps b
       LEFT JOIN payslip_item i ON i.payslip_id = b.payslip_id
      GROUP BY b.dept_id
   ),
-  ded_sum AS (   /* 공제합계(부서별) */
+  ded_sum AS (   /* 공제합계(부서별) / 控除合計（部署別） */
     SELECT b.dept_id, NVL(SUM(dd.amount),0) AS ded_sum
       FROM base_ps b
       LEFT JOIN payslip_deduction dd ON dd.payslip_id = b.payslip_id
      GROUP BY b.dept_id
   ),
-  agg_sum AS (   /* 부서별 지급/공제/순액 */
+  agg_sum AS (   /* 부서별 지급/공제/순액 / 部署別 支給・控除・純額 */
     SELECT NVL(e.dept_id, d.dept_id) AS dept_id,
            NVL(e.pay_sum,0)          AS pay_sum,
            NVL(d.ded_sum,0)          AS ded_sum,
@@ -279,8 +275,8 @@
       FROM earn_sum e
       FULL OUTER JOIN ded_sum d ON d.dept_id = e.dept_id
   ),
-  vrows AS (     /* ← 예약어 회피: rows → vrows */
-    /* 차변: 급여비용(D) */
+  vrows AS (     /* ← 예약어 회피: rows → vrows / 予約語回避：rows → vrows */
+    /* 차변: 급여비용(D) / 借方：給与費用(D) */
     SELECT #{wageAcct} AS account_id, 'D' AS drcr_code, a.dept_id,
            a.pay_sum AS debit_amt, 0 AS credit_amt,
            'PAY' AS cost_type_code,
@@ -289,7 +285,7 @@
 
     UNION ALL
 
-    /* 대변: 예수금(C) */
+    /* 대변: 예수금(C) / 貸方：預り金(C) */
     SELECT #{withholdAcct}, 'C', a.dept_id,
            0, a.ded_sum,
            'TAX',
@@ -298,7 +294,7 @@
 
     UNION ALL
 
-    /* 대변: 미지급급여(C) = 실지급 */
+    /* 대변: 미지급급여(C) = 실지급 / 貸方：未払給与(C)＝実支給 */
     SELECT #{accruedAcct}, 'C', a.dept_id,
            0, GREATEST(a.net_sum, 0),
            'NET',
@@ -306,18 +302,18 @@
       FROM agg_sum a
   )
   SELECT
-    /* ─ 화면 컬럼 매핑 (VoucherLedgerRowMap) ─ */
+    /* ─ 화면 컬럼 매핑 (VoucherLedgerRowMap) ─ / 画面列マッピング（VoucherLedgerRowMap） */
     TO_CHAR(
       ROW_NUMBER() OVER (
         ORDER BY
           CASE r.drcr_code WHEN 'D' THEN 0 ELSE 1 END,
           NVL(dp.dept_code,'ZZZ'),
-          /* 대변 내부: 예수금 → 미지급 */
+          /* 대변 내부: 예수금 → 미지급 / 貸方内部：預り金 → 未払 */
           CASE WHEN r.drcr_code='C' AND r.account_id = #{accruedAcct} THEN 1 ELSE 0 END,
           r.account_id
       )
-    )                                         AS display_seq,      -- 화면 번호
-    r.account_id                              AS account_id,       -- accountName/accountCode 둘 다 매핑
+    )                                         AS display_seq,      -- 화면 번호 / 表示番号
+    r.account_id                              AS account_id,       -- accountName/accountCode 둘 다 매핑 / 両方に同値マッピング
     CASE r.drcr_code WHEN 'D' THEN '차변' ELSE '대변' END AS drcr_name,
     r.debit_amt                               AS debit_amt,
     r.credit_amt                              AS credit_amt,
@@ -328,7 +324,7 @@
     NULL                                      AS voucher_no,
     'N'                                       AS approved_yn,
     ROW_NUMBER() OVER (ORDER BY 1)            AS line_seq,
-    r.account_id                              AS account_id,       -- (내부코드 재사용)
+    r.account_id                              AS account_id,       -- (내부코드 재사용) / （内部コード再利用）
     r.drcr_code                               AS drcr_code,
     dp.dept_code                              AS occur_dept_code,
     r.cost_type_code                          AS cost_type_code,
@@ -344,9 +340,7 @@
   ]]>
 	</select>
 
-
-
-	<!-- 라인 삭제: 토큰으로 헤더 찾아서 삭제 -->
+	<!-- 라인 삭제: 토큰으로 헤더 찾아서 삭제 / ライン削除：トークンでヘッダーを特定して削除 -->
 	<delete id="deleteVoucherLinesByToken">
   <![CDATA[
   DELETE FROM pay_voucher_line
@@ -358,7 +352,7 @@
   ]]>
 	</delete>
 
-	<!-- 헤더 삭제 -->
+	<!-- 헤더 삭제 / ヘッダー削除 -->
 	<delete id="deleteVoucherHeaderByToken">
   <![CDATA[
   DELETE FROM pay_voucher

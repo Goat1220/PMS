@@ -1,68 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper
-	namespace="org.pms.feature.runpayroll.mapper.RunPayrollMapper">
+<mapper namespace="org.pms.feature.runpayroll.mapper.RunPayrollMapper">
 
-	<!-- ========================= 공통 ========================= -->
-	<select id="findEmpIdByEmpNo" parameterType="string"
-		resultType="long">
-		SELECT emp_id FROM emp WHERE emp_no = #{empNo}
-	</select>
+    <!-- ========================= 공통 ========================= -->
+    <!-- ========================= 共通 ========================= -->
+    <select id="findEmpIdByEmpNo" parameterType="string" resultType="long">
+        SELECT emp_id FROM emp WHERE emp_no = #{empNo}
+    </select>
 
-	<!-- 1) 존재 보장: 없으면 생성 -->
-	<insert id="ensurePayslipExists">
-		MERGE INTO payslip p
-		USING (SELECT #{empId} emp_id,
-		#{yyyymm} apply_yyyymm, #{payType} pay_type
-		FROM dual) x
-		ON (p.emp_id =
-		x.emp_id AND p.apply_yyyymm = x.apply_yyyymm AND
-		p.pay_type =
-		x.pay_type)
-		WHEN NOT MATCHED THEN
-		INSERT (payslip_id, emp_id, pay_type,
-		apply_yyyymm, net_pay_amt)
-		VALUES (SEQ_PAYSLIP.NEXTVAL, x.emp_id,
-		x.pay_type, x.apply_yyyymm, 0)
-	</insert>
+    <!-- 1) 존재 보장: 없으면 생성 -->
+    <!-- 1) 存在保証：無ければ作成 -->
+    <insert id="ensurePayslipExists">
+        MERGE INTO payslip p
+        USING (SELECT #{empId} emp_id,
+        #{yyyymm} apply_yyyymm, #{payType} pay_type
+        FROM dual) x
+        ON (p.emp_id =
+        x.emp_id AND p.apply_yyyymm = x.apply_yyyymm AND
+        p.pay_type =
+        x.pay_type)
+        WHEN NOT MATCHED THEN
+        INSERT (payslip_id, emp_id, pay_type,
+        apply_yyyymm, net_pay_amt)
+        VALUES (SEQ_PAYSLIP.NEXTVAL, x.emp_id,
+        x.pay_type, x.apply_yyyymm, 0)
+    </insert>
 
-	<!-- payslip id 확보(있으면 반환, 없으면 새 id를 미리 채번해서 반환) -->
-	<select id="ensurePayslip" resultType="long">
-		SELECT p.payslip_id
-		FROM
-		payslip p
-		WHERE p.emp_id = #{empId}
-		AND p.apply_yyyymm = #{yyyymm}
-		AND
-		p.pay_type = #{payType}
-	</select>
+    <!-- payslip id 확보(있으면 반환, 없으면 새 id를 미리 채번해서 반환) -->
+    <!-- payslip id の取得（存在すれば返却、無ければ新規採番して返却） -->
+    <select id="ensurePayslip" resultType="long">
+        SELECT p.payslip_id
+        FROM
+        payslip p
+        WHERE p.emp_id = #{empId}
+        AND p.apply_yyyymm = #{yyyymm}
+        AND
+        p.pay_type = #{payType}
+    </select>
 
-	<select id="sumEarningItems" resultType="long">
-		SELECT
-		NVL(SUM(i.amount),0)
-		FROM payslip_item i
-		WHERE i.payslip_id =
-		#{payslipId}
-	</select>
+    <select id="sumEarningItems" resultType="long">
+        SELECT
+        NVL(SUM(i.amount),0)
+        FROM payslip_item i
+        WHERE i.payslip_id =
+        #{payslipId}
+    </select>
 
-	<select id="sumDeductionItems" resultType="long">
-		SELECT
-		NVL(SUM(d.amount),0)
-		FROM payslip_deduction d
-		WHERE d.payslip_id =
-		#{payslipId}
-	</select>
+    <select id="sumDeductionItems" resultType="long">
+        SELECT
+        NVL(SUM(d.amount),0)
+        FROM payslip_deduction d
+        WHERE d.payslip_id =
+        #{payslipId}
+    </select>
 
-	<update id="updatePayslipNet">
-		UPDATE payslip
-		SET net_pay_amt = #{net}
-		WHERE
-		payslip_id = #{payslipId}
-	</update>
+    <update id="updatePayslipNet">
+        UPDATE payslip
+        SET net_pay_amt = #{net}
+        WHERE
+        payslip_id = #{payslipId}
+    </update>
 
-	<!-- emp_tax_profile 플래그 upsert (필요 컬럼만 갱신) -->
-	<update id="upsertPayslipFlags">
+    <!-- emp_tax_profile 플래그 upsert (필요 컬럼만 갱신) -->
+    <!-- emp_tax_profile フラグのUPSERT（必要なカラムのみ更新） -->
+    <update id="upsertPayslipFlags">
   <![CDATA[
   MERGE INTO emp_tax_profile t
   USING (SELECT #{empId} emp_id FROM dual) x
@@ -99,66 +101,69 @@
         NVL(#{f.bonusRate,              jdbcType=NUMERIC}, NULL)
        )
   ]]>
-	</update>
+    </update>
 
 
-	<!-- ========================= 월별 합계 업서트 ========================= -->
-	<update id="upsertMonthSummary">
-		MERGE INTO pay_month_summary s
-		USING (
-		SELECT
-		#{payType} AS pay_type,
-		#{yyyymm} AS apply_yyyymm,
-		NVL(SUM(i.amount),0)
-		AS total_pay_amt,
-		NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount
-		ELSE 0 END),0) AS
-		prev_paid_amt,
-		NVL(SUM(d.amount),0) AS total_ded_amt,
-		NVL(SUM(i.amount),0) - NVL(SUM(d.amount),0) AS net_pay_amt
-		FROM payslip
-		p
-		LEFT JOIN payslip_item i ON i.payslip_id = p.payslip_id
-		LEFT JOIN
-		payslip_deduction d ON d.payslip_id = p.payslip_id
-		WHERE p.apply_yyyymm
-		= #{yyyymm}
-		AND p.pay_type = #{payType}
-		) x
-		ON (s.pay_type = x.pay_type
-		AND s.apply_yyyymm = x.apply_yyyymm)
-		WHEN MATCHED THEN
-		UPDATE SET
-		s.total_pay_amt = x.total_pay_amt,
-		s.prev_paid_amt = x.prev_paid_amt,
-		s.total_ded_amt = x.total_ded_amt,
-		s.net_pay_amt = x.net_pay_amt
-		WHEN
-		NOT MATCHED THEN
-		INSERT (pay_month_id, pay_type, apply_yyyymm,
-		total_pay_amt, prev_paid_amt,
-		total_ded_amt, net_pay_amt)
-		VALUES
-		(seq_pms.NEXTVAL, x.pay_type, x.apply_yyyymm, x.total_pay_amt,
-		x.prev_paid_amt, x.total_ded_amt, x.net_pay_amt)
-	</update>
+    <!-- ========================= 월별 합계 업서트 ========================= -->
+    <!-- ========================= 月次合計 UPSERT ========================= -->
+    <update id="upsertMonthSummary">
+        MERGE INTO pay_month_summary s
+        USING (
+        SELECT
+        #{payType} AS pay_type,
+        #{yyyymm} AS apply_yyyymm,
+        NVL(SUM(i.amount),0)
+        AS total_pay_amt,
+        NVL(SUM(CASE WHEN i.is_previous = 'Y' THEN i.amount
+        ELSE 0 END),0) AS
+        prev_paid_amt,
+        NVL(SUM(d.amount),0) AS total_ded_amt,
+        NVL(SUM(i.amount),0) - NVL(SUM(d.amount),0) AS net_pay_amt
+        FROM payslip
+        p
+        LEFT JOIN payslip_item i ON i.payslip_id = p.payslip_id
+        LEFT JOIN
+        payslip_deduction d ON d.payslip_id = p.payslip_id
+        WHERE p.apply_yyyymm
+        = #{yyyymm}
+        AND p.pay_type = #{payType}
+        ) x
+        ON (s.pay_type = x.pay_type
+        AND s.apply_yyyymm = x.apply_yyyymm)
+        WHEN MATCHED THEN
+        UPDATE SET
+        s.total_pay_amt = x.total_pay_amt,
+        s.prev_paid_amt = x.prev_paid_amt,
+        s.total_ded_amt = x.total_ded_amt,
+        s.net_pay_amt = x.net_pay_amt
+        WHEN
+        NOT MATCHED THEN
+        INSERT (pay_month_id, pay_type, apply_yyyymm,
+        total_pay_amt, prev_paid_amt,
+        total_ded_amt, net_pay_amt)
+        VALUES
+        (seq_pms.NEXTVAL, x.pay_type, x.apply_yyyymm, x.total_pay_amt,
+        x.prev_paid_amt, x.total_ded_amt, x.net_pay_amt)
+    </update>
 
 
-	<!-- 퇴직여부 업데이트: 'Y'면 해당 yyyymm의 말일로 설정, 'N'이면 해제 -->
-	<update id="updateEmpRetiredYn">
-		UPDATE emp
-		SET retire_date = CASE WHEN #{retiredYn} =
-		'Y'
-		THEN LAST_DAY(TO_DATE(#{yyyymm}||'-01','YYYY-MM-DD'))
-		ELSE NULL
-		END
-		WHERE emp_id = #{empId}
-	</update>
+    <!-- 퇴직여부 업데이트: 'Y'면 해당 yyyymm의 말일로 설정, 'N'이면 해제 -->
+    <!-- 退職有無の更新：'Y'なら当該yyyymmの月末に設定、'N'なら解除 -->
+    <update id="updateEmpRetiredYn">
+        UPDATE emp
+        SET retire_date = CASE WHEN #{retiredYn} =
+        'Y'
+        THEN LAST_DAY(TO_DATE(#{yyyymm}||'-01','YYYY-MM-DD'))
+        ELSE NULL
+        END
+        WHERE emp_id = #{empId}
+    </update>
 
 
-	<!-- ========================= ① 요약 ========================= -->
-	<select id="selectPayrollSummary"
-		resultType="org.pms.feature.runpayroll.domain.PayrollSummaryRow">
+    <!-- ========================= ① 요약 ========================= -->
+    <!-- ========================= ① サマリー ========================= -->
+    <select id="selectPayrollSummary"
+        resultType="org.pms.feature.runpayroll.domain.PayrollSummaryRow">
     <![CDATA[
     WITH
     PS AS (
@@ -214,7 +219,7 @@
     LEFT JOIN YH yh ON yh.emp_id = e.emp_id
     WHERE 1=1
     ]]>
-		<if test="payType != null and payType != ''">
+        <if test="payType != null and payType != ''">
       <![CDATA[
       AND EXISTS (
         SELECT 1 FROM payslip p2
@@ -223,21 +228,22 @@
            AND p2.pay_type = #{payType}
       )
       ]]>
-		</if>
-		<if test="deptCode != null and deptCode != ''">
+        </if>
+        <if test="deptCode != null and deptCode != ''">
       <![CDATA[ AND d.dept_code = #{deptCode} ]]>
-		</if>
-		<if test="empNo != null and empNo != ''">
+        </if>
+        <if test="empNo != null and empNo != ''">
       <![CDATA[ AND e.emp_no = #{empNo} ]]>
-		</if>
+        </if>
     <![CDATA[
     ORDER BY e.emp_no
     ]]>
-	</select>
+    </select>
 
-	<!-- ========================= ② 지급 ========================= -->
-	<select id="selectEarningItems"
-		resultType="org.pms.feature.runpayroll.domain.EarningItemRow">
+    <!-- ========================= ② 지급 ========================= -->
+    <!-- ========================= ② 支給 ========================= -->
+    <select id="selectEarningItems"
+        resultType="org.pms.feature.runpayroll.domain.EarningItemRow">
     <![CDATA[
     WITH target_ps AS (
       SELECT p.payslip_id
@@ -246,9 +252,9 @@
        WHERE e.emp_no = #{empNo}
          AND p.apply_yyyymm = #{yyyymm}
     ]]>
-		<if test="payType != null and payType != ''">
+        <if test="payType != null and payType != ''">
       <![CDATA[   AND p.pay_type = #{payType} ]]>
-		</if>
+        </if>
     <![CDATA[
     )
     SELECT itemName, nonTaxType, previousYn, amount
@@ -277,11 +283,12 @@
       )
      ORDER BY ord, sortKey
     ]]>
-	</select>
+    </select>
 
-	<!-- ========================= ③ 공제 ========================= -->
-	<select id="selectDeductions"
-		resultType="org.pms.feature.runpayroll.domain.DeductionRow">
+    <!-- ========================= ③ 공제 ========================= -->
+    <!-- ========================= ③ 控除 ========================= -->
+    <select id="selectDeductions"
+        resultType="org.pms.feature.runpayroll.domain.DeductionRow">
     <![CDATA[
     WITH target_ps AS (
       SELECT p.payslip_id
@@ -290,9 +297,9 @@
        WHERE e.emp_no = #{empNo}
          AND p.apply_yyyymm = #{yyyymm}
     ]]>
-		<if test="payType != null and payType != ''">
+        <if test="payType != null and payType != ''">
       <![CDATA[   AND p.pay_type = #{payType} ]]>
-		</if>
+        </if>
     <![CDATA[
     )
     SELECT deductionName, amount
@@ -317,10 +324,11 @@
       )
      ORDER BY ord, sortKey
     ]]>
-	</select>
+    </select>
 
-	<!-- ========================= ④ 월집계 ========================= -->
-	<select id="calcMonthRollup" resultType="map">
+    <!-- ========================= ④ 월집계 ========================= -->
+    <!-- ========================= ④ 月次集計 ========================= -->
+    <select id="calcMonthRollup" resultType="map">
     <![CDATA[
     SELECT
       NVL((
@@ -354,71 +362,73 @@
       ),0) AS net_pay_amt
     FROM dual
     ]]>
-	</select>
+    </select>
 
-	<update id="upsertMonthlySummaryMonth">
-		MERGE INTO pay_month_summary s
-		USING (
-		SELECT
-		#{payType} pay_type,
-		#{yyyymm} apply_yyyymm,
-		#{totalPayAmt}
-		total_pay_amt,
-		#{prevPaidAmt} prev_paid_amt,
-		#{totalDedAmt}
-		total_ded_amt,
-		#{netPayAmt} net_pay_amt
-		FROM dual
-		) x
-		ON (s.pay_type =
-		x.pay_type AND s.apply_yyyymm = x.apply_yyyymm)
-		WHEN MATCHED THEN
-		UPDATE SET
-		s.total_pay_amt = x.total_pay_amt,
-		s.prev_paid_amt =
-		x.prev_paid_amt,
-		s.total_ded_amt = x.total_ded_amt,
-		s.net_pay_amt =
-		x.net_pay_amt
-		WHEN NOT MATCHED THEN INSERT
-		(pay_month_id, pay_type,
-		apply_yyyymm, total_pay_amt, prev_paid_amt, total_ded_amt,
-		net_pay_amt)
-		VALUES (SEQ_PAY_MONTH.NEXTVAL, x.pay_type, x.apply_yyyymm,
-		x.total_pay_amt,
-		x.prev_paid_amt, x.total_ded_amt, x.net_pay_amt)
-	</update>
+    <update id="upsertMonthlySummaryMonth">
+        MERGE INTO pay_month_summary s
+        USING (
+        SELECT
+        #{payType} pay_type,
+        #{yyyymm} apply_yyyymm,
+        #{totalPayAmt}
+        total_pay_amt,
+        #{prevPaidAmt} prev_paid_amt,
+        #{totalDedAmt}
+        total_ded_amt,
+        #{netPayAmt} net_pay_amt
+        FROM dual
+        ) x
+        ON (s.pay_type =
+        x.pay_type AND s.apply_yyyymm = x.apply_yyyymm)
+        WHEN MATCHED THEN
+        UPDATE SET
+        s.total_pay_amt = x.total_pay_amt,
+        s.prev_paid_amt =
+        x.prev_paid_amt,
+        s.total_ded_amt = x.total_ded_amt,
+        s.net_pay_amt =
+        x.net_pay_amt
+        WHEN NOT MATCHED THEN INSERT
+        (pay_month_id, pay_type,
+        apply_yyyymm, total_pay_amt, prev_paid_amt, total_ded_amt,
+        net_pay_amt)
+        VALUES (SEQ_PAY_MONTH.NEXTVAL, x.pay_type, x.apply_yyyymm,
+        x.total_pay_amt,
+        x.prev_paid_amt, x.total_ded_amt, x.net_pay_amt)
+    </update>
 
-	<!-- ========================= ⑤ 전표 ========================= -->
-	<select id="hasVoucherByToken" resultType="int">
-		SELECT COUNT(1)
-		FROM
-		pay_voucher v
-		WHERE v.summary_note = #{token}
-	</select>
+    <!-- ========================= ⑤ 전표 ========================= -->
+    <!-- ========================= ⑤ 伝票 ========================= -->
+    <select id="hasVoucherByToken" resultType="int">
+        SELECT COUNT(1)
+        FROM
+        pay_voucher v
+        WHERE v.summary_note = #{token}
+    </select>
 
-	<insert id="insertVoucherHeaderByToken">
-		INSERT INTO pay_voucher (voucher_id, voucher_no,
-		pay_date, summary_note,
-		approved_yn)
-		VALUES (
-		SEQ_PAY_VOUCHER.NEXTVAL,
-		NULL,
-		LAST_DAY(TO_DATE(#{yyyymm}||'-01','YYYY-MM-DD')),
-		#{token},
-		'N'
-		)
-	</insert>
+    <insert id="insertVoucherHeaderByToken">
+        INSERT INTO pay_voucher (voucher_id, voucher_no,
+        pay_date, summary_note,
+        approved_yn)
+        VALUES (
+        SEQ_PAY_VOUCHER.NEXTVAL,
+        NULL,
+        LAST_DAY(TO_DATE(#{yyyymm}||'-01','YYYY-MM-DD')),
+        #{token},
+        'N'
+        )
+    </insert>
 
-	<select id="findVoucherIdByToken" resultType="long">
-		SELECT v.voucher_id
-		FROM pay_voucher v
-		WHERE v.summary_note = #{token}
-	</select>
+    <select id="findVoucherIdByToken" resultType="long">
+        SELECT v.voucher_id
+        FROM pay_voucher v
+        WHERE v.summary_note = #{token}
+    </select>
 
-	<insert id="upsertVoucherLinesForPayslip">
+    <insert id="upsertVoucherLinesForPayslip">
   <![CDATA[
   /* payslip_id 단일 건 기준: 부서별 지급/공제 사전집계 → 라인 생성 → (voucher_id, line_seq) 기준 업서트 */
+  /* payslip_id 単一件の前提：部署別の支給/控除を事前集計 → 行を生成 → （voucher_id, line_seq）でUPSERT */
   MERGE INTO pay_voucher_line t
   USING (
     WITH base AS (
@@ -428,12 +438,14 @@
        WHERE p.payslip_id = #{payslipId}
     ),
     i_sum AS (  /* 지급 항목 사전집계: 곱집합 방지 */
+               /* 支給項目の事前集計：デカルト積の防止 */
       SELECT i.payslip_id, SUM(i.amount) AS pay_sum
         FROM payslip_item i
        WHERE i.payslip_id = #{payslipId}
        GROUP BY i.payslip_id
     ),
     d_sum AS (  /* 공제 항목 사전집계: 곱집합 방지 */
+               /* 控除項目の事前集計：デカルト積の防止 */
       SELECT d.payslip_id, SUM(d.amount) AS ded_sum
         FROM payslip_deduction d
        WHERE d.payslip_id = #{payslipId}
@@ -441,6 +453,7 @@
     ),
     lines AS (
       /* 부서별 차변(비용) 라인 */
+      /* 部署別の借方（費用）行 */
       SELECT
         #{voucherId}              AS voucher_id,
         ROW_NUMBER() OVER (ORDER BY b.dept_id)                          AS line_seq,
@@ -455,6 +468,7 @@
       UNION ALL
 
       /* 부서별 대변(예수금) 라인: 비용 라인과 line_seq 충돌 방지를 위해 +1000 */
+      /* 部署別の貸方（預り金）行：費用行の line_seq 衝突防止のため +1000 */
       SELECT
         #{voucherId}              AS voucher_id,
         ROW_NUMBER() OVER (ORDER BY b.dept_id) + 1000                   AS line_seq,
@@ -481,120 +495,123 @@
     VALUES (SEQ_PAY_VOUCHER_LINE.NEXTVAL, src.voucher_id, src.line_seq,
             src.account_id, src.drcr_code, src.dept_id, src.debit_amt, src.credit_amt)
   ]]>
-	</insert>
+    </insert>
 
+    <!-- ========================= ⑥ 세금 재처리 ========================= -->
+    <!-- ========================= ⑥ 税金再処理 ========================= -->
+    <delete id="deleteTaxDeductions">
+        DELETE FROM payslip_deduction
+        WHERE payslip_id =
+        #{payslipId}
+        AND deduction_code IN ('TAX_INCOME','TAX_LOCAL')
+    </delete>
 
+    <insert id="insertTaxDeduction">
+        INSERT INTO payslip_deduction (pd_id, payslip_id,
+        deduction_code,
+        deduction_name, amount)
+        VALUES
+        (SEQ_PAYSLIP_DEDUCTION.NEXTVAL, #{payslipId}, #{code}, #{name},
+        #{amount})
+    </insert>
 
+    <!-- ========================= ⑦ YRT 반영 ========================= -->
+    <!-- ========================= ⑦ YRT 反映 ========================= -->
+    <select id="findLatestYrtAdjustment"
+        resultType="org.pms.feature.runpayroll.domain.YrtAdjustment">
+        SELECT * FROM (
+        SELECT
+        y.emp_id,
+        y.base_year,
+        /* TODO: 실제 환급/추징 금액 산식은 yrt_result_total 등으로 확장 */
+        /* TODO: 実際の還付/追徴の算式は yrt_result_total などへの拡張を推奨 */
+        0 AS refund_amt,
+        0 AS
+        additional_tax_amt,
+        ROW_NUMBER() OVER (PARTITION BY y.emp_id ORDER BY
+        y.created_at DESC) rn
+        FROM yrt_header y
+        WHERE y.emp_id = #{empId}
+        AND
+        y.base_year = #{baseYear}
+        ) t WHERE t.rn = 1
+    </select>
 
-	<!-- ========================= ⑥ 세금 재처리 ========================= -->
-	<delete id="deleteTaxDeductions">
-		DELETE FROM payslip_deduction
-		WHERE payslip_id =
-		#{payslipId}
-		AND deduction_code IN ('TAX_INCOME','TAX_LOCAL')
-	</delete>
+    <insert id="insertEarningItem">
+        INSERT INTO payslip_item (item_id, payslip_id,
+        is_previous, is_safety_bonus,
+        item_name, amount)
+        VALUES
+        (SEQ_PAYSLIP_ITEM.NEXTVAL, #{payslipId}, 'N', 'N', #{itemName},
+        #{amount})
+    </insert>
 
-	<insert id="insertTaxDeduction">
-		INSERT INTO payslip_deduction (pd_id, payslip_id,
-		deduction_code,
-		deduction_name, amount)
-		VALUES
-		(SEQ_PAYSLIP_DEDUCTION.NEXTVAL, #{payslipId}, #{code}, #{name},
-		#{amount})
-	</insert>
+    <insert id="insertDeductionItem">
+        INSERT INTO payslip_deduction (pd_id, payslip_id,
+        deduction_code,
+        deduction_name, amount)
+        VALUES
+        (SEQ_PAYSLIP_DEDUCTION.NEXTVAL, #{payslipId}, #{code}, #{name},
+        #{amount})
+    </insert>
 
-	<!-- ========================= ⑦ YRT 반영 ========================= -->
-	<select id="findLatestYrtAdjustment"
-		resultType="org.pms.feature.runpayroll.domain.YrtAdjustment">
-		SELECT * FROM (
-		SELECT
-		y.emp_id,
-		y.base_year,
-		/* TODO: 실제 환급/추징
-		금액 산식은 yrt_result_total 등으로 확장 */
-		0 AS refund_amt,
-		0 AS
-		additional_tax_amt,
-		ROW_NUMBER() OVER (PARTITION BY y.emp_id ORDER BY
-		y.created_at DESC) rn
-		FROM yrt_header y
-		WHERE y.emp_id = #{empId}
-		AND
-		y.base_year = #{baseYear}
-		) t WHERE t.rn = 1
-	</select>
+    <!-- ========================= ⑧ 확정 ========================= -->
+    <!-- ========================= ⑧ 確定 ========================= -->
+    <!-- 확정 건수 조회 -->
+    <!-- 確定件数の照会 -->
+    <select id="countConfirmedPayslips" resultType="int">
+        SELECT COUNT(1)
+        FROM payslip p
+        JOIN emp e ON e.emp_id = p.emp_id
+        WHERE
+        p.apply_yyyymm = #{yyyymm}
+        AND p.pay_type = #{payType}
+        AND
+        p.confirmed_yn = 'Y'
+        AND e.emp_no IN
+        <foreach collection="empNos" item="no" open="(" close=")"
+            separator=",">
+            #{no}
+        </foreach>
+    </select>
 
-	<insert id="insertEarningItem">
-		INSERT INTO payslip_item (item_id, payslip_id,
-		is_previous, is_safety_bonus,
-		item_name, amount)
-		VALUES
-		(SEQ_PAYSLIP_ITEM.NEXTVAL, #{payslipId}, 'N', 'N', #{itemName},
-		#{amount})
-	</insert>
+    <!-- 확정 처리 -->
+    <!-- 確定処理 -->
+    <update id="confirmPayslips">
+        UPDATE payslip p
+        SET p.confirmed_yn = 'Y',
+        p.confirmed_at = SYSDATE
+        WHERE p.apply_yyyymm = #{yyyymm}
+        AND p.pay_type = #{payType}
+        AND
+        p.emp_id IN (
+        SELECT e.emp_id FROM emp e
+        WHERE e.emp_no IN
+        <foreach collection="empNos" item="no" open="(" close=")"
+            separator=",">
+            #{no}
+        </foreach>
+        )
+    </update>
 
-	<insert id="insertDeductionItem">
-		INSERT INTO payslip_deduction (pd_id, payslip_id,
-		deduction_code,
-		deduction_name, amount)
-		VALUES
-		(SEQ_PAYSLIP_DEDUCTION.NEXTVAL, #{payslipId}, #{code}, #{name},
-		#{amount})
-	</insert>
-
-	<!-- ========================= ⑧ 확정 ========================= -->
-	<!-- 확정 건수 조회 -->
-	<select id="countConfirmedPayslips" resultType="int">
-		SELECT COUNT(1)
-		FROM payslip p
-		JOIN emp e ON e.emp_id = p.emp_id
-		WHERE
-		p.apply_yyyymm = #{yyyymm}
-		AND p.pay_type = #{payType}
-		AND
-		p.confirmed_yn = 'Y'
-		AND e.emp_no IN
-		<foreach collection="empNos" item="no" open="(" close=")"
-			separator=",">
-			#{no}
-		</foreach>
-	</select>
-
-	<!-- 확정 처리 -->
-	<update id="confirmPayslips">
-		UPDATE payslip p
-		SET p.confirmed_yn = 'Y',
-		p.confirmed_at = SYSDATE
-		WHERE p.apply_yyyymm = #{yyyymm}
-		AND p.pay_type = #{payType}
-		AND
-		p.emp_id IN (
-		SELECT e.emp_id FROM emp e
-		WHERE e.emp_no IN
-		<foreach collection="empNos" item="no" open="(" close=")"
-			separator=",">
-			#{no}
-		</foreach>
-		)
-	</update>
-
-	<!-- 확정 해제 -->
-	<update id="unconfirmPayslips">
-		UPDATE payslip p
-		SET p.confirmed_yn = 'N',
-		p.confirmed_at = NULL
-		WHERE
-		p.apply_yyyymm = #{yyyymm}
-		AND p.pay_type = #{payType}
-		AND p.emp_id IN (
-		SELECT e.emp_id
-		FROM emp e
-		WHERE e.emp_no IN
-		<foreach collection="empNos" item="no" open="(" separator=","
-			close=")">
-			#{no}
-		</foreach>
-		)
-	</update>
+    <!-- 확정 해제 -->
+    <!-- 確定解除 -->
+    <update id="unconfirmPayslips">
+        UPDATE payslip p
+        SET p.confirmed_yn = 'N',
+        p.confirmed_at = NULL
+        WHERE
+        p.apply_yyyymm = #{yyyymm}
+        AND p.pay_type = #{payType}
+        AND p.emp_id IN (
+        SELECT e.emp_id
+        FROM emp e
+        WHERE e.emp_no IN
+        <foreach collection="empNos" item="no" open="(" separator=","
+            close=")">
+            #{no}
+        </foreach>
+        )
+    </update>
 
 </mapper>
