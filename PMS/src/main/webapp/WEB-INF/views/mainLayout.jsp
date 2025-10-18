@@ -4,7 +4,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>급여 처리 시스템</title>
+<title>給与処理システム</title>
 <base target="contentFrame">
 
 <style>
@@ -123,13 +123,13 @@ document.addEventListener('DOMContentLoaded', function(){
 <body>
 <div class="app">
   <aside class="aside">
-    <div class="logo" style="font-weight:700;font-size:18px;padding:20px;border-bottom:1px solid rgba(255,255,255,0.1)">급여 처리 시스템</div>
+    <div class="logo" style="font-weight:700;font-size:18px;padding:20px;border-bottom:1px solid rgba(255,255,255,0.1)">給与処理システム</div>
     <%@ include file="/WEB-INF/views/includes/leftMenu.jsp"%>
   </aside>
 
   <section class="main">
     <div class="header">
-      <div id="pageTitle">급여 관리</div>
+      <div id="pageTitle">給与管理</div>
       <div class="version">v1.0</div>
     </div>
     <div class="content">

@@ -48,27 +48,27 @@
 
 
 <li class="menu-section">
-  <div class="section-title">급여담당자의 급상여처리</div>
+  <div class="section-title">給与担当者の給与処理</div>
   <ul class="submenu">
-    <li><a href="<c:url value='/runpayroll'/>">급상여처리하기</a></li>
-    <li><a href="<c:url value='/voucher'/>">급상여전표처리</a></li>
-    <li><a href="<c:url value='/report/withholding'/>">신고서확인하기</a></li>
+    <li><a href="<c:url value='/runpayroll'/>">昇給処理</a></li>
+    <li><a href="<c:url value='/voucher'/>">給与伝票処理</a></li>
+    <li><a href="<c:url value='/report/withholding'/>">申告書確認</a></li>
   </ul>
 </li>
 
 <li class="menu-section">
-  <div class="section-title">개인 급여처리내역 확인</div>
+  <div class="section-title">個人給与処理内訳確認</div>
   <ul class="submenu">
-    <li><a href="<c:url value='/feature/payslip/view'/>">급여명세서 확인하기</a></li>
+    <li><a href="<c:url value='/feature/payslip/view'/>">給与明細書確認</a></li>
   </ul>
 </li>
 
 <li class="menu-section">
-  <div class="section-title">연말정산 프로세스</div>
+  <div class="section-title">年末調整プロセス</div>
   <ul class="submenu">
-    <li><a href="<c:url value='/feature/yearend-tax-simulation/view'/>">개인별 연말정산 시뮬레이션</a></li>
-    <li><a href="<c:url value='/yearend/result/list'/>">개인별 연말정산 결과조회</a></li>
-    <li><a href="<c:url value='/yearend/admin/list'/>">급여담당자의 연말정산 처리/신고</a></li>
+    <li><a href="<c:url value='/feature/yearend-tax-simulation/view'/>">個人別年末調整シミュレーション</a></li>
+    <li><a href="<c:url value='/yearend/result/list'/>">個人別年末調整結果照会</a></li>
+    <li><a href="<c:url value='/yearend/admin/list'/>">年末調整処理/申告</a></li>
   </ul>
 </li>
 </ul>
