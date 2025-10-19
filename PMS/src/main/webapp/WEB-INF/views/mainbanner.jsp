@@ -9,6 +9,6 @@
 <body style="margin:0; padding:0; text-align:center; background:#f8fafc;">
     <img src="<c:url value='/resources/images/img.png'/>" 
          alt="배너 이미지" 
-         style="max-width:100%; height:auto;">
+         style="max-width:75%; height:auto;">
 </body>
 </html>
