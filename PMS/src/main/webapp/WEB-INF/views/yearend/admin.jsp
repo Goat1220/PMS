@@ -25,7 +25,7 @@
 			<div
 				style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%">
 				<label><b>調整年度</b></label> <input id="searchYear" type="text"
-					value="${empty cond.baseYear ? '2018' : cond.baseYear}"> <label><b>調整事業所</b></label>
+					value="<%-- ${empty cond.baseYear ? '2018' : cond.baseYear} --%>2025"> <label><b>調整事業所</b></label>
 				<select id="searchBizPlace">
 					<option value="">全体</option>
 					<option value="本社" ${cond.bizPlace=='本社' ? 'selected' : ''}>本社</option>
